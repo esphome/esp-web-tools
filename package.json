@@ -1,0 +1,32 @@
+{
+  "name": "esphome-web",
+  "version": "0.0.1",
+  "description": "Web tools for ESPHome",
+  "main": "dist/flash-button.js",
+  "repository": "https://github.com/esphome/web",
+  "author": "ESPHome maintainers",
+  "license": "Apache-2.0",
+  "scripts": {
+    "prepublishOnly": "script/build"
+  },
+  "devDependencies": {
+    "@rollup/plugin-json": "^4.1.0",
+    "@rollup/plugin-node-resolve": "^13.0.0",
+    "@rollup/plugin-typescript": "^8.2.1",
+    "@types/w3c-web-serial": "^1.0.1",
+    "@types/web-bluetooth": "^0.0.9",
+    "prettier": "^2.3.0",
+    "rollup": "^2.48.0",
+    "rollup-plugin-terser": "^7.0.2",
+    "serve": "^11.3.2",
+    "typescript": "^4.2.4"
+  },
+  "dependencies": {
+    "@material/mwc-button": "^0.21.0",
+    "@material/mwc-circular-progress": "^0.21.0",
+    "@material/mwc-dialog": "^0.21.0",
+    "@material/mwc-textfield": "^0.21.0",
+    "lit": "^2.0.0-rc.2",
+    "tslib": "^2.2.0"
+  }
+}

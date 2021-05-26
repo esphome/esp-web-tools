@@ -1,0 +1,29 @@
+<html>
+  <head>
+    <title>ESPHome Web</title>
+    <style>
+      body {
+        max-width: 600px;
+      }
+      esphome-web-flash-button {
+        display: inline-block;
+        margin-bottom: 8px;
+      }
+      a {
+        color: #03a9f4;
+      }
+    </style>
+  </head>
+  <body>
+    <p>ESPHome Web is a set of tools to allow working with ESP devices in the browser.</p>
+    <p>To flash the XX firmware, connect an ESP to your computer and hit the button:</p>
+    <esphome-web-flash-button
+      manifest="firmware_build/manifest.json"
+    ></esphome-web-flash-button>
+    <p><i>Note, this only works in desktop Chrome and Edge. Android support has not been implemented yet.</i></div>
+    <p>
+      This works by combining Web Serial with a <a href="firmware_build/manifest.json">manifest</a> which describes the firmware. It will automatically detect the type of the connected ESP device and find the right firmware files in the manifest.
+    </p>
+    <script src="./dist/web/flash-button.js" type="module"></script>
+  </body>
+</html>
