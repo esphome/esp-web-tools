@@ -16,7 +16,7 @@
     "@types/w3c-web-serial": "^1.0.1",
     "@types/web-bluetooth": "^0.0.9",
     "prettier": "^2.3.0",
-    "rollup": "^2.48.0",
+    "rollup": "^2.50.2",
     "rollup-plugin-terser": "^7.0.2",
     "serve": "^11.3.2",
     "typescript": "^4.2.4"
