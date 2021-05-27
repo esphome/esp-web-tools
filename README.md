@@ -10,13 +10,18 @@ Defined using a manifest.
   "builds": [
     {
       "chipFamily": "ESP32",
+      "improv": true,
       "parts": [
-        { "filename": "bootloader.bin", "offset": 4096, "size": 15872 },
-        { "filename": "partitions.bin", "offset": 32768, "size": 3072 },
-        { "filename": "ota.bin", "offset": 57344, "size": 8192 },
-        { "filename": "firmware.bin", "offset": 65536, "size": 1531904 }
+        { "filename": "bootloader.bin", "offset": 4096 },
+        { "filename": "partitions.bin", "offset": 32768 },
+        { "filename": "ota.bin", "offset": 57344 },
+        { "filename": "firmware.bin", "offset": 65536 }
       ]
     }
   ]
 }
 ```
+
+## Development
+
+Run `script/develop`. This starts a server. Open it on http://localhost:5000.
