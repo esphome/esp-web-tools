@@ -1,4 +1,4 @@
-# JavaScript SDK for ESPHome
+# ESPHome Web: JavaScript SDK for ESPHome
 
 Allow flashing ESPHome or other ESP-based firmwares via the browser. Will automatically detect the board type and select a supported firmware.
 
