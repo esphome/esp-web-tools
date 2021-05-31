@@ -1,121 +1,64 @@
-import { css, html, HTMLTemplateResult, LitElement, PropertyValues } from "lit";
-import { customElement, property } from "lit/decorators.js";
-import { Manifest } from "./const";
-import { getChipFamilyName } from "./util";
-import { ESPLoader } from "./vendor/esptool/esp_loader";
+import { css, html, HTMLTemplateResult, LitElement } from "lit";
+import { customElement, state } from "lit/decorators.js";
+import { classMap } from "lit/directives/class-map.js";
+
+interface Row {
+  id?: string;
+  content: HTMLTemplateResult | string;
+  error?: boolean;
+  action?: boolean;
+}
 
 @customElement("esphome-web-flash-log")
 class FlashLog extends LitElement {
-  @property() public offerImprov = false;
+  @state() _rows: Row[] = [];
 
-  @property() public esploader?: ESPLoader;
-
-  @property() public manifest?: Manifest;
-
-  @property() public totalBytes?: number;
-
-  @property() public bytesWritten?: number;
-
-  @property() public extraMsg: string = "";
-
-  @property() public errorMsg: string = "";
-
-  @property() public allowClose = false;
-
-  render() {
-    if (!this.esploader) {
-      return this._renderBody(["Establishing connection..."]);
-    }
-
-    const lines: Array<HTMLTemplateResult | string> = [
-      html`Connection established<br />`,
-    ];
-
-    if (!this.esploader.chipFamily) {
-      lines.push("Initializing...");
-      return this._renderBody(lines);
-    }
-
-    lines.push(
-      html`Initialized. Found ${getChipFamilyName(this.esploader)}<br />`
-    );
-
-    if (this.manifest === undefined) {
-      lines.push(html`Fetching manifest...<br />`);
-      return this._renderBody(lines);
-    }
-
-    lines.push(html`Found manifest for ${this.manifest.name}<br />`);
-
-    if (!this.totalBytes) {
-      return this._renderBody(lines);
-    }
-
-    lines.push(html`Bytes to be written: ${this.totalBytes}<br />`);
-
-    if (!this.bytesWritten) {
-      return this._renderBody(lines);
-    }
-
-    if (this.bytesWritten !== this.totalBytes) {
-      lines.push(
-        html`Writing progress:
-          ${Math.floor((this.bytesWritten / this.totalBytes) * 100)}%<br />`
-      );
-      return this._renderBody(lines);
-    }
-
-    const doImprov =
-      this.offerImprov &&
-      customElements.get("improv-wifi-launch-button")?.isSupported;
-
-    lines.push(html`Writing complete${doImprov ? "" : ", all done!"}<br />`);
-
-    if (doImprov) {
-      lines.push(html`
-        <br />
-        <improv-wifi-launch-button
-          ><button slot="activate">
-            Click here to finish setting up your device.
-          </button></improv-wifi-launch-button
+  protected render() {
+    return html`${this._rows.map(
+      (row) =>
+        html`<div
+          class=${classMap({
+            error: row.error === true,
+            action: row.action === true,
+          })}
         >
-      `);
-    }
-
-    return this._renderBody(lines, !doImprov);
+          ${row.content}
+        </div>`
+    )}`;
   }
 
-  private _renderBody(
-    lines: Array<HTMLTemplateResult | string>,
-    allowClose = false
-  ) {
-    // allow closing if esploader not connected
-    // or we are at the end.
-    // TODO force allow close if not connected
-    return html`
-      ${lines} ${this.extraMsg}
-      ${allowClose
-        ? html` <br /><button @click=${this._close}>Close this dialog</button> `
-        : ""}
-      ${this.errorMsg
-        ? html`<div class="error">Error: ${this.errorMsg}</div>`
-        : ""}
-      ${this.esploader && !this.esploader.connected
-        ? html`<div class="error">Connection lost</div>`
-        : ""}
-    `;
-  }
-
-  protected updated(props: PropertyValues) {
-    super.updated(props);
-
-    if (props.has("esploader") && this.esploader) {
-      this.esploader.addEventListener("disconnect", () => this.requestUpdate());
+  /**
+   * Add or replace a row.
+   */
+  public addRow(row: Row) {
+    // If last entry has same ID, replace it.
+    if (
+      row.id &&
+      this._rows.length > 0 &&
+      this._rows[this._rows.length - 1].id === row.id
+    ) {
+      const newRows = this._rows.slice(0, -1);
+      newRows.push(row);
+      this._rows = newRows;
+    } else {
+      this._rows = [...this._rows, row];
     }
   }
 
-  private _close() {
-    this.parentElement?.removeChild(this);
+  /**
+   * Add an error row
+   */
+  public addError(content: Row["content"]) {
+    this.addRow({ content, error: true });
+  }
+
+  /**
+   * Remove last row if ID matches
+   */
+  public removeRow(id: string) {
+    if (this._rows.length > 0 && this._rows[this._rows.length - 1].id === id) {
+      this._rows = this._rows.slice(0, -1);
+    }
   }
 
   static styles = css`
@@ -141,8 +84,12 @@ class FlashLog extends LitElement {
       cursor: pointer;
     }
 
+    .action,
     .error {
       margin-top: 1em;
+    }
+
+    .error {
       color: red;
     }
   `;

@@ -1,8 +1,14 @@
 # JavaScript SDK for ESPHome
 
-Allow flashing ESPHome or other ESP-based firmwares via the browser.
+Allow flashing ESPHome or other ESP-based firmwares via the browser. Will automatically detect the board type and select a supported firmware.
 
-Defined using a manifest.
+```html
+<esphome-web-install-button
+  manifest="firmware_esphome/manifest.json"
+></esphome-web-install-button>
+```
+
+Manifest definition:
 
 ```json
 {
@@ -17,10 +23,27 @@ Defined using a manifest.
         { "filename": "ota.bin", "offset": 57344 },
         { "filename": "firmware.bin", "offset": 65536 }
       ]
+    },
+    {
+      "chipFamily": "ESP8266",
+      "parts": [
+        { "filename": "esp8266.bin", "offset": 0 },
+      ]
     }
   ]
 }
 ```
+
+Allows for optionally passing an attribute to trigger an erase before installation.
+
+```html
+<esphome-web-install-button
+  manifest="firmware_esphome/manifest.json"
+  erase-first
+></esphome-web-install-button>
+```
+
+All attributes can also be set via properties (`manifest`, `eraseFirst`)
 
 ## Development
 

@@ -3,11 +3,12 @@ import json from "@rollup/plugin-json";
 import { terser } from "rollup-plugin-terser";
 
 const config = {
-  input: "dist/flash-button.js",
+  input: "dist/install-button.js",
   output: {
     dir: "dist/web",
     format: "module",
   },
+  external: ["https://www.improv-wifi.com/sdk-js/launch-button.js"],
   preserveEntrySignatures: false,
   plugins: [nodeResolve(), json()],
 };
