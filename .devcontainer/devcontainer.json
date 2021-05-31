@@ -1,33 +1,33 @@
 // For format details, see https://aka.ms/devcontainer.json. For config options, see the README at:
 // https://github.com/microsoft/vscode-dev-containers/tree/v0.177.0/containers/typescript-node
 {
-	"name": "Node.js & TypeScript",
-	"build": {
-		"dockerfile": "Dockerfile",
-		// Update 'VARIANT' to pick a Node version: 12, 14, 16
-		"args": {
-			"VARIANT": "16"
-		}
-	},
+  "name": "Node.js & TypeScript",
+  "build": {
+    "dockerfile": "Dockerfile",
+    // Update 'VARIANT' to pick a Node version: 12, 14, 16
+    "args": {
+      "VARIANT": "16"
+    }
+  },
 
-	// Add the IDs of extensions you want installed when the container is created.
-	"extensions": [
-		"dbaeumer.vscode-eslint",
+  // Add the IDs of extensions you want installed when the container is created.
+  "extensions": [
+    "dbaeumer.vscode-eslint",
     "esbenp.prettier-vscode",
     "bierner.lit-html",
-    "runem.lit-plugin",
-	],
+    "runem.lit-plugin"
+  ],
 
-	// Use 'forwardPorts' to make a list of ports inside the container available locally.
-	// "forwardPorts": [],
+  // Use 'forwardPorts' to make a list of ports inside the container available locally.
+  "forwardPorts": [5000],
 
-	// Use 'postCreateCommand' to run commands after the container is created.
-	// "postCreateCommand": "yarn install",
+  // Use 'postCreateCommand' to run commands after the container is created.
+  "postCreateCommand": "npm install",
 
-	// Comment out connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
-	"remoteUser": "node",
+  // Comment out connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
+  "remoteUser": "node",
 
-	"settings": {
+  "settings": {
     "files.eol": "\n",
     "editor.tabSize": 2,
     "editor.formatOnPaste": false,
@@ -41,5 +41,4 @@
     },
     "files.trimTrailingWhitespace": true
   }
-
 }

@@ -4,5 +4,5 @@ set -e
 cd "$(dirname "$0")/.."
 
 rm -rf dist
-NODE_ENV=production yarn tsc
-NODE_ENV=production yarn rollup -c
+NODE_ENV=production npm exec -- tsc
+NODE_ENV=production npm exec -- rollup -c
