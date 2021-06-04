@@ -27,7 +27,7 @@ export const startFlash = async (
   // For debugging
   (window as any).esploader = esploader;
 
-  const logEl = document.createElement("esphome-web-flash-log");
+  const logEl = document.createElement("esp-web-flash-log");
   // logEl.esploader = esploader;
   logEl.addRow({ id: "initializing", content: "Initializing..." });
   logParent.append(logEl);

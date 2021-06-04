@@ -1,11 +1,20 @@
 <html>
   <head>
-    <title>ESPHome Web</title>
+    <title>ESP Web Tools</title>
     <style>
       body {
-        max-width: 600px;
+        font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI",
+          Roboto, Ubuntu, sans-serif;
+        padding: 0;
+        margin: 0;
+        line-height: 1.4;
       }
-      esphome-web-flash-button {
+      .content {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 12px;
+      }
+      esp-web-flash-button {
         display: inline-block;
         margin-bottom: 8px;
       }
@@ -13,17 +22,6 @@
         color: #03a9f4;
       }
     </style>
-  </head>
-  <body>
-    <p>ESPHome Web is a set of tools to allow working with ESP devices in the browser.</p>
-    <p>To flash the ESPHome firmware, connect an ESP to your computer and hit the button:</p>
-    <esp-web-install-button
-      manifest="firmware_build/manifest.json"
-    ></esp-web-install-button>
-    <p><i>Note, this only works in desktop Chrome and Edge. Android support has not been implemented yet.</i></div>
-    <p>
-      This works by combining Web Serial with a <a href="firmware_build/manifest.json">manifest</a> which describes the firmware. It will automatically detect the type of the connected ESP device and find the right firmware files in the manifest.
-    </p>
     <script module>
       import(
         // In development we import locally.
@@ -32,6 +30,65 @@
           : "https://unpkg.com/esp-web-tools@1.0.0/dist/web/install-button.js?module"
       );
     </script>
-    <script src="./dist/web/install-button.js" type="module"></script>
+  </head>
+  <body>
+    <div class="content">
+      <h1>ESP Web Tools</h1>
+      <p>
+        ESP Web Tools is a set of tools to allow working with ESP devices in the
+        browser.
+      </p>
+      <p>
+        To flash the ESPHome firmware, connect an ESP to your computer and hit
+        the button:
+      </p>
+      <esp-web-install-button
+        manifest="firmware_build/manifest.json"
+      ></esp-web-install-button>
+      <p>
+        <i
+          >Note, this only works in desktop Chrome and Edge. Android support has
+          not been implemented yet.</i
+        >
+      </p>
+      <p>
+        This works by combining Web Serial with a
+        <a href="firmware_build/manifest.json">manifest</a> which describes the
+        firmware. It will automatically detect the type of the connected ESP
+        device and find the right firmware files in the manifest.
+      </p>
+      <p>
+        To add this to your own website, create a manifest and add the button
+        pointing at it to your website:
+      </p>
+      <pre>
+&lt;script
+  type="module"
+  src="https://unpkg.com/esp-web-tools@1.0.0/dist/web/install-button.js?module"
+>&lt;/script>
+
+&lt;esp-web-install-button
+  manifest="firmware_build/manifest.json"
+>&lt;/esp-web-install-button></pre
+      >
+      <p>
+        Add the attribute <code>erase-first</code> if you want to first fully
+        erase the ESP prior to installation.
+      </p>
+      <p>
+        Customize the button or unsupported message by using the
+        <code>activate</code> and <code>unsupported</code> slots:
+      </p>
+      <pre>
+&lt;esp-web-install-button
+  manifest="firmware_build/manifest.json"
+  erase-first
+>
+  &lt;button slot="activate">Custom install button&lt;/button>
+  &lt;span slot="unsupported">Ah snap, your browser doesn't work!&lt;/span>
+&lt;/esp-web-install-button>
+    </pre
+      >
+    </div>
   </body>
 </html>

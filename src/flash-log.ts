@@ -9,7 +9,7 @@ interface Row {
   action?: boolean;
 }
 
-@customElement("esphome-web-flash-log")
+@customElement("esp-web-flash-log")
 class FlashLog extends LitElement {
   @state() _rows: Row[] = [];
 
@@ -97,6 +97,6 @@ class FlashLog extends LitElement {
 
 declare global {
   interface HTMLElementTagNameMap {
-    "esphome-web-flash-log": FlashLog;
+    "esp-web-flash-log": FlashLog;
   }
 }
