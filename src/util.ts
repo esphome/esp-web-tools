@@ -2,8 +2,8 @@ import {
   CHIP_FAMILY_ESP32,
   CHIP_FAMILY_ESP32S2,
   CHIP_FAMILY_ESP8266,
+  ESPLoader,
 } from "esp-web-flasher";
-import { ESPLoader } from "./const";
 
 export const getChipFamilyName = (esploader: ESPLoader) => {
   switch (esploader.chipFamily) {

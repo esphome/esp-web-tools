@@ -26,7 +26,7 @@
     "@material/mwc-circular-progress": "^0.21.0",
     "@material/mwc-dialog": "^0.21.0",
     "@material/mwc-textfield": "^0.21.0",
-    "esp-web-flasher": "^1.0.0",
+    "esp-web-flasher": "^1.0.3",
     "lit": "^2.0.0-rc.2",
     "tslib": "^2.2.0"
   }

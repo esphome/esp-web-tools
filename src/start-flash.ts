@@ -1,6 +1,6 @@
 import { html } from "lit";
-import { connect } from "esp-web-flasher";
-import { Build, ESPLoader, Manifest, Logger } from "./const";
+import { connect, ESPLoader, Logger } from "esp-web-flasher";
+import { Build, Manifest } from "./const";
 import "./flash-log";
 import { getChipFamilyName, sleep } from "./util";
 
