@@ -171,7 +171,7 @@ export const startFlash = async (
     complete${doImprov
       ? ""
       : html`, all done!<br /><br /><button
-            @click=${() => logParent.removeChild(logEl)}
+            @click=${() => logEl.parentElement?.removeChild(logEl)}
           >
             Close this dialog
           </button>`}`,
