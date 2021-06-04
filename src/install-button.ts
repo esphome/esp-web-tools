@@ -31,14 +31,10 @@ class InstallButton extends HTMLElement {
       }
 
       const mod = await import("./start-flash");
-
-      const progress = document.createElement("div");
-      document.body.append(progress);
-
       await mod.startFlash(
         console,
         manifest,
-        progress,
+        (logEl) => this.parentElement!.insertBefore(logEl, this.nextSibling),
         this.eraseFirst !== undefined
           ? this.eraseFirst
           : this.hasAttribute("erase-first")

@@ -7,7 +7,7 @@ import { getChipFamilyName, sleep } from "./util";
 export const startFlash = async (
   logger: Logger,
   manifestPath: string,
-  logParent: HTMLElement,
+  addLogElement: (el: HTMLElement) => void,
   eraseFirst: boolean
 ) => {
   const manifestURL = new URL(manifestPath, location.toString()).toString();
@@ -30,7 +30,7 @@ export const startFlash = async (
   const logEl = document.createElement("esp-web-flash-log");
   // logEl.esploader = esploader;
   logEl.addRow({ id: "initializing", content: "Initializing..." });
-  logParent.append(logEl);
+  addLogElement(logEl);
 
   try {
     await esploader.initialize();
