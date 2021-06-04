@@ -20,13 +20,23 @@
       a {
         color: #03a9f4;
       }
+      .footer {
+        margin-top: 24px;
+        border-top: 1px solid #ccc;
+        padding-top: 24px;
+        text-align: center;
+      }
+      .footer .initiative {
+        font-style: italic;
+        margin-top: 16px;
+      }
     </style>
     <script module>
       import(
         // In development we import locally.
         window.location.hostname === "localhost"
           ? "/dist/web/install-button.js"
-          : "https://unpkg.com/esp-web-tools@1.0.3/dist/web/install-button.js?module"
+          : "https://unpkg.com/esp-web-tools@2.0.0/dist/web/install-button.js?module"
       );
     </script>
   </head>
@@ -34,31 +44,41 @@
     <div class="content">
       <h1>ESP Web Tools</h1>
       <p>
-        ESP Web Tools is a set of tools to allow working with ESP devices in the
-        browser.
+        ESP Web Tools is a set of open source tools to allow working with ESP
+        devices in the browser.
+        <a href="https://github.com/esphome/esp-web-tools"
+          >The code is available on GitHub.</a
+        >
       </p>
       <p>
-        To install the ESPHome firmware, connect an ESP to your computer and hit
-        the button:
+        To try it out and install
+        <a href="https://esphome.io">the ESPHome firmware</a>, connect an ESP to
+        your computer and hit the button:
       </p>
       <esp-web-install-button
         manifest="firmware_build/manifest.json"
       ></esp-web-install-button>
       <p>
-        <i
-          >Note, this only works in desktop Chrome and Edge. Android support has
-          not been implemented yet.</i
+        <i>
+          Note, this only works in desktop Chrome and Edge. Android support
+          should be possible but has not been implemented yet.
+        </i>
+      </p>
+      <p>
+        This works by combining
+        <a
+          href="https://developer.mozilla.org/en-US/docs/Web/API/Web_Serial_API"
+          >Web Serial</a
         >
+        with a manifest which describes the firmware. It will automatically
+        detect the type of the connected ESP device and find the right firmware
+        files in the manifest.
       </p>
+      <h2>Using ESP Web Tools on your website</h2>
       <p>
-        This works by combining Web Serial with a
-        <a href="firmware_build/manifest.json">manifest</a> which describes the
-        firmware. It will automatically detect the type of the connected ESP
-        device and find the right firmware files in the manifest.
-      </p>
-      <p>
-        To add this to your own website, create a manifest and add the button
-        pointing at it to your website:
+        To add this to your own website, create a manifest and add the button to
+        your website. Make sure you update the manifest attribute to point at
+        your manifest.
       </p>
       <pre>
 &lt;script
@@ -71,12 +91,75 @@
 >&lt;/esp-web-install-button></pre
       >
       <p>
+        Your website needs to be served over <code>https://</code>. If your
+        manifest is hosted on another server, make sure you configure
+        <a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS"
+          >the CORS-headers</a
+        >
+        for your manifest and firmware files such that your website is allowed
+        to fetch those files by adding the header
+        <code
+          >Access-Control-Allow-Origin: https://domain-of-your-website.com</code
+        >.
+      </p>
+
+      <p>
         Add the attribute <code>erase-first</code> if you want to first fully
         erase the ESP prior to installation.
       </p>
       <p>
-        Customize the button or unsupported message by using the
-        <code>activate</code> and <code>unsupported</code> slots:
+        ESP Web Tools can also be integrated in your projects by installing it
+        via NPM:<br />
+        <code>npm install --save esp-web-tools</code>
+      </p>
+      <h3 id="manifest">Creating your manifest</h3>
+      <p>
+        ESP Web Tools manifest describe the firmware that you want to install.
+        It allows specifying different builds for the different types of ESP
+        devices. Current supported devices are ESP8266, ESP32 and ESP32-S2. The
+        correct build will be automatically selected based on the type of the
+        ESP device we detect via the serial port.
+      </p>
+      <pre>
+{
+  "name": "ESPHome",
+  "builds": [
+    {
+      "chipFamily": "ESP32",
+      "improv": true,
+      "parts": [
+        { "path": "bootloader.bin", "offset": 4096 },
+        { "path": "partitions.bin", "offset": 32768 },
+        { "path": "ota.bin", "offset": 57344 },
+        { "path": "firmware.bin", "offset": 65536 }
+      ]
+    },
+    {
+      "chipFamily": "ESP8266",
+      "parts": [
+        { "path": "esp8266.bin", "offset": 0 }
+      ]
+    }
+  ]
+}</pre
+      >
+      <p>
+        Each build contains a list of parts to be flashed to the ESP device.
+        Each part consists of a path to the file and an offset on the flash
+        where it should be installed. Part paths are resolved relative to the
+        path of the manifest, but can also be URLs to other hosts.
+      </p>
+      <p>
+        Each build also allows you to specify if it supports
+        <a href="https://www.improv-wifi.com">the Improv WiFi standard</a>. If
+        it does, the user will be offered to configure the WiFi after flashing
+        is done.
+      </p>
+      <h3>Customizing the look and feel</h3>
+      <p>
+        You can customize both the activation button and the message that is
+        shown when the user uses an unsupported browser. This can be done using
+        the <code>activate</code> and <code>unsupported</code> slots:
       </p>
       <pre>
 &lt;esp-web-install-button
@@ -88,6 +171,18 @@
 &lt;/esp-web-install-button>
     </pre
       >
+      <div class="footer">
+        <div>
+          ESP Web Tools –
+          <a href="https://github.com/esphome/esp-web-tools">GitHub</a>
+        </div>
+        <div class="initiative">
+          ESP Web Tools is a project by
+          <a href="https://esphome.io">ESPHome</a>.<br />
+          Development is funded by
+          <a href="https://www.nabucasa.com">Nabu Casa</a>.
+        </div>
+      </div>
     </div>
   </body>
 </html>
