@@ -45,9 +45,11 @@ export const startFlash = async (
     return;
   }
 
+  const chipFamily = getChipFamilyName(esploader);
+
   logEl.addRow({
     id: "initializing",
-    content: html`Initialized. Found ${getChipFamilyName(esploader)}`,
+    content: html`Initialized. Found ${chipFamily}`,
   });
   logEl.addRow({ id: "manifest", content: "Fetching manifest..." });
 
@@ -64,8 +66,6 @@ export const startFlash = async (
     id: "manifest",
     content: html`Found manifest for ${manifest.name}`,
   });
-
-  const chipFamily = getChipFamilyName(esploader);
 
   let build: Build | undefined;
   for (const b of manifest.builds) {
@@ -87,11 +87,11 @@ export const startFlash = async (
   });
 
   const filePromises = build.parts.map(async (part) => {
-    const url = new URL(part.filename, manifestURL).toString();
+    const url = new URL(part.path, manifestURL).toString();
     const resp = await fetch(url);
     if (!resp.ok) {
       throw new Error(
-        `Downlading firmware ${part.filename} failed: ${resp.status}`
+        `Downlading firmware ${part.path} failed: ${resp.status}`
       );
     }
     return resp.arrayBuffer();

@@ -2,7 +2,7 @@ export interface Build {
   chipFamily: "ESP32" | "ESP8266";
   improv: boolean;
   parts: {
-    filename: string;
+    path: string;
     offset: number;
   }[];
 }

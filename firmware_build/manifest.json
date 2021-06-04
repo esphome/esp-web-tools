@@ -5,15 +5,15 @@
       "chipFamily": "ESP32",
       "improv": true,
       "parts": [
-        { "filename": "bootloader.bin", "offset": 4096 },
-        { "filename": "partitions.bin", "offset": 32768 },
-        { "filename": "ota.bin", "offset": 57344 },
-        { "filename": "firmware.bin", "offset": 65536 }
+        { "path": "bootloader.bin", "offset": 4096 },
+        { "path": "partitions.bin", "offset": 32768 },
+        { "path": "ota.bin", "offset": 57344 },
+        { "path": "firmware.bin", "offset": 65536 }
       ]
     },
     {
       "chipFamily": "ESP8266",
-      "parts": [{ "filename": "esp8266.bin", "offset": 0 }]
+      "parts": [{ "path": "esp8266.bin", "offset": 0 }]
     }
   ]
 }
