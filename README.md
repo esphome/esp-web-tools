@@ -1,11 +1,11 @@
-# ESPHome Web: JavaScript SDK for ESPHome
+# ESP Web Tools
 
 Allow flashing ESPHome or other ESP-based firmwares via the browser. Will automatically detect the board type and select a supported firmware.
 
 ```html
-<esphome-web-install-button
+<esp-web-install-button
   manifest="firmware_esphome/manifest.json"
-></esphome-web-install-button>
+></esp-web-install-button>
 ```
 
 Manifest definition:
@@ -37,10 +37,10 @@ Manifest definition:
 Allows for optionally passing an attribute to trigger an erase before installation.
 
 ```html
-<esphome-web-install-button
+<esp-web-install-button
   manifest="firmware_esphome/manifest.json"
   erase-first
-></esphome-web-install-button>
+></esp-web-install-button>
 ```
 
 All attributes can also be set via properties (`manifest`, `eraseFirst`)

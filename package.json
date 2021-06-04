@@ -1,8 +1,8 @@
 {
-  "name": "esphome-web",
+  "name": "esp-web-tools",
   "version": "0.0.1",
-  "description": "Web tools for ESPHome",
-  "main": "dist/flash-button.js",
+  "description": "Web tools for ESP devices",
+  "main": "dist/install-button.js",
   "repository": "https://github.com/esphome/web",
   "author": "ESPHome maintainers",
   "license": "Apache-2.0",
@@ -26,6 +26,7 @@
     "@material/mwc-circular-progress": "^0.21.0",
     "@material/mwc-dialog": "^0.21.0",
     "@material/mwc-textfield": "^0.21.0",
+    "esp-web-flasher": "^1.0.0",
     "lit": "^2.0.0-rc.2",
     "tslib": "^2.2.0"
   }

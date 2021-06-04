@@ -1,10 +1,8 @@
 import { html } from "lit";
-import { connect } from "./vendor/esptool";
-import type { Logger } from "./vendor/esptool/const";
-import type { ESPLoader } from "./vendor/esptool/esp_loader";
-import { Build, Manifest } from "./const";
+import { connect } from "esp-web-flasher";
+import { Build, ESPLoader, Manifest, Logger } from "./const";
 import "./flash-log";
-import { getChipFamilyName } from "./util";
+import { getChipFamilyName, sleep } from "./util";
 
 export const startFlash = async (
   logger: Logger,
@@ -123,7 +121,10 @@ export const startFlash = async (
     }
   }
 
-  logEl.removeRow("preparing");
+  logEl.addRow({
+    id: "preparing",
+    content: `Ready to install`,
+  });
 
   if (eraseFirst) {
     logEl.addRow({
@@ -132,7 +133,12 @@ export const startFlash = async (
     });
   }
 
-  let lastPct = -1;
+  let lastPct = 0;
+
+  logEl.addRow({
+    id: "write",
+    content: html`Writing progress: ${lastPct}%`,
+  });
 
   for (const part of build.parts) {
     await espStub.flashData(
@@ -152,6 +158,7 @@ export const startFlash = async (
     );
   }
 
+  await sleep(100);
   await esploader.softReset();
 
   const doImprov =

@@ -16,14 +16,22 @@
   </head>
   <body>
     <p>ESPHome Web is a set of tools to allow working with ESP devices in the browser.</p>
-    <p>To flash the XX firmware, connect an ESP to your computer and hit the button:</p>
-    <esphome-web-install-button
+    <p>To flash the ESPHome firmware, connect an ESP to your computer and hit the button:</p>
+    <esp-web-install-button
       manifest="firmware_build/manifest.json"
-    ></esphome-web-install-button>
+    ></esp-web-install-button>
     <p><i>Note, this only works in desktop Chrome and Edge. Android support has not been implemented yet.</i></div>
     <p>
       This works by combining Web Serial with a <a href="firmware_build/manifest.json">manifest</a> which describes the firmware. It will automatically detect the type of the connected ESP device and find the right firmware files in the manifest.
     </p>
+    <script module>
+      import(
+        // In development we import locally.
+        window.location.hostname === "localhost"
+          ? "/dist/web/install-button.js"
+          : "https://unpkg.com/esp-web-tools@1.0.0/dist/web/install-button.js?module"
+      );
+    </script>
     <script src="./dist/web/install-button.js" type="module"></script>
   </body>
 </html>

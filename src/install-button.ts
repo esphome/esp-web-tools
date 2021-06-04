@@ -49,4 +49,4 @@ class InstallButton extends HTMLElement {
   }
 }
 
-customElements.define("esphome-web-install-button", InstallButton);
+customElements.define("esp-web-install-button", InstallButton);

@@ -2,8 +2,8 @@ import {
   CHIP_FAMILY_ESP32,
   CHIP_FAMILY_ESP32S2,
   CHIP_FAMILY_ESP8266,
-} from "./vendor/esptool";
-import { ESPLoader } from "./vendor/esptool/esp_loader";
+} from "esp-web-flasher";
+import { ESPLoader } from "./const";
 
 export const getChipFamilyName = (esploader: ESPLoader) => {
   switch (esploader.chipFamily) {
@@ -17,3 +17,6 @@ export const getChipFamilyName = (esploader: ESPLoader) => {
       return "Unknown Chip";
   }
 };
+
+export const sleep = (time: number) =>
+  new Promise((resolve) => setTimeout(resolve, time));
