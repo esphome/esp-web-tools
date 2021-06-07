@@ -13,11 +13,13 @@ class InstallButton extends HTMLElement {
     this.renderRoot = this.attachShadow({ mode: "open" });
 
     if (!InstallButton.isSupported) {
+      this.setAttribute("install-unsupported", "");
       this.renderRoot.innerHTML =
         "<slot name='unsupported'>Your browser does not support installing things on ESP devices. Use Google Chrome or Microsoft Edge.</slot>";
       return;
     }
 
+    this.setAttribute("install-supported", "");
     this.addEventListener("mouseover", () => {
       // Preload
       import("./start-flash");

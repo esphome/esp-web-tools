@@ -45,6 +45,15 @@ Allows for optionally passing an attribute to trigger an erase before installati
 
 All attributes can also be set via properties (`manifest`, `eraseFirst`)
 
+## Styling
+
+The following attributes are automatically added to `<esp-web-install-button>`:
+
+| Attribute | Description |
+| -- | -- |
+| `install-supported` | Added if installing firmware is supported
+| `install-unsupported` | Added if installing firmware is not supported
+
 ## Development
 
 Run `script/develop`. This starts a server. Open it on http://localhost:5000.
