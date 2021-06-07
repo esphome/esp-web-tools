@@ -97,12 +97,6 @@ export const startFlash = async (
     return resp.arrayBuffer();
   });
 
-  // Pre-load improv for later
-  if (build.improv) {
-    // @ts-ignore
-    import("https://www.improv-wifi.com/sdk-js/launch-button.js");
-  }
-
   // Run the stub while we wait for files to download
   const espStub = await esploader.runStub();
 
@@ -123,8 +117,14 @@ export const startFlash = async (
 
   logEl.addRow({
     id: "preparing",
-    content: `Ready to install`,
+    content: `Installation prepared`,
   });
+
+  // Pre-load improv for later
+  if (build.improv) {
+    // @ts-ignore
+    import("https://www.improv-wifi.com/sdk-js/launch-button.js");
+  }
 
   if (eraseFirst) {
     logEl.addRow({
