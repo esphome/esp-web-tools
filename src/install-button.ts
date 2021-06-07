@@ -7,6 +7,10 @@ class InstallButton extends HTMLElement {
 
   private renderRoot?: ShadowRoot;
 
+  public static preload() {
+    import("./start-flash");
+  }
+
   public connectedCallback() {
     if (this.renderRoot) {
       return;
@@ -22,10 +26,7 @@ class InstallButton extends HTMLElement {
     }
 
     this.setAttribute("install-supported", "");
-    this.addEventListener("mouseover", () => {
-      // Preload
-      import("./start-flash");
-    });
+    this.addEventListener("mouseover", InstallButton.preload);
     this.addEventListener("click", async (ev) => {
       ev.preventDefault();
       const manifest = this.manifest || this.getAttribute("manifest");
