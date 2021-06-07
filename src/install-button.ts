@@ -1,6 +1,8 @@
 class InstallButton extends HTMLElement {
   public static isSupported = "serial" in navigator;
 
+  public manifest?: string;
+
   public eraseFirst?: boolean;
 
   private renderRoot?: ShadowRoot;
@@ -26,7 +28,7 @@ class InstallButton extends HTMLElement {
     });
     this.addEventListener("click", async (ev) => {
       ev.preventDefault();
-      const manifest = this.getAttribute("manifest");
+      const manifest = this.manifest || this.getAttribute("manifest");
       if (!manifest) {
         alert("No manifest defined!");
         return;
