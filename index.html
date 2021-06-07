@@ -20,6 +20,20 @@
       a {
         color: #03a9f4;
       }
+      .videoWrapper {
+        position: relative;
+        padding-bottom: 56.25%; /* 16:9 */
+        height: 0;
+        margin-bottom: 25px;
+        background: #000;
+      }
+      .videoWrapper iframe {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+      }
       .footer {
         margin-top: 24px;
         border-top: 1px solid #ccc;
@@ -75,6 +89,17 @@
         detect the type of the connected ESP device and find the right firmware
         files in the manifest.
       </p>
+      <div class="videoWrapper">
+        <iframe
+          width="560"
+          height="315"
+          src="https://www.youtube-nocookie.com/embed/jGfa0xMhUn4"
+          title="YouTube video player"
+          frameborder="0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowfullscreen
+        ></iframe>
+      </div>
       <h2>Using ESP Web Tools on your website</h2>
       <p>
         To add this to your own website, create a manifest and add the button to
@@ -160,9 +185,21 @@
       <p>
         Each build also allows you to specify if it supports
         <a href="https://www.improv-wifi.com">the Improv WiFi standard</a>. If
-        it does, the user will be offered to configure the WiFi after flashing
-        is done.
+        it does, the user will be offered to configure the WiFi after
+        installation is done as can be seen in the video below.
       </p>
+      <div class="videoWrapper">
+        <iframe
+          width="560"
+          height="315"
+          src="https://www.youtube-nocookie.com/embed/jGfa0xMhUn4?start=186"
+          title="YouTube video player"
+          frameborder="0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowfullscreen
+        ></iframe>
+      </div>
+
       <h3>Customizing the look and feel</h3>
       <p>
         You can customize both the activation button and the message that is
