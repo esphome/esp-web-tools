@@ -129,7 +129,12 @@ export const startFlash = async (
   if (eraseFirst) {
     logEl.addRow({
       id: "erase",
-      content: html`Erasing device`,
+      content: html`Erasing device...`,
+    });
+    await espStub.eraseFlash();
+    logEl.addRow({
+      id: "erase",
+      content: html`Device erased`,
     });
   }
 
