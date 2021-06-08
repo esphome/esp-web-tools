@@ -1,6 +1,12 @@
 <html>
   <head>
+    <meta charset="utf-8" />
     <title>ESP Web Tools</title>
+    <meta name="viewport" content="width=device-width" />
+    <meta
+      name="description"
+      content="Easily allow users to flash new firmware for their ESP-devices on the web."
+    />
     <style>
       body {
         font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI",
@@ -13,6 +19,13 @@
         max-width: 600px;
         margin: 0 auto;
         padding: 12px;
+      }
+      .project .logo {
+        float: right;
+        width: 200px;
+      }
+      .project .logo img {
+        width: 100%;
       }
       esp-web-flash-log {
         margin-top: 8px;
@@ -33,6 +46,10 @@
         left: 0;
         width: 100%;
         height: 100%;
+      }
+      .content pre {
+        max-width: 100%;
+        overflow-y: scroll;
       }
       .footer {
         margin-top: 24px;
@@ -71,7 +88,7 @@
       </p>
       <esp-web-install-button
         erase-first
-        manifest="firmware_build/manifest.json"
+        manifest="/static/firmware_build/manifest.json"
       ></esp-web-install-button>
       <p>
         <i>
@@ -100,7 +117,24 @@
           allowfullscreen
         ></iframe>
       </div>
-      <h2>Using ESP Web Tools on your website</h2>
+      <h2>Projects using ESP Web Tools</h2>
+      <div class="project">
+        <div class="logo">
+          <img src="/static/wled.png" alt="WLED logo" />
+        </div>
+        <h3>WLED</h3>
+        <p>
+          A fast and feature-rich implementation of an ESP8266/ESP32 firmware to
+          control NeoPixel (WS2812B, WS2811, SK6812) LEDs or also SPI based
+          chipsets like the WS2801 and APA102.
+        </p>
+        <p>
+          <a href="https://flash.wled.me" target="_blank"
+            >Installation Website</a
+          >
+        </p>
+      </div>
+      <h2>Adding ESP Web Tools to your website</h2>
       <p>
         To add this to your own website, create a manifest and add the button to
         your website. Make sure you update the manifest attribute to point at
@@ -120,7 +154,7 @@
 >&lt;/script>
 
 &lt;esp-web-install-button
-  manifest="firmware_build/manifest.json"
+  manifest="/static/firmware_build/manifest.json"
 >&lt;/esp-web-install-button></pre
       >
       <p>
@@ -208,7 +242,7 @@
       </p>
       <pre>
 &lt;esp-web-install-button
-  manifest="firmware_build/manifest.json"
+  manifest="/static/firmware_build/manifest.json"
   erase-first
 >
   &lt;button slot="activate">Custom install button&lt;/button>
