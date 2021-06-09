@@ -148,11 +148,13 @@ export const startFlash = async (
   let totalWritten = 0;
 
   for (const part of build.parts) {
+    const file = files.shift()!;
     await espStub.flashData(
-      files.shift()!,
-      (newBytesWritten) => {
-        totalWritten += newBytesWritten;
-        const newPct = Math.floor((totalWritten / totalSize) * 100);
+      file,
+      (bytesWritten) => {
+        const newPct = Math.floor(
+          ((totalWritten + bytesWritten) / totalSize) * 100
+        );
         if (newPct === lastPct) {
           return;
         }
@@ -164,7 +166,13 @@ export const startFlash = async (
       },
       part.offset
     );
+    totalWritten += file.byteLength;
   }
+
+  logEl.addRow({
+    id: "write",
+    content: html`Writing progress: 100%`,
+  });
 
   await sleep(100);
   await esploader.softReset();
