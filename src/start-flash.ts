@@ -145,11 +145,14 @@ export const startFlash = async (
     content: html`Writing progress: ${lastPct}%`,
   });
 
+  let totalWritten = 0;
+
   for (const part of build.parts) {
     await espStub.flashData(
       files.shift()!,
       (newBytesWritten) => {
-        const newPct = Math.floor((newBytesWritten / totalSize) * 100);
+        totalWritten += newBytesWritten;
+        const newPct = Math.floor((totalWritten / totalSize) * 100);
         if (newPct === lastPct) {
           return;
         }
