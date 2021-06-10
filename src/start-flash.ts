@@ -176,6 +176,7 @@ export const startFlash = async (
 
   await sleep(100);
   await esploader.softReset();
+  await esploader.disconnect();
 
   const doImprov =
     build.improv &&
@@ -192,8 +193,6 @@ export const startFlash = async (
             Close this dialog
           </button>`}`,
   });
-
-  await esploader.disconnect();
 
   if (!doImprov) {
     return;
