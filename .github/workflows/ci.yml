@@ -21,4 +21,4 @@ jobs:
           node-version: 16
       - run: npm ci
       - run: script/build
-      - run: npm exec prettier --check src
+      - run: npm exec -- prettier --check src
