@@ -120,7 +120,7 @@ const startImprov = async (button: InstallButton) => {
     improvEl = document.createElement("improv-wifi-launch-button");
     const improvButton = document.createElement("button");
     improvButton.slot = "activate";
-    improvButton.textContent = "Click here to finish setting up your device.";
+    improvButton.textContent = "CLICK HERE TO FINISH SETTING UP YOUR DEVICE";
     improvEl.appendChild(improvButton);
     addElement(button, improvEl);
   }

@@ -58,6 +58,13 @@
         font-style: italic;
         margin-top: 16px;
       }
+      table {
+        border-spacing: 0;
+      }
+      td {
+        padding: 8px;
+        border-bottom: 1px solid #ccc;
+      }
     </style>
     <script module>
       import(
@@ -233,13 +240,37 @@
 
       <h3>Customizing the look and feel</h3>
       <p>
-        You can customize both the activation button and the message that is
-        shown when the user uses an unsupported browser. This can be done using
-        the <code>activate</code> and <code>unsupported</code> slots:
+        There are multiple options to change the look and feel of the button and
+        other elements.
+      </p>
+      <h4>Change colors</h4>
+      <p>
+        You can change the colors of the default UI elements with CSS custom
+        properties (variables), the following variables are available:
+      </p>
+      <ul>
+        <li><code>--esp-tools-button-color</code></li>
+        <li><code>--esp-tools-button-text-color</code></li>
+
+        <li><code>--esp-tools-success-color</code></li>
+        <li><code>--esp-tools-error-color</code></li>
+
+        <li><code>--esp-tools-progress-color</code></li>
+
+        <li><code>--esp-tools-log-background</code></li>
+        <li><code>--esp-tools-log-text-color</code></li>
+      </ul>
+      <h4>Replace the button and message with a custom one</h4>
+      <p>
+        You can replace both the activation button and the message that is shown
+        when the user uses an unsupported browser with your own elements. This
+        can be done using the <code>activate</code> and
+        <code>unsupported</code> slots:
       </p>
       <pre>
 &lt;esp-web-install-button
   manifest="static/firmware_build/manifest.json"
+  show-log
   erase-first
 >
   &lt;button slot="activate">Custom install button&lt;/button>
@@ -247,6 +278,83 @@
 &lt;/esp-web-install-button>
     </pre
       >
+      <h4>Show or hide the progress bar and log</h4>
+      <p>
+        By default there is a progress bar showing the state and progress of the
+        flashing progress, you can chnage this progress bar to a log view with
+        the <code>show-log</code> attribute.
+      </p>
+      <p>
+        You can also hide all progress indicators by adding the `hide-progress`
+        attribute. This will hide both the progress bar and the log view. You
+        can then implement your own progress elements using the
+        <a href="#state-events">state events</a>.
+      </p>
+
+      <h3 id="state-events">State events</h3>
+      <p>
+        During the flash progress the button will fire
+        <code>state-changed</code> events for every step of the progress and to
+        signal progress in the writing.
+      </p>
+      <p>
+        With these events you can create your own progress UI or trigger certain
+        actions. You can also find the current state as the
+        <code>state</code> property of the
+        <code>esp-web-install-button</code> element.
+      </p>
+      <p>Events for the following states are fired:</p>
+      <ul>
+        <li>initializing</li>
+        <li>manifest</li>
+        <li>preparing</li>
+        <li>erasing</li>
+        <li>writing</li>
+        <li>finished</li>
+        <li>error</li>
+      </ul>
+      <p>A state change events contains the following information:</p>
+      <table>
+        <tr>
+          <td><code>state</code></td>
+          <td>The current state; one of the above</td>
+        </tr>
+        <tr>
+          <td><code>message</code></td>
+          <td>A textual explaination of the current state</td>
+        </tr>
+        <tr>
+          <td><code>manifest</code></td>
+          <td>The loaded manifest</td>
+        </tr>
+        <tr>
+          <td><code>chipFamily</code></td>
+          <td>
+            The chip that was detected;
+            <code>"ESP32" | "ESP8266" | "ESP32-S2" | "Unknown Chip"</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>details</code></td>
+          <td>
+            An optional extra field that is different
+            <a
+              href="https://github.com/esphome/esp-web-tools/blob/main/src/const.ts"
+              >per state</a
+            >
+          </td>
+        </tr>
+      </table>
+      <p>An example that logs all state events:</p>
+      <pre>
+&lt;esp-web-install-button
+  manifest="static/firmware_build/manifest.json"
+>&lt;/esp-web-install-button>
+&lt;script>
+const espInstallButton = document.querySelector("esp-web-install-button");
+espInstallButton.addEventListener("state-changed", (ev) => { console.log(ev.detail) });
+&lt;/script>
+      </pre>
       <div class="footer">
         <div>
           ESP Web Tools –
