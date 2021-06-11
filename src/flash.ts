@@ -89,13 +89,7 @@ export const flash = async (
     details: { done: true },
   });
 
-  let build: Build | undefined;
-  for (const b of manifest.builds) {
-    if (b.chipFamily === chipFamily) {
-      build = b;
-      break;
-    }
-  }
+  const build = manifest.builds.find((b) => b.chipFamily === chipFamily);
 
   if (!build) {
     fireStateEvent({

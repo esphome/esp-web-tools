@@ -42,14 +42,10 @@ export const startFlash = async (button: InstallButton) => {
       if (state.state === State.INITIALIZING) {
         button.toggleAttribute("active", true);
       } else if (state.state === State.MANIFEST && state.manifest) {
-        let build: Build;
-        for (const b of state.manifest.builds) {
-          if (b.chipFamily === state.chipFamily) {
-            build = b;
-            break;
-          }
-        }
-        if (build!.improv) {
+        const build = state.manifest.builds.find(
+          (b) => b.chipFamily === state.chipFamily
+        )!;
+        if (build.improv) {
           hasImprov = true;
           // @ts-ignore
           // preload improv button
