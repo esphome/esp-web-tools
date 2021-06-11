@@ -94,20 +94,18 @@ export class InstallButton extends HTMLElement {
 
     this.addEventListener("mouseover", InstallButton.preload);
 
-    const container = document.createElement("span");
+    const slot = document.createElement("slot");
 
-    container.addEventListener("click", async (ev) => {
+    slot.addEventListener("click", async (ev) => {
       ev.preventDefault();
       const mod = await import("./start-flash");
       mod.startFlash(this);
     });
 
-    const slot = document.createElement("slot");
     slot.name = "activate";
     const button = document.createElement("button");
     button.innerText = "INSTALL";
     slot.append(button);
-    container.append(slot);
     if (
       "adoptedStyleSheets" in Document.prototype &&
       "replaceSync" in CSSStyleSheet.prototype
@@ -122,7 +120,7 @@ export class InstallButton extends HTMLElement {
       styleSheet.innerText = InstallButton.style;
       this.renderRoot.append(styleSheet);
     }
-    this.renderRoot.append(container);
+    this.renderRoot.append(slot);
   }
 }
 
