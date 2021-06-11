@@ -12,8 +12,6 @@ export class FlashProgress extends LitElement {
 
   @state() private _progress = 0;
 
-  @state() private _buffer = 1;
-
   public processState(state: FlashState) {
     this._state = state;
     if (this._state.state === State.WRITING) {
@@ -28,7 +26,6 @@ export class FlashProgress extends LitElement {
   public clear() {
     this._state = undefined;
     this._progress = 0;
-    this._buffer = 1;
     this._indeterminate = true;
   }
 
@@ -51,22 +48,21 @@ export class FlashProgress extends LitElement {
         })}
         .indeterminate=${this._indeterminate}
         .progress=${this._progress}
-        .buffer=${this._buffer}
       ></mwc-linear-progress>`;
   }
 
   static styles = css`
     :host {
       display: block;
-      --mdc-theme-primary: var(--progress-color, #03a9f4);
+      --mdc-theme-primary: var(--esp-tools-progress-color, #03a9f4);
     }
     .error {
-      color: var(--error-color, #dc3545);
-      --mdc-theme-primary: var(--error-color, #dc3545);
+      color: var(--esp-tools-error-color, #dc3545);
+      --mdc-theme-primary: var(--esp-tools-error-color, #dc3545);
     }
     .done {
-      color: var(--success-color, #28a745);
-      --mdc-theme-primary: var(--success-color, #28a745);
+      color: var(--esp-tools-success-color, #28a745);
+      --mdc-theme-primary: var(--esp-tools-success-color, #28a745);
     }
   `;
 }

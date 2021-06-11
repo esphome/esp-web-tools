@@ -12,18 +12,13 @@ let logEl: FlashLog | undefined;
 
 let progressEl: FlashProgress | undefined;
 
+let improvEl: HTMLElement | undefined;
+
 const addElement = <T extends HTMLElement>(
   button: InstallButton,
   element: T
 ): T => {
-  let before = button.nextSibling;
-  if (
-    before &&
-    ["ESP-WEB-FLASH-PROGRESS", "ESP-WEB-FLASH-LOG"].includes(before.nodeName)
-  ) {
-    before = before.nextSibling;
-  }
-  button.parentElement!.insertBefore(element, before);
+  button.renderRoot!.append(element);
   return element;
 };
 
@@ -43,23 +38,13 @@ export const startFlash = async (button: InstallButton) => {
   if (!stateListnerAdded) {
     stateListnerAdded = true;
     button.addEventListener("state-changed", (ev) => {
-      button.state = ev.detail;
-      if (button.state.state === State.INITIALIZING) {
+      const state = (button.state = ev.detail);
+      if (state.state === State.INITIALIZING) {
         button.toggleAttribute("disabled", true);
-        button.renderRoot!.querySelector("button")!.disabled = true;
-      } else if (button.state.state === State.ERROR) {
-        button.toggleAttribute("disabled", false);
-        button.renderRoot!.querySelector("button")!.disabled = false;
-      } else if (button.state.state === State.FINISHED) {
-        button.toggleAttribute("disabled", false);
-        button.renderRoot!.querySelector("button")!.disabled = false;
-        if (hasImprov) {
-          startImprov(button);
-        }
-      } else if (button.state.state === State.MANIFEST && ev.detail.manifest) {
+      } else if (state.state === State.MANIFEST && state.manifest) {
         let build: Build;
-        for (const b of ev.detail.manifest.builds) {
-          if (b.chipFamily === ev.detail.chipFamily) {
+        for (const b of state.manifest.builds) {
+          if (b.chipFamily === state.chipFamily) {
             build = b;
             break;
           }
@@ -67,9 +52,16 @@ export const startFlash = async (button: InstallButton) => {
         if (build!.improv) {
           hasImprov = true;
           // @ts-ignore
-          // preload improv
+          // preload improv button
           import("https://www.improv-wifi.com/sdk-js/launch-button.js");
         }
+      } else if (state.state === State.FINISHED) {
+        button.toggleAttribute("disabled", false);
+        if (hasImprov) {
+          startImprov(button);
+        }
+      } else if (state.state === State.ERROR) {
+        button.toggleAttribute("disabled", false);
       }
       progressEl?.processState(ev.detail);
       logEl?.processState(ev.detail);
@@ -104,6 +96,7 @@ export const startFlash = async (button: InstallButton) => {
 
   logEl?.clear();
   progressEl?.clear();
+  improvEl?.classList.toggle("hidden", true);
 
   flash(
     button,
@@ -123,13 +116,13 @@ const startImprov = async (button: InstallButton) => {
     return;
   }
 
-  const improvLaunchButton = document.createElement(
-    "improv-wifi-launch-button"
-  );
-  const improvButton = document.createElement("button");
-  improvButton.slot = "activate";
-  improvButton.textContent = "Click here to finish setting up your device.";
-  improvLaunchButton.appendChild(improvButton);
-
-  addElement(button, improvLaunchButton);
+  if (!improvEl) {
+    improvEl = document.createElement("improv-wifi-launch-button");
+    const improvButton = document.createElement("button");
+    improvButton.slot = "activate";
+    improvButton.textContent = "Click here to finish setting up your device.";
+    improvEl.appendChild(improvButton);
+    addElement(button, improvEl);
+  }
+  improvEl.classList.toggle("hidden", false);
 };

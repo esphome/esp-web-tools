@@ -100,8 +100,8 @@ export class FlashLog extends LitElement {
       padding: 12px 16px;
       max-width: 500px;
       font-family: monospace;
-      background-color: black;
-      color: greenyellow;
+      background-color: var(--esp-tools-log-background, black);
+      color: var(--esp-tools-log-text-color, greenyellow);
       font-size: 14px;
       line-height: 19px;
     }
@@ -122,7 +122,7 @@ export class FlashLog extends LitElement {
     }
 
     .error {
-      color: var(--error-color, #dc3545);
+      color: var(--esp-tools-error-color, #dc3545);
     }
 
     .error,
