@@ -23,7 +23,7 @@ const addElement = <T extends HTMLElement>(
 };
 
 export const startFlash = async (button: InstallButton) => {
-  if (button.hasAttribute("disabled")) {
+  if (button.hasAttribute("active")) {
     return;
   }
 
@@ -40,7 +40,7 @@ export const startFlash = async (button: InstallButton) => {
     button.addEventListener("state-changed", (ev) => {
       const state = (button.state = ev.detail);
       if (state.state === State.INITIALIZING) {
-        button.toggleAttribute("disabled", true);
+        button.toggleAttribute("active", true);
       } else if (state.state === State.MANIFEST && state.manifest) {
         let build: Build;
         for (const b of state.manifest.builds) {

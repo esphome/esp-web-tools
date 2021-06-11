@@ -98,7 +98,6 @@ export class FlashLog extends LitElement {
       display: block;
       margin-top: 16px;
       padding: 12px 16px;
-      max-width: 500px;
       font-family: monospace;
       background: var(--esp-tools-log-background, black);
       color: var(--esp-tools-log-text-color, greenyellow);

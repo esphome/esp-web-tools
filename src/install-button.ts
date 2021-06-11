@@ -7,13 +7,10 @@ export class InstallButton extends HTMLElement {
   button {
     position: relative;
     cursor: pointer;
-    height: 32px;
-    line-height: 32px;
     font-size: 14px;
-    padding: 0 28px;
+    padding: 8px 28px;
     color: var(--esp-tools-button-text-color, #fff);
     background-color: var(--esp-tools-button-color, #03a9f4);
-    text-align: center;
     border: none;
     border-radius: 4px;
     box-shadow: 0 2px 2px 0 rgba(0,0,0,.14), 0 3px 1px -2px rgba(0,0,0,.12), 0 1px 5px 0 rgba(0,0,0,.2);
@@ -44,8 +41,9 @@ export class InstallButton extends HTMLElement {
     background-color: grey;
   }
   :host([active]) button {
-    color: #969696;
-    background-color: #b7b7b7;
+    color: rgba(0, 0, 0, 0.38);
+    background-color: rgba(0, 0, 0, 0.12);
+    box-shadow: none;
     cursor: unset;
     pointer-events: none;
   }
