@@ -12,37 +12,42 @@ export interface Manifest {
   builds: Build[];
 }
 
-export interface BaseFlashState {
+interface BaseFlashState {
   state: State;
   message: string;
+  manifest?: Manifest;
+  chipFamily?: "ESP32" | "ESP8266" | "ESP32-S2" | "Unknown Chip";
 }
 
 export interface InitializingState extends BaseFlashState {
   state: State.INITIALIZING;
-  details: { done: boolean; chipFamily?: string };
+  details: { done: boolean };
 }
+
 export interface ManifestState extends BaseFlashState {
   state: State.MANIFEST;
-  details: { done: boolean; manifest?: Manifest };
+  details: { done: boolean };
 }
+
 export interface PreparingState extends BaseFlashState {
   state: State.PREPARING;
   details: { done: boolean };
 }
+
 export interface ErasingState extends BaseFlashState {
   state: State.ERASING;
   details: { done: boolean };
 }
+
 export interface WritingState extends BaseFlashState {
   state: State.WRITING;
   details: { bytesTotal: number; bytesWritten: number; percentage: number };
 }
-export interface ImprovState extends BaseFlashState {
-  state: State.IMPROV;
-}
+
 export interface FinishedState extends BaseFlashState {
   state: State.FINISHED;
 }
+
 export interface ErrorState extends BaseFlashState {
   state: State.ERROR;
   details: { error: FlashError; details: string | Error };
@@ -54,7 +59,6 @@ export type FlashState =
   | PreparingState
   | ErasingState
   | WritingState
-  | ImprovState
   | FinishedState
   | ErrorState;
 
@@ -64,7 +68,6 @@ export const enum State {
   PREPARING = "preparing",
   ERASING = "erasing",
   WRITING = "writing",
-  IMPROV = "improv",
   FINISHED = "finished",
   ERROR = "error",
 }

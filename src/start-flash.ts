@@ -1,267 +1,135 @@
-import { connect, ESPLoader, Logger } from "esp-web-flasher";
-import { Build, FlashError, Manifest, State } from "./const";
-import { fireEvent, getChipFamilyName, sleep } from "./util";
+import { flash } from "./flash";
+import "./flash-log";
+import "./flash-progress";
+import type { FlashLog } from "./flash-log";
+import type { FlashProgress } from "./flash-progress";
+import type { InstallButton } from "./install-button";
+import { Build, State } from "./const";
 
-export const startFlash = async (
-  eventTarget: EventTarget,
-  logger: Logger,
-  manifestPath: string,
-  eraseFirst: boolean,
-  addElement: (el: HTMLElement) => void
-) => {
-  const manifestURL = new URL(manifestPath, location.toString()).toString();
-  const manifestProm = fetch(manifestURL).then(
-    (resp): Promise<Manifest> => resp.json()
-  );
+let stateListnerAdded = false;
 
-  let esploader: ESPLoader | undefined;
+let logEl: FlashLog | undefined;
 
-  try {
-    esploader = await connect(logger);
-  } catch (err) {
-    // User pressed cancel on web serial
+let progressEl: FlashProgress | undefined;
+
+const addElement = <T extends HTMLElement>(
+  button: InstallButton,
+  element: T
+): T => {
+  let before = button.nextSibling;
+  if (
+    before &&
+    ["ESP-WEB-FLASH-PROGRESS", "ESP-WEB-FLASH-LOG"].includes(before.nodeName)
+  ) {
+    before = before.nextSibling;
+  }
+  button.parentElement!.insertBefore(element, before);
+  return element;
+};
+
+export const startFlash = async (button: InstallButton) => {
+  if (button.hasAttribute("disabled")) {
     return;
   }
 
-  // For debugging
-  (window as any).esploader = esploader;
-
-  fireEvent(eventTarget, "state-changed", {
-    state: State.INITIALIZING,
-    message: "Initializing...",
-    details: { done: false },
-  });
-
-  try {
-    await esploader.initialize();
-  } catch (err) {
-    logger.error(err);
-    if (esploader.connected) {
-      fireEvent(eventTarget, "state-changed", {
-        state: State.ERROR,
-        message:
-          "Failed to initialize. Try resetting your device or holding the BOOT button before clicking connect.",
-        details: { error: FlashError.FAILED_INITIALIZING, details: err },
-      });
-      await esploader.disconnect();
-    }
+  const manifest = button.manifest || button.getAttribute("manifest");
+  if (!manifest) {
+    alert("No manifest defined!");
     return;
   }
 
-  const chipFamily = getChipFamilyName(esploader);
+  let hasImprov = false;
 
-  fireEvent(eventTarget, "state-changed", {
-    state: State.INITIALIZING,
-    message: `Initialized. Found ${chipFamily}`,
-    details: { done: true, chipFamily },
-  });
-  fireEvent(eventTarget, "state-changed", {
-    state: State.MANIFEST,
-    message: "Fetching manifest...",
-    details: { done: false },
-  });
-
-  let manifest: Manifest | undefined;
-  try {
-    manifest = await manifestProm;
-  } catch (err) {
-    fireEvent(eventTarget, "state-changed", {
-      state: State.ERROR,
-      message: `Unable to fetch manifest: ${err.message}`,
-      details: { error: FlashError.FAILED_MANIFEST_FETCH, details: err },
-    });
-    await esploader.disconnect();
-    return;
-  }
-
-  fireEvent(eventTarget, "state-changed", {
-    state: State.MANIFEST,
-    message: `Found manifest for ${manifest.name}`,
-    details: { done: true, manifest },
-  });
-
-  let build: Build | undefined;
-  for (const b of manifest.builds) {
-    if (b.chipFamily === chipFamily) {
-      build = b;
-      break;
-    }
-  }
-
-  if (!build) {
-    fireEvent(eventTarget, "state-changed", {
-      state: State.ERROR,
-      message: `Your ${chipFamily} board is not supported.`,
-      details: { error: FlashError.NOT_SUPPORTED, details: chipFamily },
-    });
-    await esploader.disconnect();
-    return;
-  }
-
-  fireEvent(eventTarget, "state-changed", {
-    state: State.PREPARING,
-    message: "Preparing installation...",
-    details: { done: false },
-  });
-
-  const filePromises = build.parts.map(async (part) => {
-    const url = new URL(part.path, manifestURL).toString();
-    const resp = await fetch(url);
-    if (!resp.ok) {
-      throw new Error(
-        `Downlading firmware ${part.path} failed: ${resp.status}`
-      );
-    }
-    return resp.arrayBuffer();
-  });
-
-  // Run the stub while we wait for files to download
-  const espStub = await esploader.runStub();
-
-  const files: ArrayBuffer[] = [];
-  let totalSize = 0;
-
-  for (const prom of filePromises) {
-    try {
-      const data = await prom;
-      files.push(data);
-      totalSize += data.byteLength;
-    } catch (err) {
-      fireEvent(eventTarget, "state-changed", {
-        state: State.ERROR,
-        message: err,
-        details: { error: FlashError.FAILED_FIRMWARE_DOWNLOAD, details: err },
-      });
-      await esploader.disconnect();
-      return;
-    }
-  }
-
-  fireEvent(eventTarget, "state-changed", {
-    state: State.PREPARING,
-    message: "Installation prepared",
-    details: { done: true },
-  });
-
-  // Pre-load improv for later
-  if (build.improv) {
-    // @ts-ignore
-    import("https://www.improv-wifi.com/sdk-js/launch-button.js");
-  }
-
-  if (eraseFirst) {
-    fireEvent(eventTarget, "state-changed", {
-      state: State.ERASING,
-      message: "Erasing device...",
-      details: { done: false },
-    });
-    await espStub.eraseFlash();
-    fireEvent(eventTarget, "state-changed", {
-      state: State.ERASING,
-      message: "Device erased",
-      details: { done: true },
-    });
-  }
-
-  let lastPct = 0;
-
-  fireEvent(eventTarget, "state-changed", {
-    state: State.WRITING,
-    message: `Writing progress: ${lastPct}%`,
-    details: {
-      bytesTotal: totalSize,
-      bytesWritten: 0,
-      percentage: lastPct,
-    },
-  });
-
-  let totalWritten = 0;
-
-  for (const part of build.parts) {
-    const file = files.shift()!;
-    try {
-      await espStub.flashData(
-        file,
-        (bytesWritten) => {
-          const newPct = Math.floor(
-            ((totalWritten + bytesWritten) / totalSize) * 100
-          );
-          if (newPct === lastPct) {
-            return;
+  if (!stateListnerAdded) {
+    stateListnerAdded = true;
+    button.addEventListener("state-changed", (ev) => {
+      button.state = ev.detail;
+      if (button.state.state === State.INITIALIZING) {
+        button.toggleAttribute("disabled", true);
+        button.renderRoot!.querySelector("button")!.disabled = true;
+      } else if (button.state.state === State.ERROR) {
+        button.toggleAttribute("disabled", false);
+        button.renderRoot!.querySelector("button")!.disabled = false;
+      } else if (button.state.state === State.FINISHED) {
+        button.toggleAttribute("disabled", false);
+        button.renderRoot!.querySelector("button")!.disabled = false;
+        if (hasImprov) {
+          startImprov(button);
+        }
+      } else if (button.state.state === State.MANIFEST && ev.detail.manifest) {
+        let build: Build;
+        for (const b of ev.detail.manifest.builds) {
+          if (b.chipFamily === ev.detail.chipFamily) {
+            build = b;
+            break;
           }
-          lastPct = newPct;
-          fireEvent(eventTarget, "state-changed", {
-            state: State.WRITING,
-            message: `Writing progress: ${newPct}%`,
-            details: {
-              bytesTotal: totalSize,
-              bytesWritten: totalWritten + bytesWritten,
-              percentage: newPct,
-            },
-          });
-        },
-        part.offset
-      );
-    } catch (err) {
-      fireEvent(eventTarget, "state-changed", {
-        state: State.ERROR,
-        message: err,
-        details: { error: FlashError.WRITE_FAILED, details: err },
-      });
-      await esploader.disconnect();
-      return;
-    }
-    totalWritten += file.byteLength;
-  }
-
-  fireEvent(eventTarget, "state-changed", {
-    state: State.WRITING,
-    message: "Writing complete",
-    details: {
-      bytesTotal: totalSize,
-      bytesWritten: totalWritten,
-      percentage: 100,
-    },
-  });
-
-  await sleep(100);
-  await esploader.softReset();
-  await esploader.disconnect();
-
-  if (build.improv) {
-    // @ts-ignore
-    await import("https://www.improv-wifi.com/sdk-js/launch-button.js");
-  }
-
-  const doImprov =
-    build.improv && customElements.get("improv-wifi-launch-button").isSupported;
-
-  if (!doImprov) {
-    fireEvent(eventTarget, "state-changed", {
-      state: State.FINISHED,
-      message: "All done!",
+        }
+        if (build!.improv) {
+          hasImprov = true;
+          // @ts-ignore
+          // preload improv
+          import("https://www.improv-wifi.com/sdk-js/launch-button.js");
+        }
+      }
+      progressEl?.processState(ev.detail);
+      logEl?.processState(ev.detail);
     });
+  }
+
+  const showLog = button.showLog || button.hasAttribute("show-log");
+  const showProgress =
+    !showLog &&
+    button.hideProgress !== true &&
+    !button.hasAttribute("hide-progress");
+
+  if (showLog && !logEl) {
+    logEl = addElement<FlashLog>(
+      button,
+      document.createElement("esp-web-flash-log")
+    );
+  } else if (!showLog && logEl) {
+    logEl.remove();
+    logEl = undefined;
+  }
+
+  if (showProgress && !progressEl) {
+    progressEl = addElement<FlashProgress>(
+      button,
+      document.createElement("esp-web-flash-progress")
+    );
+  } else if (!showProgress && progressEl) {
+    progressEl.remove();
+    progressEl = undefined;
+  }
+
+  logEl?.clear();
+  progressEl?.clear();
+
+  flash(
+    button,
+    console,
+    manifest,
+    button.eraseFirst !== undefined
+      ? button.eraseFirst
+      : button.hasAttribute("erase-first")
+  );
+};
+
+const startImprov = async (button: InstallButton) => {
+  // @ts-ignore
+  await import("https://www.improv-wifi.com/sdk-js/launch-button.js");
+
+  if (!customElements.get("improv-wifi-launch-button").isSupported) {
     return;
   }
-
-  fireEvent(eventTarget, "state-changed", {
-    state: State.IMPROV,
-    message: "Flashing done, click the setup button to continue",
-  });
 
   const improvLaunchButton = document.createElement(
     "improv-wifi-launch-button"
   );
-  const button = document.createElement("button");
-  button.slot = "activate";
-  button.textContent = "Click here to finish setting up your device.";
-  improvLaunchButton.appendChild(button);
+  const improvButton = document.createElement("button");
+  improvButton.slot = "activate";
+  improvButton.textContent = "Click here to finish setting up your device.";
+  improvLaunchButton.appendChild(improvButton);
 
-  addElement(improvLaunchButton);
-
-  // Todo: listen for improv events to know when to close dialog
-  fireEvent(eventTarget, "state-changed", {
-    state: State.FINISHED,
-    message: "All done!",
-  });
+  addElement(button, improvLaunchButton);
 };
