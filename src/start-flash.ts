@@ -68,6 +68,7 @@ export const startFlash = async (button: InstallButton) => {
     });
   }
 
+  const logConsole = button.logConsole || button.hasAttribute("log-console");
   const showLog = button.showLog || button.hasAttribute("show-log");
   const showProgress =
     !showLog &&
@@ -100,7 +101,13 @@ export const startFlash = async (button: InstallButton) => {
 
   flash(
     button,
-    console,
+    logConsole
+      ? console
+      : {
+          log: () => {},
+          error: () => {},
+          debug: () => {},
+        },
     manifest,
     button.eraseFirst !== undefined
       ? button.eraseFirst
