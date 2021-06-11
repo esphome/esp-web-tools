@@ -122,7 +122,7 @@ export class FlashLog extends LitElement {
     }
 
     .error {
-      color: red;
+      color: var(--error-color, #dc3545);
     }
 
     .error,

@@ -15,7 +15,7 @@ export interface Manifest {
 export interface FlashState {
   state: State;
   message: string;
-  details?: any;
+  details?: Record<string, any>;
 }
 
 export enum State {

@@ -129,7 +129,7 @@ export const startFlash = async (
     } catch (err) {
       fireEvent(eventTarget, "state-changed", {
         state: State.ERROR,
-        message: err.message,
+        message: err,
         details: { error: "failed_firmware_download", details: err },
       });
       await esploader.disconnect();
@@ -205,7 +205,7 @@ export const startFlash = async (
     } catch (err) {
       fireEvent(eventTarget, "state-changed", {
         state: State.ERROR,
-        message: err.message,
+        message: err,
         details: { error: "write_failed", details: err },
       });
       await esploader.disconnect();
@@ -262,6 +262,6 @@ export const startFlash = async (
   // Todo: listen for improv events to know when to close dialog
   fireEvent(eventTarget, "state-changed", {
     state: State.FINISHED,
-    message: "",
+    message: "All done!",
   });
 };
