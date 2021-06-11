@@ -1,5 +1,5 @@
 import { connect, ESPLoader, Logger } from "esp-web-flasher";
-import { Build, FlashError, FlashState, Manifest, State } from "./const";
+import { FlashError, FlashState, Manifest, State } from "./const";
 import { fireEvent, getChipFamilyName, sleep } from "./util";
 
 export const flash = async (

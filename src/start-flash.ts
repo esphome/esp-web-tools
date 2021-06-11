@@ -4,7 +4,7 @@ import "./flash-progress";
 import type { FlashLog } from "./flash-log";
 import type { FlashProgress } from "./flash-progress";
 import type { InstallButton } from "./install-button";
-import { Build, State } from "./const";
+import { State } from "./const";
 
 let stateListnerAdded = false;
 
