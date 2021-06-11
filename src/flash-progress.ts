@@ -41,6 +41,11 @@ export class FlashProgress extends LitElement {
       >
         ${this._state.message}
       </h2>
+      <p>
+        ${this._state.manifest
+          ? html`${this._state.manifest.name}: ${this._state.chipFamily}`
+          : html`&nbsp;`}
+      </p>
       <mwc-linear-progress
         class=${classMap({
           error: this._state.state === State.ERROR,
@@ -63,6 +68,12 @@ export class FlashProgress extends LitElement {
     .done {
       color: var(--esp-tools-success-color, #28a745);
       --mdc-theme-primary: var(--esp-tools-success-color, #28a745);
+    }
+    h2 {
+      margin: 16px 0 0;
+    }
+    p {
+      margin: 4px 0;
     }
   `;
 }
