@@ -260,6 +260,27 @@
         <li><code>--esp-tools-log-background</code></li>
         <li><code>--esp-tools-log-text-color</code></li>
       </ul>
+      <p>There are also some attributes that can be used for styling:</p>
+      <table>
+        <tr>
+          <td><code>install-supported</code></td>
+          <td>Added if installing firmware is supported</td>
+        </tr>
+        <tr>
+          <td>
+            <code>install-unsupported</code>
+          </td>
+          <td>Added if installing firmware is not supported</td>
+        </tr>
+        <tr>
+          <td><code>active</code></td>
+          <td>Added when flashing is active</td>
+        </tr>
+      </table>
+      <p>
+        When you are using a custom button, you should disable it when the
+        <code>active</code> attribute is present.
+      </p>
       <h4>Replace the button and message with a custom one</h4>
       <p>
         You can replace both the activation button and the message that is shown
@@ -313,7 +334,7 @@
         <li>finished</li>
         <li>error</li>
       </ul>
-      <p>A state change events contains the following information:</p>
+      <p>A `state-changed` event contains the following information:</p>
       <table>
         <tr>
           <td><code>state</code></td>
@@ -321,7 +342,7 @@
         </tr>
         <tr>
           <td><code>message</code></td>
-          <td>A textual explaination of the current state</td>
+          <td>A description of the current state</td>
         </tr>
         <tr>
           <td><code>manifest</code></td>
@@ -351,8 +372,8 @@
   manifest="static/firmware_build/manifest.json"
 >&lt;/esp-web-install-button>
 &lt;script>
-const espInstallButton = document.querySelector("esp-web-install-button");
-espInstallButton.addEventListener("state-changed", (ev) => { console.log(ev.detail) });
+const espWebInstallButton = document.querySelector("esp-web-install-button");
+espWebInstallButton.addEventListener("state-changed", (ev) => { console.log(ev.detail) });
 &lt;/script>
       </pre>
       <div class="footer">

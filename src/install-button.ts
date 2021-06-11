@@ -43,7 +43,7 @@ export class InstallButton extends HTMLElement {
   button:active::before {
     background-color: grey;
   }
-  :host([disabled]) button {
+  :host([active]) button {
     color: #969696;
     background-color: #b7b7b7;
     cursor: unset;

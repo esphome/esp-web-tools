@@ -56,12 +56,12 @@ export const startFlash = async (button: InstallButton) => {
           import("https://www.improv-wifi.com/sdk-js/launch-button.js");
         }
       } else if (state.state === State.FINISHED) {
-        button.toggleAttribute("disabled", false);
+        button.toggleAttribute("active", false);
         if (hasImprov) {
           startImprov(button);
         }
       } else if (state.state === State.ERROR) {
-        button.toggleAttribute("disabled", false);
+        button.toggleAttribute("active", false);
       }
       progressEl?.processState(ev.detail);
       logEl?.processState(ev.detail);
