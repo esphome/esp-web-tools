@@ -18,7 +18,7 @@ export class FlashProgress extends LitElement {
     this._state = state;
     if (this._state.state === State.WRITING) {
       this._indeterminate = false;
-      this._progress = this._state.details!.percentage / 100;
+      this._progress = this._state.details.percentage / 100;
     }
     if (this._state.state === State.ERROR) {
       this._indeterminate = false;

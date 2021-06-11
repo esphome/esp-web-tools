@@ -1,5 +1,5 @@
 import { connect, ESPLoader, Logger } from "esp-web-flasher";
-import { Build, Manifest, State } from "./const";
+import { Build, FlashError, Manifest, State } from "./const";
 import { fireEvent, getChipFamilyName, sleep } from "./util";
 
 export const startFlash = async (
@@ -41,7 +41,7 @@ export const startFlash = async (
         state: State.ERROR,
         message:
           "Failed to initialize. Try resetting your device or holding the BOOT button before clicking connect.",
-        details: { error: "failed_initialize", deatils: err },
+        details: { error: FlashError.FAILED_INITIALIZING, details: err },
       });
       await esploader.disconnect();
     }
@@ -68,7 +68,7 @@ export const startFlash = async (
     fireEvent(eventTarget, "state-changed", {
       state: State.ERROR,
       message: `Unable to fetch manifest: ${err.message}`,
-      details: { error: "fetch_manifest_failed", details: err },
+      details: { error: FlashError.FAILED_MANIFEST_FETCH, details: err },
     });
     await esploader.disconnect();
     return;
@@ -92,7 +92,7 @@ export const startFlash = async (
     fireEvent(eventTarget, "state-changed", {
       state: State.ERROR,
       message: `Your ${chipFamily} board is not supported.`,
-      details: { error: "not_supported", details: { chipFamily } },
+      details: { error: FlashError.NOT_SUPPORTED, details: chipFamily },
     });
     await esploader.disconnect();
     return;
@@ -130,7 +130,7 @@ export const startFlash = async (
       fireEvent(eventTarget, "state-changed", {
         state: State.ERROR,
         message: err,
-        details: { error: "failed_firmware_download", details: err },
+        details: { error: FlashError.FAILED_FIRMWARE_DOWNLOAD, details: err },
       });
       await esploader.disconnect();
       return;
@@ -206,7 +206,7 @@ export const startFlash = async (
       fireEvent(eventTarget, "state-changed", {
         state: State.ERROR,
         message: err,
-        details: { error: "write_failed", details: err },
+        details: { error: FlashError.WRITE_FAILED, details: err },
       });
       await esploader.disconnect();
       return;
