@@ -334,7 +334,9 @@
         <li>finished</li>
         <li>error</li>
       </ul>
-      <p>A `state-changed` event contains the following information:</p>
+      <p>
+        A <code>state-changed</code> event contains the following information:
+      </p>
       <table>
         <tr>
           <td><code>state</code></td>
@@ -347,6 +349,10 @@
         <tr>
           <td><code>manifest</code></td>
           <td>The loaded manifest</td>
+        </tr>
+        <tr>
+          <td><code>build</code></td>
+          <td>The manifest's build that was selected</td>
         </tr>
         <tr>
           <td><code>chipFamily</code></td>
@@ -373,7 +379,9 @@
 >&lt;/esp-web-install-button>
 &lt;script>
 const espWebInstallButton = document.querySelector("esp-web-install-button");
-espWebInstallButton.addEventListener("state-changed", (ev) => { console.log(ev.detail) });
+espWebInstallButton.addEventListener(
+  "state-changed", (ev) => { console.log(ev.detail) }
+);
 &lt;/script>
       </pre>
       <div class="footer">
