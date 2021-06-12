@@ -97,7 +97,8 @@
       <p>
         <i>
           Note, this only works in desktop Chrome and Edge. Android support
-          should be possible but has not been implemented yet.
+          should be possible but has not been implemented yet. If you don't see
+          your ESP device, you need <a href="#drivers">drivers</a>.
         </i>
       </p>
       <p>
@@ -384,6 +385,28 @@ espWebInstallButton.addEventListener(
 );
 &lt;/script>
       </pre>
+      <h3 id="drivers">USB Serial Drivers</h3>
+      <p>
+        If the serial port is not showing up, your computer might be missing the
+        drivers for the USB serial chip used in your ESP device. These drivers
+        work for most ESP devices:
+      </p>
+      <ul>
+        <li>
+          CP2102 (square chip):
+          <a
+            href="https://www.silabs.com/products/development-tools/software/usb-to-uart-bridge-vcp-drivers"
+            >driver</a
+          >
+        </li>
+        <li>
+          CH341:
+          <a
+            href="https://github.com/nodemcu/nodemcu-devkit/tree/master/Drivers"
+            >driver</a
+          >
+        </li>
+      </ul>
       <div class="footer">
         <div>
           ESP Web Tools –
