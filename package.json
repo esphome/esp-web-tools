@@ -14,7 +14,6 @@
     "@rollup/plugin-node-resolve": "^13.0.0",
     "@rollup/plugin-typescript": "^8.2.1",
     "@types/w3c-web-serial": "^1.0.1",
-    "@types/web-bluetooth": "^0.0.9",
     "prettier": "^2.3.0",
     "rollup": "^2.50.2",
     "rollup-plugin-terser": "^7.0.2",
@@ -22,10 +21,8 @@
     "typescript": "^4.3.2"
   },
   "dependencies": {
-    "@material/mwc-button": "^0.21.0",
-    "@material/mwc-circular-progress": "^0.21.0",
-    "@material/mwc-dialog": "^0.21.0",
-    "@material/mwc-textfield": "^0.21.0",
+    "@material/mwc-base": "^0.21.0",
+    "@material/mwc-linear-progress": "^0.21.0",
     "esp-web-flasher": "^1.0.4",
     "lit": "^2.0.0-rc.2",
     "tslib": "^2.2.0"

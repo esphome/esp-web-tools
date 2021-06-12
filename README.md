@@ -47,12 +47,57 @@ All attributes can also be set via properties (`manifest`, `eraseFirst`)
 
 ## Styling
 
+### Attributes
+
 The following attributes are automatically added to `<esp-web-install-button>`:
 
 | Attribute | Description |
 | -- | -- |
 | `install-supported` | Added if installing firmware is supported
 | `install-unsupported` | Added if installing firmware is not supported
+| `active` | Added when flashing is active
+
+You can add the following attributes or properties to change the UI elements:
+
+| Attribute | Property | Description |
+| -- | -- | -- |
+| `show-log` | `showLog` | Show a log style view of the progress instead of a progress bar
+| `hide-progress` | `hideProgress` | Hides all progress UI elements
+
+### CSS custom properties (variables)
+
+The following variables can be used to change the colors of the default UI elements:
+
+- `--esp-tools-button-color`
+- `--esp-tools-button-text-color`
+- `--esp-tools-success-color`
+- `--esp-tools-error-color`
+- `--esp-tools-progress-color`
+- `--esp-tools-log-background`
+- `--esp-tools-log-text-color`
+
+### Slots
+
+The following slots are available:
+
+| Slot name | Description |
+| -- | -- |
+| `activate` | Button to start the flash progress
+| `unsupported` | Message to show when the browser is not supported
+
+## Events
+
+When the state of flashing changes, a `state-changed` event is fired.
+
+A `state-changed` event contains the following information:
+
+Field | Description
+-- | --
+state | The current [state](https://github.com/esphome/esp-web-tools/blob/main/src/const.ts)
+message | A description of the current state
+manifest | The loaded manifest
+chipFamily | The chip that was detected;&nbsp;"ESP32" \| "ESP8266" \| "ESP32-S2" \| "Unknown Chip"
+details | An optional extra field that is different [per state](https://github.com/esphome/esp-web-tools/blob/main/src/const.ts)
 
 ## Development
 

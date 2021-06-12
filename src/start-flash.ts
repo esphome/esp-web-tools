@@ -1,213 +1,126 @@
-import { html } from "lit";
-import { connect, ESPLoader, Logger } from "esp-web-flasher";
-import { Build, Manifest } from "./const";
+import { flash } from "./flash";
 import "./flash-log";
-import { getChipFamilyName, sleep } from "./util";
+import "./flash-progress";
+import type { FlashLog } from "./flash-log";
+import type { FlashProgress } from "./flash-progress";
+import type { InstallButton } from "./install-button";
+import { State } from "./const";
 
-export const startFlash = async (
-  logger: Logger,
-  manifestPath: string,
-  addLogElement: (el: HTMLElement) => void,
-  eraseFirst: boolean
-) => {
-  const manifestURL = new URL(manifestPath, location.toString()).toString();
-  const manifestProm = fetch(manifestURL).then(
-    (resp): Promise<Manifest> => resp.json()
-  );
+let stateListenerAdded = false;
 
-  let esploader: ESPLoader | undefined;
+let logEl: FlashLog | undefined;
 
-  try {
-    esploader = await connect(logger);
-  } catch (err) {
-    // User pressed cancel on web serial
+let progressEl: FlashProgress | undefined;
+
+let improvEl: HTMLElement | undefined;
+
+const addElement = <T extends HTMLElement>(
+  button: InstallButton,
+  element: T
+): T => {
+  button.renderRoot!.append(element);
+  return element;
+};
+
+export const startFlash = async (button: InstallButton) => {
+  if (button.hasAttribute("active")) {
     return;
   }
 
-  // For debugging
-  (window as any).esploader = esploader;
-
-  const logEl = document.createElement("esp-web-flash-log");
-  // logEl.esploader = esploader;
-  logEl.addRow({ id: "initializing", content: "Initializing..." });
-  addLogElement(logEl);
-
-  try {
-    await esploader.initialize();
-  } catch (err) {
-    console.error(err);
-    if (esploader.connected) {
-      logEl.addError(
-        "Failed to initialize. Try resetting your device or holding the BOOT button before clicking connect."
-      );
-      await esploader.disconnect();
-    }
+  const manifest = button.manifest || button.getAttribute("manifest");
+  if (!manifest) {
+    alert("No manifest defined!");
     return;
   }
 
-  const chipFamily = getChipFamilyName(esploader);
+  let hasImprov = false;
 
-  logEl.addRow({
-    id: "initializing",
-    content: html`Initialized. Found ${chipFamily}`,
-  });
-  logEl.addRow({ id: "manifest", content: "Fetching manifest..." });
-
-  let manifest: Manifest | undefined;
-  try {
-    manifest = await manifestProm;
-  } catch (err) {
-    logEl.addError(`Unable to fetch manifest: ${err}`);
-    await esploader.disconnect();
-    return;
-  }
-
-  logEl.addRow({
-    id: "manifest",
-    content: html`Found manifest for ${manifest.name}`,
-  });
-
-  let build: Build | undefined;
-  for (const b of manifest.builds) {
-    if (b.chipFamily === chipFamily) {
-      build = b;
-      break;
-    }
-  }
-
-  if (!build) {
-    logEl.addError(`Your ${chipFamily} board is not supported.`);
-    await esploader.disconnect();
-    return;
-  }
-
-  logEl.addRow({
-    id: "preparing",
-    content: "Preparing installation...",
-  });
-
-  const filePromises = build.parts.map(async (part) => {
-    const url = new URL(part.path, manifestURL).toString();
-    const resp = await fetch(url);
-    if (!resp.ok) {
-      throw new Error(
-        `Downlading firmware ${part.path} failed: ${resp.status}`
-      );
-    }
-    return resp.arrayBuffer();
-  });
-
-  // Run the stub while we wait for files to download
-  const espStub = await esploader.runStub();
-
-  const files: ArrayBuffer[] = [];
-  let totalSize = 0;
-
-  for (const prom of filePromises) {
-    try {
-      const data = await prom;
-      files.push(data);
-      totalSize += data.byteLength;
-    } catch (err) {
-      logEl.addError(err.message);
-      await esploader.disconnect();
-      return;
-    }
-  }
-
-  logEl.addRow({
-    id: "preparing",
-    content: `Installation prepared`,
-  });
-
-  // Pre-load improv for later
-  if (build.improv) {
-    // @ts-ignore
-    import("https://www.improv-wifi.com/sdk-js/launch-button.js");
-  }
-
-  if (eraseFirst) {
-    logEl.addRow({
-      id: "erase",
-      content: html`Erasing device...`,
-    });
-    await espStub.eraseFlash();
-    logEl.addRow({
-      id: "erase",
-      content: html`Device erased`,
-    });
-  }
-
-  let lastPct = 0;
-
-  logEl.addRow({
-    id: "write",
-    content: html`Writing progress: ${lastPct}%`,
-  });
-
-  let totalWritten = 0;
-
-  for (const part of build.parts) {
-    const file = files.shift()!;
-    await espStub.flashData(
-      file,
-      (bytesWritten) => {
-        const newPct = Math.floor(
-          ((totalWritten + bytesWritten) / totalSize) * 100
-        );
-        if (newPct === lastPct) {
-          return;
+  if (!stateListenerAdded) {
+    stateListenerAdded = true;
+    button.addEventListener("state-changed", (ev) => {
+      const state = (button.state = ev.detail);
+      if (state.state === State.INITIALIZING) {
+        button.toggleAttribute("active", true);
+      } else if (state.state === State.MANIFEST && state.build?.improv) {
+        hasImprov = true;
+        // @ts-ignore
+        // preload improv button
+        import("https://www.improv-wifi.com/sdk-js/launch-button.js");
+      } else if (state.state === State.FINISHED) {
+        button.toggleAttribute("active", false);
+        if (hasImprov) {
+          startImprov(button);
         }
-        lastPct = newPct;
-        logEl.addRow({
-          id: "write",
-          content: html`Writing progress: ${newPct}%`,
-        });
-      },
-      part.offset
-    );
-    totalWritten += file.byteLength;
+      } else if (state.state === State.ERROR) {
+        button.toggleAttribute("active", false);
+      }
+      progressEl?.processState(ev.detail);
+      logEl?.processState(ev.detail);
+    });
   }
 
-  logEl.addRow({
-    id: "write",
-    content: html`Writing progress: 100%`,
-  });
+  const logConsole = button.logConsole || button.hasAttribute("log-console");
+  const showLog = button.showLog || button.hasAttribute("show-log");
+  const showProgress =
+    !showLog &&
+    button.hideProgress !== true &&
+    !button.hasAttribute("hide-progress");
 
-  await sleep(100);
-  await esploader.softReset();
-  await esploader.disconnect();
+  if (showLog && !logEl) {
+    logEl = addElement<FlashLog>(
+      button,
+      document.createElement("esp-web-flash-log")
+    );
+  } else if (!showLog && logEl) {
+    logEl.remove();
+    logEl = undefined;
+  }
 
-  const doImprov =
-    build.improv &&
-    customElements.get("improv-wifi-launch-button")?.isSupported;
+  if (showProgress && !progressEl) {
+    progressEl = addElement<FlashProgress>(
+      button,
+      document.createElement("esp-web-flash-progress")
+    );
+  } else if (!showProgress && progressEl) {
+    progressEl.remove();
+    progressEl = undefined;
+  }
 
-  logEl.addRow({
-    id: "write",
-    content: html`Writing
-    complete${doImprov
-      ? ""
-      : html`, all done!<br /><br /><button
-            @click=${() => logEl.parentElement?.removeChild(logEl)}
-          >
-            Close this dialog
-          </button>`}`,
-  });
+  logEl?.clear();
+  progressEl?.clear();
+  improvEl?.classList.toggle("hidden", true);
 
-  if (!doImprov) {
+  flash(
+    button,
+    logConsole
+      ? console
+      : {
+          log: () => {},
+          error: () => {},
+          debug: () => {},
+        },
+    manifest,
+    button.eraseFirst !== undefined
+      ? button.eraseFirst
+      : button.hasAttribute("erase-first")
+  );
+};
+
+const startImprov = async (button: InstallButton) => {
+  // @ts-ignore
+  await import("https://www.improv-wifi.com/sdk-js/launch-button.js");
+
+  if (!customElements.get("improv-wifi-launch-button").isSupported) {
     return;
   }
 
-  // Todo: listen for improv events to know when to close dialog
-  logEl.addRow({
-    id: "improv",
-    action: true,
-    content: html`
-      <improv-wifi-launch-button
-        ><button slot="activate">
-          Click here to finish setting up your device.
-        </button></improv-wifi-launch-button
-      >
-    `,
-  });
+  if (!improvEl) {
+    improvEl = document.createElement("improv-wifi-launch-button");
+    const improvButton = document.createElement("button");
+    improvButton.slot = "activate";
+    improvButton.textContent = "CLICK HERE TO FINISH SETTING UP YOUR DEVICE";
+    improvEl.appendChild(improvButton);
+    addElement(button, improvEl);
+  }
+  improvEl.classList.toggle("hidden", false);
 };

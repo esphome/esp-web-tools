@@ -1,17 +1,18 @@
 import { css, html, HTMLTemplateResult, LitElement } from "lit";
 import { customElement, state } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
+import { FlashState, State } from "./const";
 
 interface Row {
-  id?: string;
-  content: HTMLTemplateResult | string;
+  state?: State;
+  message: HTMLTemplateResult | string;
   error?: boolean;
   action?: boolean;
 }
 
 @customElement("esp-web-flash-log")
-class FlashLog extends LitElement {
-  @state() _rows: Row[] = [];
+export class FlashLog extends LitElement {
+  @state() private _rows: Row[] = [];
 
   protected render() {
     return html`${this._rows.map(
@@ -22,9 +23,30 @@ class FlashLog extends LitElement {
             action: row.action === true,
           })}
         >
-          ${row.content}
+          ${row.message}
         </div>`
     )}`;
+  }
+
+  public willUpdate() {
+    this.toggleAttribute("hidden", !this._rows.length);
+  }
+
+  public clear() {
+    this._rows = [];
+  }
+
+  public processState(state: FlashState) {
+    if (state.state === State.ERROR) {
+      this.addError(state.message);
+      return;
+    }
+    this.addRow(state);
+    if (state.state === State.FINISHED) {
+      this.addAction(
+        html`<button @click=${this.clear}>Close this log</button>`
+      );
+    }
   }
 
   /**
@@ -33,9 +55,9 @@ class FlashLog extends LitElement {
   public addRow(row: Row) {
     // If last entry has same ID, replace it.
     if (
-      row.id &&
+      row.state &&
       this._rows.length > 0 &&
-      this._rows[this._rows.length - 1].id === row.id
+      this._rows[this._rows.length - 1].state === row.state
     ) {
       const newRows = this._rows.slice(0, -1);
       newRows.push(row);
@@ -48,15 +70,25 @@ class FlashLog extends LitElement {
   /**
    * Add an error row
    */
-  public addError(content: Row["content"]) {
-    this.addRow({ content, error: true });
+  public addError(message: Row["message"]) {
+    this.addRow({ message, error: true });
   }
 
   /**
-   * Remove last row if ID matches
+   * Add an action row
    */
-  public removeRow(id: string) {
-    if (this._rows.length > 0 && this._rows[this._rows.length - 1].id === id) {
+  public addAction(message: Row["message"]) {
+    this.addRow({ message, action: true });
+  }
+
+  /**
+   * Remove last row if state matches
+   */
+  public removeRow(state: string) {
+    if (
+      this._rows.length > 0 &&
+      this._rows[this._rows.length - 1].state === state
+    ) {
       this._rows = this._rows.slice(0, -1);
     }
   }
@@ -64,13 +96,17 @@ class FlashLog extends LitElement {
   static styles = css`
     :host {
       display: block;
-      max-width: 500px;
+      margin-top: 16px;
+      padding: 12px 16px;
       font-family: monospace;
-      background-color: black;
-      color: greenyellow;
+      background: var(--esp-tools-log-background, black);
+      color: var(--esp-tools-log-text-color, greenyellow);
       font-size: 14px;
       line-height: 19px;
-      padding: 12px 16px;
+    }
+
+    :host([hidden]) {
+      display: none;
     }
 
     button {
@@ -84,13 +120,13 @@ class FlashLog extends LitElement {
       cursor: pointer;
     }
 
-    .action,
     .error {
-      margin-top: 1em;
+      color: var(--esp-tools-error-color, #dc3545);
     }
 
-    .error {
-      color: red;
+    .error,
+    .action {
+      margin-top: 1em;
     }
   `;
 }
