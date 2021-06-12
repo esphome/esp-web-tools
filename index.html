@@ -285,9 +285,9 @@
       <h4>Replace the button and message with a custom one</h4>
       <p>
         You can replace both the activation button and the message that is shown
-        when the user uses an unsupported browser with your own elements. This
-        can be done using the <code>activate</code> and
-        <code>unsupported</code> slots:
+        when the user uses an unsupported browser or non secure context with
+        your own elements. This can be done using the <code>activate</code>,
+        <code>unsupported</code> and <code>not-allowed</code> slots:
       </p>
       <pre>
 &lt;esp-web-install-button
@@ -297,17 +297,19 @@
 >
   &lt;button slot="activate">Custom install button&lt;/button>
   &lt;span slot="unsupported">Ah snap, your browser doesn't work!&lt;/span>
+  &lt;span slot="not-allowed">Ah snap, you are not allowed to use this on HTTP!&lt;/span>
 &lt;/esp-web-install-button>
     </pre
       >
       <h4>Show or hide the progress bar and log</h4>
       <p>
         By default there is a progress bar showing the state and progress of the
-        flashing progress, you can chnage this progress bar to a log view with
+        flashing progress, you can change this progress bar to a log view with
         the <code>show-log</code> attribute.
       </p>
       <p>
-        You can also hide all progress indicators by adding the `hide-progress`
+        You can also hide all progress indicators by adding the
+        <code>hide-progress</code>
         attribute. This will hide both the progress bar and the log view. You
         can then implement your own progress elements using the
         <a href="#state-events">state events</a>.
