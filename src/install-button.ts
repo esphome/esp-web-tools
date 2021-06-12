@@ -3,6 +3,8 @@ import { FlashState } from "./const";
 export class InstallButton extends HTMLElement {
   public static isSupported = "serial" in navigator;
 
+  public static isAllowed = window.isSecureContext;
+
   private static style = `
   button {
     position: relative;
@@ -86,6 +88,15 @@ export class InstallButton extends HTMLElement {
       slot.name = "unsupported";
       slot.innerText =
         "Your browser does not support installing things on ESP devices. Use Google Chrome or Microsoft Edge.";
+      this.renderRoot.append(slot);
+      return;
+    }
+
+    if (!InstallButton.isAllowed) {
+      const slot = document.createElement("slot");
+      slot.name = "not-allowed";
+      slot.innerText =
+        "You can only install ESP devices on HTTPS websites or on the localhost.";
       this.renderRoot.append(slot);
       return;
     }

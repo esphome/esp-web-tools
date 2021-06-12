@@ -69,6 +69,9 @@ export class FlashProgress extends LitElement {
       color: var(--esp-tools-success-color, #28a745);
       --mdc-theme-primary: var(--esp-tools-success-color, #28a745);
     }
+    mwc-linear-progress {
+      text-align: left;
+    }
     h2 {
       margin: 16px 0 0;
     }

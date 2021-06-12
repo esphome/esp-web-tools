@@ -84,6 +84,7 @@ The following slots are available:
 | -- | -- |
 | `activate` | Button to start the flash progress
 | `unsupported` | Message to show when the browser is not supported
+| `not-allowed` | Message to show when not a secure context
 
 ## Events
 
@@ -96,6 +97,7 @@ Field | Description
 state | The current [state](https://github.com/esphome/esp-web-tools/blob/main/src/const.ts)
 message | A description of the current state
 manifest | The loaded manifest
+build | The manifest's build that was selected 
 chipFamily | The chip that was detected;&nbsp;"ESP32" \| "ESP8266" \| "ESP32-S2" \| "Unknown Chip"
 details | An optional extra field that is different [per state](https://github.com/esphome/esp-web-tools/blob/main/src/const.ts)
 
