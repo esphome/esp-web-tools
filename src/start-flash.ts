@@ -6,7 +6,7 @@ import type { FlashProgress } from "./flash-progress";
 import type { InstallButton } from "./install-button";
 import { State } from "./const";
 
-let stateListnerAdded = false;
+let stateListenerAdded = false;
 
 let logEl: FlashLog | undefined;
 
@@ -35,8 +35,8 @@ export const startFlash = async (button: InstallButton) => {
 
   let hasImprov = false;
 
-  if (!stateListnerAdded) {
-    stateListnerAdded = true;
+  if (!stateListenerAdded) {
+    stateListenerAdded = true;
     button.addEventListener("state-changed", (ev) => {
       const state = (button.state = ev.detail);
       if (state.state === State.INITIALIZING) {
