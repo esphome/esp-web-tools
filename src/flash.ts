@@ -1,5 +1,5 @@
 import { connect, ESPLoader, Logger } from "esp-web-flasher";
-import { FlashError, FlashState, Manifest, State } from "./const";
+import { Build, FlashError, FlashState, Manifest, State } from "./const";
 import { fireEvent, getChipFamilyName, sleep } from "./util";
 
 export const flash = async (
@@ -9,12 +9,14 @@ export const flash = async (
   eraseFirst: boolean
 ) => {
   let manifest: Manifest;
+  let build: Build | undefined;
   let chipFamily: "ESP32" | "ESP8266" | "ESP32-S2" | "Unknown Chip";
 
   const fireStateEvent = (stateUpdate: FlashState) => {
     fireEvent(eventTarget, "state-changed", {
       ...stateUpdate,
       manifest,
+      build,
       chipFamily,
     });
   };
@@ -83,13 +85,13 @@ export const flash = async (
     return;
   }
 
+  build = manifest.builds.find((b) => b.chipFamily === chipFamily);
+
   fireStateEvent({
     state: State.MANIFEST,
     message: `Found manifest for ${manifest.name}`,
     details: { done: true },
   });
-
-  const build = manifest.builds.find((b) => b.chipFamily === chipFamily);
 
   if (!build) {
     fireStateEvent({

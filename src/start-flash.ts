@@ -41,16 +41,11 @@ export const startFlash = async (button: InstallButton) => {
       const state = (button.state = ev.detail);
       if (state.state === State.INITIALIZING) {
         button.toggleAttribute("active", true);
-      } else if (state.state === State.MANIFEST && state.manifest) {
-        const build = state.manifest.builds.find(
-          (b) => b.chipFamily === state.chipFamily
-        )!;
-        if (build.improv) {
-          hasImprov = true;
-          // @ts-ignore
-          // preload improv button
-          import("https://www.improv-wifi.com/sdk-js/launch-button.js");
-        }
+      } else if (state.state === State.MANIFEST && state.build?.improv) {
+        hasImprov = true;
+        // @ts-ignore
+        // preload improv button
+        import("https://www.improv-wifi.com/sdk-js/launch-button.js");
       } else if (state.state === State.FINISHED) {
         button.toggleAttribute("active", false);
         if (hasImprov) {
