@@ -49,7 +49,7 @@ All attributes can also be set via properties (`manifest`, `eraseFirst`)
 
 ### Attributes
 
-The following attributes are automatically added to `<esp-web-install-button>`:
+The following attributes are automatically added to `<esp-web-install-button>` and can be used for styling:
 
 | Attribute | Description |
 | -- | -- |
