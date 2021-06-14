@@ -110,12 +110,24 @@ const startImprov = async (button: InstallButton) => {
   // @ts-ignore
   await import("https://www.improv-wifi.com/sdk-js/launch-button.js");
 
-  if (!customElements.get("improv-wifi-launch-button").isSupported) {
+  const improvButtonConstructor = customElements.get(
+    "improv-wifi-launch-button"
+  );
+
+  if (
+    !improvButtonConstructor.isSupported ||
+    !improvButtonConstructor.isAllowed
+  ) {
     return;
   }
 
   if (!improvEl) {
     improvEl = document.createElement("improv-wifi-launch-button");
+    improvEl.addEventListener("state-changed", (ev: any) => {
+      if (ev.detail.state === "PROVISIONED") {
+        improvEl!.classList.toggle("hidden", true);
+      }
+    });
     const improvButton = document.createElement("button");
     improvButton.slot = "activate";
     improvButton.textContent = "CLICK HERE TO FINISH SETTING UP YOUR DEVICE";
