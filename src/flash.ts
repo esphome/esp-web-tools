@@ -224,7 +224,7 @@ export const flash = async (
   });
 
   await sleep(100);
-  await esploader.softReset();
+  await esploader.hardReset();
   await esploader.disconnect();
 
   fireStateEvent({
