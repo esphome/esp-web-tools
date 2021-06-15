@@ -52,7 +52,7 @@ export const flash = async (
       fireStateEvent({
         state: State.ERROR,
         message:
-          "Failed to initialize. Try resetting your device or holding the BOOT button before clicking connect.",
+          "Failed to initialize. Try resetting your device or holding the BOOT button while selecting your serial port.",
         details: { error: FlashError.FAILED_INITIALIZING, details: err },
       });
       await esploader.disconnect();
