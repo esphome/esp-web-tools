@@ -22,10 +22,9 @@
       }
       .project .logo {
         float: right;
-        width: 200px;
       }
       .project .logo img {
-        width: 100%;
+        max-height: 50px;
       }
       a {
         color: #03a9f4;
@@ -122,10 +121,12 @@
           allowfullscreen
         ></iframe>
       </div>
-      <h2 id='used-by'>Projects using ESP Web Tools</h2>
+      <h2 id="used-by">Projects using ESP Web Tools</h2>
       <div class="project">
         <div class="logo">
-          <img src="static/wled.png" alt="WLED logo" />
+          <a href="https://wled.me"
+            ><img src="static/logos/wled.png" alt="WLED logo"
+          /></a>
         </div>
         <h3>WLED</h3>
         <p>
@@ -134,12 +135,26 @@
           chipsets like the WS2801 and APA102.
         </p>
         <p>
-          <a href="https://flash.wled.me" target="_blank"
+          <a href="https://install.wled.me" target="_blank"
             >Installation Website</a
           >
         </p>
       </div>
-      <h2 id='add-website'>Adding ESP Web Tools to your website</h2>
+      <div class="project">
+        <div class="logo">
+          <a href="http://www.espeasy.com/"
+            ><img src="static/logos/espeasy.png" alt="ESPEasy logo"
+          /></a>
+        </div>
+        <h3>ESPEasy</h3>
+        <p>Easy MultiSensor device based on ESP8266/ESP32.</p>
+        <p>
+          <a href="https://td-er.nl/ESPEasy/" target="_blank"
+            >Installation Website</a
+          >
+        </p>
+      </div>
+      <h2 id="add-website">Adding ESP Web Tools to your website</h2>
       <p>
         To add this to your own website, create a manifest and add the button to
         your website. Make sure you update the manifest attribute to point at
@@ -239,7 +254,7 @@
         ></iframe>
       </div>
 
-      <h3 id='customize'>Customizing the look and feel</h3>
+      <h3 id="customize">Customizing the look and feel</h3>
       <p>
         There are multiple options to change the look and feel of the button and
         other elements.
