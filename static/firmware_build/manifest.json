@@ -1,5 +1,5 @@
 {
-  "name": "ESPHome",
+  "name": "ESP Web Tools demo powered by ESPHome",
   "builds": [
     {
       "chipFamily": "ESP32",
