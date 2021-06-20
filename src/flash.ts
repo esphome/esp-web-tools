@@ -174,6 +174,12 @@ export const flash = async (
     },
   });
 
+  try {
+    await espStub.setBaudrate(2000000);
+  } catch (err) {
+    logger.debug("Changing baud rate failed. Continue with writing");
+  }
+
   let totalWritten = 0;
 
   for (const part of build.parts) {
