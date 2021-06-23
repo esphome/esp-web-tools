@@ -181,7 +181,7 @@ export const flash = async (
     try {
       await espStub.flashData(
         file,
-        (bytesWritten) => {
+        (bytesWritten: number) => {
           const newPct = Math.floor(
             ((totalWritten + bytesWritten) / totalSize) * 100
           );
@@ -199,7 +199,8 @@ export const flash = async (
             },
           });
         },
-        part.offset
+        part.offset,
+        true
       );
     } catch (err) {
       fireStateEvent({
