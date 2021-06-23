@@ -23,7 +23,7 @@
   "dependencies": {
     "@material/mwc-base": "^0.21.0",
     "@material/mwc-linear-progress": "^0.21.0",
-    "esp-web-flasher": "^3.1.1",
+    "esp-web-flasher": "^3.1.2",
     "lit": "^2.0.0-rc.2",
     "tslib": "^2.2.0"
   }
