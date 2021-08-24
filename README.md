@@ -41,7 +41,7 @@ Manifest definition:
       "parts": [
         { "path": "esp8266.bin", "offset": 0 },
       ]
-    },
+    }
   ]
 }
 ```
