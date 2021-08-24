@@ -25,11 +25,23 @@ Manifest definition:
       ]
     },
     {
+      "chipFamily": "ESP32-C3",
+      "parts": [
+        { "path": "esp32-c3.bin", "offset": 0 },
+      ]
+    },
+    {
+      "chipFamily": "ESP32-S2",
+      "parts": [
+        { "path": "esp32-s2.bin", "offset": 0 },
+      ]
+    },
+    {
       "chipFamily": "ESP8266",
       "parts": [
         { "path": "esp8266.bin", "offset": 0 },
       ]
-    }
+    },
   ]
 }
 ```
@@ -97,8 +109,8 @@ Field | Description
 state | The current [state](https://github.com/esphome/esp-web-tools/blob/main/src/const.ts)
 message | A description of the current state
 manifest | The loaded manifest
-build | The manifest's build that was selected 
-chipFamily | The chip that was detected;&nbsp;"ESP32" \| "ESP8266" \| "ESP32-S2" \| "Unknown Chip"
+build | The manifest's build that was selected
+chipFamily | The chip that was detected;&nbsp;"ESP32" \| "ESP8266" \| "ESP32-S2" \| "ESP32-C3" \| "Unknown Chip"
 details | An optional extra field that is different [per state](https://github.com/esphome/esp-web-tools/blob/main/src/const.ts)
 
 ## Development
