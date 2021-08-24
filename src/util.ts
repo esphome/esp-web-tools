@@ -5,11 +5,11 @@ import {
   CHIP_FAMILY_ESP32C3,
   ESPLoader,
 } from "esp-web-flasher";
-import type { Build } from "./const";
+import type { BaseFlashState } from "./const";
 
 export const getChipFamilyName = (
   esploader: ESPLoader
-): Build["chipFamily"] | "Unknown Chip" => {
+): NonNullable<BaseFlashState["chipFamily"]> => {
   switch (esploader.chipFamily) {
     case CHIP_FAMILY_ESP32:
       return "ESP32";
