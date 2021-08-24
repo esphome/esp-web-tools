@@ -6,13 +6,25 @@ import type { FlashProgress } from "./flash-progress";
 import type { InstallButton } from "./install-button";
 import { State } from "./const";
 
-let stateListenerAdded = false;
+interface FlashData {
+  stateListenerAdded: boolean;
+  logEl: FlashLog | undefined;
+  progressEl: FlashProgress | undefined;
+  improvEl: HTMLElement | undefined;
+}
 
-let logEl: FlashLog | undefined;
+const getData = (button: InstallButton): FlashData => {
+  if (!("_flashData" in button)) {
+    (button as any)._flashData = {
+      stateListenerAdded: false,
+      logEl: undefined,
+      progressEl: undefined,
+      improvEl: undefined,
+    } as FlashData;
+  }
 
-let progressEl: FlashProgress | undefined;
-
-let improvEl: HTMLElement | undefined;
+  return (button as any)._flashData as FlashData;
+};
 
 const addElement = <T extends HTMLElement>(
   button: InstallButton,
@@ -33,10 +45,12 @@ export const startFlash = async (button: InstallButton) => {
     return;
   }
 
+  const data = getData(button);
+
   let hasImprov = false;
 
-  if (!stateListenerAdded) {
-    stateListenerAdded = true;
+  if (!data.stateListenerAdded) {
+    data.stateListenerAdded = true;
     button.addEventListener("state-changed", (ev) => {
       const state = (button.state = ev.detail);
       if (state.state === State.INITIALIZING) {
@@ -54,8 +68,8 @@ export const startFlash = async (button: InstallButton) => {
       } else if (state.state === State.ERROR) {
         button.toggleAttribute("active", false);
       }
-      progressEl?.processState(ev.detail);
-      logEl?.processState(ev.detail);
+      data.progressEl?.processState(ev.detail);
+      data.logEl?.processState(ev.detail);
     });
   }
 
@@ -66,29 +80,29 @@ export const startFlash = async (button: InstallButton) => {
     button.hideProgress !== true &&
     !button.hasAttribute("hide-progress");
 
-  if (showLog && !logEl) {
-    logEl = addElement<FlashLog>(
+  if (showLog && !data.logEl) {
+    data.logEl = addElement<FlashLog>(
       button,
       document.createElement("esp-web-flash-log")
     );
-  } else if (!showLog && logEl) {
-    logEl.remove();
-    logEl = undefined;
+  } else if (!showLog && data.logEl) {
+    data.logEl.remove();
+    data.logEl = undefined;
   }
 
-  if (showProgress && !progressEl) {
-    progressEl = addElement<FlashProgress>(
+  if (showProgress && !data.progressEl) {
+    data.progressEl = addElement<FlashProgress>(
       button,
       document.createElement("esp-web-flash-progress")
     );
-  } else if (!showProgress && progressEl) {
-    progressEl.remove();
-    progressEl = undefined;
+  } else if (!showProgress && data.progressEl) {
+    data.progressEl.remove();
+    data.progressEl = undefined;
   }
 
-  logEl?.clear();
-  progressEl?.clear();
-  improvEl?.classList.toggle("hidden", true);
+  data.logEl?.clear();
+  data.progressEl?.clear();
+  data.improvEl?.classList.toggle("hidden", true);
 
   flash(
     button,
@@ -121,18 +135,20 @@ const startImprov = async (button: InstallButton) => {
     return;
   }
 
-  if (!improvEl) {
-    improvEl = document.createElement("improv-wifi-launch-button");
-    improvEl.addEventListener("state-changed", (ev: any) => {
+  const data = getData(button);
+
+  if (!data.improvEl) {
+    data.improvEl = document.createElement("improv-wifi-launch-button");
+    data.improvEl.addEventListener("state-changed", (ev: any) => {
       if (ev.detail.state === "PROVISIONED") {
-        improvEl!.classList.toggle("hidden", true);
+        data.improvEl!.classList.toggle("hidden", true);
       }
     });
     const improvButton = document.createElement("button");
     improvButton.slot = "activate";
     improvButton.textContent = "CLICK HERE TO FINISH SETTING UP YOUR DEVICE";
-    improvEl.appendChild(improvButton);
-    addElement(button, improvEl);
+    data.improvEl.appendChild(improvButton);
+    addElement(button, data.improvEl);
   }
-  improvEl.classList.toggle("hidden", false);
+  data.improvEl.classList.toggle("hidden", false);
 };
