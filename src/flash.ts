@@ -10,7 +10,7 @@ export const flash = async (
 ) => {
   let manifest: Manifest;
   let build: Build | undefined;
-  let chipFamily: "ESP32" | "ESP8266" | "ESP32-S2" | "Unknown Chip";
+  let chipFamily: ReturnType<typeof getChipFamilyName>;
 
   const fireStateEvent = (stateUpdate: FlashState) => {
     fireEvent(eventTarget, "state-changed", {

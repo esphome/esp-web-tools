@@ -1,5 +1,5 @@
 export interface Build {
-  chipFamily: "ESP32" | "ESP8266";
+  chipFamily: "ESP32" | "ESP8266" | "ESP32-S2" | "ESP32-C3";
   improv: boolean;
   parts: {
     path: string;
@@ -12,12 +12,12 @@ export interface Manifest {
   builds: Build[];
 }
 
-interface BaseFlashState {
+export interface BaseFlashState {
   state: State;
   message: string;
   manifest?: Manifest;
   build?: Build;
-  chipFamily?: "ESP32" | "ESP8266" | "ESP32-S2" | "Unknown Chip";
+  chipFamily?: Build["chipFamily"] | "Unknown Chip";
 }
 
 export interface InitializingState extends BaseFlashState {
