@@ -21,7 +21,7 @@
     "typescript": "^4.3.2"
   },
   "dependencies": {
-    "@material/mwc-linear-progress": "^0.22.1",
+    "@material/mwc-linear-progress": "^0.23.0",
     "esp-web-flasher": "^3.2.0",
     "lit": "^2.0.0-rc.3",
     "tslib": "^2.3.1"
