@@ -1,6 +1,5 @@
 import { customElement } from "lit/decorators.js";
 import { ColoredConsole } from "../util/console-color";
-import { iterateReadableStream } from "improv-wifi-serial-sdk/dist/util";
 import { sleep } from "../util/sleep";
 import { Logger } from "../const";
 

@@ -1,9 +1,9 @@
 {
-  "name": "ESP Web Tools demo powered by ESPHome",
+  "name": "ESPHome",
+  "version": "2021.10.3",
   "builds": [
     {
       "chipFamily": "ESP32",
-      "improv": true,
       "parts": [
         { "path": "bootloader.bin", "offset": 4096 },
         { "path": "partitions.bin", "offset": 32768 },
