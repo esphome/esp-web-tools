@@ -19,7 +19,7 @@ export class EwtConsole extends HTMLElement {
 
     shadowRoot.innerHTML = `
       <style>
-        :host, input, button {
+        :host, input {
           background-color: #1c1c1c;
           color: #ddd;
           font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier,
@@ -122,11 +122,6 @@ export class EwtConsole extends HTMLElement {
           border: 0;
           outline: none;
         }
-        button {
-          background-color: #ddd;
-          border: 0;
-          color: #1c1c1c;
-        }
       </style>
       <div class="log"></div>
       <form>
@@ -148,36 +143,35 @@ export class EwtConsole extends HTMLElement {
         this._sendCommand();
       }
     });
-    this.shadowRoot!.querySelector("button")!.addEventListener("click", () =>
-      this._sendCommand()
-    );
 
-    const reader = this.port.readable!.getReader();
-    const connection = this._connect(reader);
+    const abortController = new AbortController();
+    const connection = this._connect(abortController.signal);
     this._cancelConnection = () => {
-      reader.cancel();
+      abortController.abort();
       return connection;
     };
   }
 
-  private async _connect(reader: ReadableStreamDefaultReader<Uint8Array>) {
+  private async _connect(abortSignal: AbortSignal) {
     this.logger.debug("Starting console read loop");
     try {
-      while (true) {
-        const { value, done } = await reader.read();
-        if (done) {
-          this._console!.addLine("\r\n\r\nTerminal disconnected\r\n");
-          break;
-        }
-        if (!value || value.length === 0) {
-          continue;
-        }
-        this._console!.addLine(String.fromCodePoint(...value));
+      await this.port
+        .readable!.pipeThrough(new TextDecoderStream(), {
+          signal: abortSignal,
+        })
+        .pipeTo(
+          new WritableStream({
+            write: (chunk) => {
+              this._console!.addLine(chunk);
+            },
+          })
+        );
+      if (!abortSignal.aborted) {
+        this._console!.addLine("\r\n\r\nTerminal disconnected\r\n");
       }
     } catch (e) {
       this._console!.addLine(`\n\nTerminal disconnected: ${e}`);
     } finally {
-      reader.releaseLock();
       await sleep(100);
       this.logger.debug("Finished console read loop");
     }
