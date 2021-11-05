@@ -72,7 +72,7 @@ export class InstallButton extends HTMLElement {
   public renderRoot?: ShadowRoot;
 
   public static preload() {
-    import("./start-flash");
+    import("./connect");
   }
 
   public connectedCallback() {
@@ -98,8 +98,8 @@ export class InstallButton extends HTMLElement {
 
     slot.addEventListener("click", async (ev) => {
       ev.preventDefault();
-      const mod = await import("./start-flash");
-      mod.startFlash(this);
+      const mod = await import("./connect");
+      mod.connect(this);
     });
 
     slot.name = "activate";

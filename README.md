@@ -13,10 +13,10 @@ Manifest definition:
 ```json
 {
   "name": "ESPHome",
+  "version": "2021.10.3",
   "builds": [
     {
       "chipFamily": "ESP32",
-      "improv": true,
       "parts": [
         { "path": "bootloader.bin", "offset": 4096 },
         { "path": "partitions.bin", "offset": 32768 },
@@ -46,17 +46,6 @@ Manifest definition:
 }
 ```
 
-Allows for optionally passing an attribute to trigger an erase before installation.
-
-```html
-<esp-web-install-button
-  manifest="firmware_esphome/manifest.json"
-  erase-first
-></esp-web-install-button>
-```
-
-All attributes can also be set via properties (`manifest`, `eraseFirst`)
-
 ## Styling
 
 ### Attributes
@@ -67,14 +56,6 @@ The following attributes are automatically added to `<esp-web-install-button>` a
 | -- | -- |
 | `install-supported` | Added if installing firmware is supported
 | `install-unsupported` | Added if installing firmware is not supported
-| `active` | Added when flashing is active
-
-You can add the following attributes or properties to change the UI elements:
-
-| Attribute | Property | Description |
-| -- | -- | -- |
-| `show-log` | `showLog` | Show a log style view of the progress instead of a progress bar
-| `hide-progress` | `hideProgress` | Hides all progress UI elements
 
 ### CSS custom properties (variables)
 
@@ -115,4 +96,4 @@ details | An optional extra field that is different [per state](https://github.c
 
 ## Development
 
-Run `script/develop`. This starts a server. Open it on http://localhost:5000.
+Run `script/develop`. This starts a server. Open it on http://localhost:5001.

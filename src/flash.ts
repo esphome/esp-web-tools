@@ -1,9 +1,16 @@
-import { connect, ESPLoader, Logger } from "esp-web-flasher";
-import { Build, FlashError, FlashState, Manifest, State } from "./const";
-import { fireEvent, getChipFamilyName, sleep } from "./util";
+import { ESPLoader, Logger } from "esp-web-flasher";
+import {
+  Build,
+  FlashError,
+  FlashState,
+  Manifest,
+  FlashStateType,
+} from "./const";
+import { getChipFamilyName, sleep } from "./util";
 
 export const flash = async (
-  eventTarget: EventTarget,
+  onEvent: (state: FlashState) => void,
+  port: SerialPort,
   logger: Logger,
   manifestPath: string,
   eraseFirst: boolean
@@ -12,47 +19,39 @@ export const flash = async (
   let build: Build | undefined;
   let chipFamily: ReturnType<typeof getChipFamilyName>;
 
-  const fireStateEvent = (stateUpdate: FlashState) => {
-    fireEvent(eventTarget, "state-changed", {
+  const fireStateEvent = (stateUpdate: FlashState) =>
+    onEvent({
       ...stateUpdate,
       manifest,
       build,
       chipFamily,
     });
-  };
 
   const manifestURL = new URL(manifestPath, location.toString()).toString();
   const manifestProm = fetch(manifestURL).then(
     (resp): Promise<Manifest> => resp.json()
   );
 
-  let esploader: ESPLoader | undefined;
-
-  try {
-    esploader = await connect(logger);
-  } catch (err) {
-    // User pressed cancel on web serial
-    return;
-  }
+  const esploader = new ESPLoader(port, logger);
 
   // For debugging
   (window as any).esploader = esploader;
 
   fireStateEvent({
-    state: State.INITIALIZING,
+    state: FlashStateType.INITIALIZING,
     message: "Initializing...",
     details: { done: false },
   });
 
   try {
     await esploader.initialize();
-  } catch (err) {
+  } catch (err: any) {
     logger.error(err);
     if (esploader.connected) {
       fireStateEvent({
-        state: State.ERROR,
+        state: FlashStateType.ERROR,
         message:
-          "Failed to initialize. Try resetting your device or holding the BOOT button while selecting your serial port.",
+          "Failed to initialize. Try resetting your device or holding the BOOT button while clicking INSTALL.",
         details: { error: FlashError.FAILED_INITIALIZING, details: err },
       });
       await esploader.disconnect();
@@ -63,22 +62,22 @@ export const flash = async (
   chipFamily = getChipFamilyName(esploader);
 
   fireStateEvent({
-    state: State.INITIALIZING,
+    state: FlashStateType.INITIALIZING,
     message: `Initialized. Found ${chipFamily}`,
     details: { done: true },
   });
   fireStateEvent({
-    state: State.MANIFEST,
+    state: FlashStateType.MANIFEST,
     message: "Fetching manifest...",
     details: { done: false },
   });
 
   try {
     manifest = await manifestProm;
-  } catch (err) {
+  } catch (err: any) {
     fireStateEvent({
-      state: State.ERROR,
-      message: `Unable to fetch manifest: ${err.message}`,
+      state: FlashStateType.ERROR,
+      message: `Unable to fetch manifest: ${err}`,
       details: { error: FlashError.FAILED_MANIFEST_FETCH, details: err },
     });
     await esploader.disconnect();
@@ -88,14 +87,14 @@ export const flash = async (
   build = manifest.builds.find((b) => b.chipFamily === chipFamily);
 
   fireStateEvent({
-    state: State.MANIFEST,
+    state: FlashStateType.MANIFEST,
     message: `Found manifest for ${manifest.name}`,
     details: { done: true },
   });
 
   if (!build) {
     fireStateEvent({
-      state: State.ERROR,
+      state: FlashStateType.ERROR,
       message: `Your ${chipFamily} board is not supported.`,
       details: { error: FlashError.NOT_SUPPORTED, details: chipFamily },
     });
@@ -104,7 +103,7 @@ export const flash = async (
   }
 
   fireStateEvent({
-    state: State.PREPARING,
+    state: FlashStateType.PREPARING,
     message: "Preparing installation...",
     details: { done: false },
   });
@@ -131,11 +130,14 @@ export const flash = async (
       const data = await prom;
       files.push(data);
       totalSize += data.byteLength;
-    } catch (err) {
+    } catch (err: any) {
       fireStateEvent({
-        state: State.ERROR,
-        message: err,
-        details: { error: FlashError.FAILED_FIRMWARE_DOWNLOAD, details: err },
+        state: FlashStateType.ERROR,
+        message: err.message,
+        details: {
+          error: FlashError.FAILED_FIRMWARE_DOWNLOAD,
+          details: err.message,
+        },
       });
       await esploader.disconnect();
       return;
@@ -143,20 +145,20 @@ export const flash = async (
   }
 
   fireStateEvent({
-    state: State.PREPARING,
+    state: FlashStateType.PREPARING,
     message: "Installation prepared",
     details: { done: true },
   });
 
   if (eraseFirst) {
     fireStateEvent({
-      state: State.ERASING,
+      state: FlashStateType.ERASING,
       message: "Erasing device...",
       details: { done: false },
     });
     await espStub.eraseFlash();
     fireStateEvent({
-      state: State.ERASING,
+      state: FlashStateType.ERASING,
       message: "Device erased",
       details: { done: true },
     });
@@ -165,7 +167,7 @@ export const flash = async (
   let lastPct = 0;
 
   fireStateEvent({
-    state: State.WRITING,
+    state: FlashStateType.WRITING,
     message: `Writing progress: ${lastPct}%`,
     details: {
       bytesTotal: totalSize,
@@ -190,7 +192,7 @@ export const flash = async (
           }
           lastPct = newPct;
           fireStateEvent({
-            state: State.WRITING,
+            state: FlashStateType.WRITING,
             message: `Writing progress: ${newPct}%`,
             details: {
               bytesTotal: totalSize,
@@ -202,10 +204,10 @@ export const flash = async (
         part.offset,
         true
       );
-    } catch (err) {
+    } catch (err: any) {
       fireStateEvent({
-        state: State.ERROR,
-        message: err,
+        state: FlashStateType.ERROR,
+        message: err.message,
         details: { error: FlashError.WRITE_FAILED, details: err },
       });
       await esploader.disconnect();
@@ -215,7 +217,7 @@ export const flash = async (
   }
 
   fireStateEvent({
-    state: State.WRITING,
+    state: FlashStateType.WRITING,
     message: "Writing complete",
     details: {
       bytesTotal: totalSize,
@@ -225,11 +227,13 @@ export const flash = async (
   });
 
   await sleep(100);
-  await esploader.hardReset();
+  console.log("DISCONNECT");
   await esploader.disconnect();
+  console.log("HARD RESET");
+  await esploader.hardReset();
 
   fireStateEvent({
-    state: State.FINISHED,
+    state: FlashStateType.FINISHED,
     message: "All done!",
   });
 };

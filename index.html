@@ -90,6 +90,15 @@
         padding: 8px;
         border-bottom: 1px solid #ccc;
       }
+      @media (prefers-color-scheme: dark) {
+        body {
+          background-color: #333;
+          color: #fff;
+        }
+        a {
+          color: #58a6ff;
+        }
+      }
     </style>
     <script module>
       import(
@@ -112,8 +121,8 @@
       </p>
       <p>
         To try it out and install
-        <a href="https://esphome.io">the ESPHome firmware</a>, connect an ESP to
-        your computer and hit the button:
+        <a href="https://esphome.io">ESPHome</a> on an ESP, connect it to your
+        computer and hit the button:
       </p>
       <esp-web-install-button
         log-console
@@ -137,7 +146,7 @@
         detect the type of the connected ESP device and find the right firmware
         files in the manifest.
       </p>
-      <div class="videoWrapper">
+      <!-- <div class="videoWrapper">
         <iframe
           width="560"
           height="315"
@@ -147,7 +156,7 @@
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           allowfullscreen
         ></iframe>
-      </div>
+      </div> -->
       <h2 id="used-by">Projects using ESP Web Tools</h2>
       <div class="project">
         <a href="https://wled.me" class="logo"
@@ -250,10 +259,10 @@
       <pre>
 {
   "name": "ESPHome",
+  "version": "2021.11.0",
   "builds": [
     {
       "chipFamily": "ESP32",
-      "improv": true,
       "parts": [
         { "path": "bootloader.bin", "offset": 4096 },
         { "path": "partitions.bin", "offset": 32768 },
@@ -276,7 +285,22 @@
         where it should be installed. Part paths are resolved relative to the
         path of the manifest, but can also be URLs to other hosts.
       </p>
+      <h3 id="improv">Wi-Fi provisioning</h3>
       <p>
+        ESP Web Tools has support for the
+        <a href="https://www.improv-wifi.com/serial"
+          >Improv Wi-Fi serial standard</a
+        >. This is an open standard to allow configuring Wi-Fi via the serial
+        port.
+      </p>
+      <p>
+        If Improv is supported, a user will be guided to connect the device to
+        the network after installation. It also allows the user to connect
+        already installed devices and re-configure the wireless network
+        settings.
+      </p>
+      <p>TODO EXAMPLE VIDEO</p>
+      <!-- <p>
         Each build also allows you to specify if it supports
         <a href="https://www.improv-wifi.com">the Improv Wi-Fi standard</a>. If
         it does, the user will be offered to configure the Wi-Fi after
@@ -292,7 +316,7 @@
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           allowfullscreen
         ></iframe>
-      </div>
+      </div> -->
 
       <h3 id="customize">Customizing the look and feel</h3>
       <p>
