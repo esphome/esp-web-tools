@@ -13,8 +13,10 @@ import {
   ImprovSerialErrorState,
   PortNotReady,
 } from "improv-wifi-serial-sdk/dist/const";
-import { fireEvent } from "./util.js";
+import { fireEvent } from "./util/fire-event";
 import { flash } from "./flash";
+import "./components/ewt-console";
+import { sleep } from "./util/sleep";
 
 const ERROR_ICON = "⚠️";
 const OK_ICON = "🎉";
@@ -26,23 +28,6 @@ const messageTemplate = (icon: string, label: string) => html`
   </div>
 `;
 
-/*
-ESP Web Tools
-
-TODO: esploader.disconnect() should not close port. It doesn't own it!
-
-On startup, connect with Imperial to detect it and query info.
-
-If Imperial is not detected, offer basic install dialog (install + erase).
-
-If Imperial is detected:
-  - UI includes detected name, firmware, version
-  - Offer "Configure Wi-Fi".
-  - If provisioned + connected: show "visit device"
-  - If same firwmware but different version: offer upgrade (install) (no erase)
-  - If same firmware + version: offer factory reset (erase + install)
-  - If different firmware: offer install (erase + install)
-*/
 @customElement("ewt-install-dialog")
 class EwtInstallDialog extends LitElement {
   public port!: SerialPort;
@@ -58,8 +43,12 @@ class EwtInstallDialog extends LitElement {
   // null = NOT_SUPPORTED
   @state() private _client?: ImprovSerial | null;
 
-  @state() private _state: "ERROR" | "DASHBOARD" | "PROVISION" | "INSTALL" =
-    "DASHBOARD";
+  @state() private _state:
+    | "ERROR"
+    | "DASHBOARD"
+    | "PROVISION"
+    | "INSTALL"
+    | "CONSOLE" = "DASHBOARD";
 
   @state() private _installErase = false;
   @state() private _installConfirmed = false;
@@ -85,7 +74,11 @@ class EwtInstallDialog extends LitElement {
     let hideActions = false;
 
     // During installation phase we temporarily remove the client
-    if (this._client === undefined && this._state !== "INSTALL") {
+    if (
+      this._client === undefined &&
+      this._state !== "INSTALL" &&
+      this._state !== "CONSOLE"
+    ) {
       if (this._error) {
         content = this._renderMessage(ERROR_ICON, this._error, true);
       } else {
@@ -101,6 +94,8 @@ class EwtInstallDialog extends LitElement {
       [heading, content, hideActions] = this._renderDashboard();
     } else if (this._state === "PROVISION") {
       [heading, content, hideActions] = this._renderProvision();
+    } else if (this._state === "CONSOLE") {
+      [heading, content, hideActions] = this._renderConsole();
     }
 
     return html`
@@ -196,6 +191,21 @@ class EwtInstallDialog extends LitElement {
               : `Install ${this._manifest!.name}`}
             @click=${() => this._startInstall(!isSameFirmware)}
             .disabled=${isSameVersion}
+          ></ewt-button>
+        </div>
+        <div>
+          <ewt-button
+            label="Console"
+            @click=${async () => {
+              const client = this._client;
+              if (client) {
+                await this._closeClientWithoutEvents(client);
+                await sleep(100);
+              }
+              // Also set `null` back to undefined.
+              this._client = undefined;
+              this._state = "CONSOLE";
+            }}
           ></ewt-button>
         </div>
         <div>
@@ -339,7 +349,17 @@ class EwtInstallDialog extends LitElement {
                 }}
               ></ewt-button>
             `
-          : ""}
+          : html`
+              <ewt-button
+                slot="secondaryAction"
+                label="Console"
+                @click=${async () => {
+                  // In case it was null
+                  this._client = undefined;
+                  this._state = "CONSOLE";
+                }}
+              ></ewt-button>
+            `}
       `;
     } else if (
       !this._installState ||
@@ -419,6 +439,34 @@ class EwtInstallDialog extends LitElement {
     return [heading, content!, hideActions];
   }
 
+  _renderConsole(): [string | undefined, TemplateResult, boolean] {
+    let heading: string | undefined = `Console`;
+    let content: TemplateResult;
+    let hideActions = false;
+
+    content = html`
+      <ewt-console .port=${this.port} .logger=${this.logger}></ewt-console>
+      <ewt-button
+        slot="primaryAction"
+        label="Back"
+        @click=${async () => {
+          await this.shadowRoot!.querySelector("ewt-console")!.disconnect();
+          this._state = "DASHBOARD";
+          this._initialize();
+        }}
+      ></ewt-button>
+      <ewt-button
+        slot="secondaryAction"
+        label="Reset Device"
+        @click=${async () => {
+          await this.shadowRoot!.querySelector("ewt-console")!.reset();
+        }}
+      ></ewt-button>
+    `;
+
+    return [heading, content!, hideActions];
+  }
+
   public override willUpdate(changedProps: PropertyValues) {
     if (!changedProps.has("_state")) {
       return;
@@ -444,6 +492,8 @@ class EwtInstallDialog extends LitElement {
     if (!changedProps.has("_state")) {
       return;
     }
+
+    this.setAttribute("state", this._state);
 
     if (this._state === "PROVISION") {
       const textfield = this.shadowRoot!.querySelector("ewt-textfield");
@@ -521,8 +571,7 @@ class EwtInstallDialog extends LitElement {
     this._installConfirmed = true;
     this._installState = undefined;
     if (this._client) {
-      this._client.removeEventListener("disconnect", this._handleDisconnect);
-      await this._client.close();
+      await this._closeClientWithoutEvents(this._client);
     }
     this._client = undefined;
 
@@ -575,9 +624,7 @@ class EwtInstallDialog extends LitElement {
       this._progressFeedback.reject();
     }
     if (this._client) {
-      if (this._client) {
-        await this._client.close();
-      }
+      await this._closeClientWithoutEvents(this._client);
     }
     fireEvent(this, "closed" as any);
     this.parentNode!.removeChild(this);
@@ -585,6 +632,11 @@ class EwtInstallDialog extends LitElement {
 
   private get _isUpdate() {
     return this._info?.firmware === this._manifest!.name;
+  }
+
+  private async _closeClientWithoutEvents(client: ImprovSerial) {
+    client.removeEventListener("disconnect", this._handleDisconnect);
+    await client.close();
   }
 
   static styles = css`
@@ -639,6 +691,14 @@ class EwtInstallDialog extends LitElement {
       text-align: left;
       text-decoration: underline;
       cursor: pointer;
+    }
+    :host([state="CONSOLE"]) ewt-dialog {
+      --mdc-dialog-max-width: 90vw;
+    }
+    ewt-console {
+      display: block;
+      width: calc(80vw - 48px);
+      height: 80vh;
     }
   `;
 }

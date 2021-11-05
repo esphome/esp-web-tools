@@ -6,7 +6,8 @@ import {
   Manifest,
   FlashStateType,
 } from "./const";
-import { getChipFamilyName, sleep } from "./util";
+import { getChipFamilyName } from "./util/chip-family-name";
+import { sleep } from "./util/sleep";
 
 export const flash = async (
   onEvent: (state: FlashState) => void,
