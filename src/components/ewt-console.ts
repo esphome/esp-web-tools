@@ -167,10 +167,14 @@ export class EwtConsole extends HTMLElement {
           })
         );
       if (!abortSignal.aborted) {
-        this._console!.addLine("\r\n\r\nTerminal disconnected\r\n");
+        this._console!.addLine("");
+        this._console!.addLine("");
+        this._console!.addLine("Terminal disconnected");
       }
     } catch (e) {
-      this._console!.addLine(`\n\nTerminal disconnected: ${e}`);
+      this._console!.addLine("");
+      this._console!.addLine("");
+      this._console!.addLine(`Terminal disconnected: ${e}`);
     } finally {
       await sleep(100);
       this.logger.debug("Finished console read loop");

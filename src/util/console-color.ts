@@ -5,7 +5,7 @@ interface ConsoleState {
   strikethrough: boolean;
   foregroundColor: string | null;
   backgroundColor: string | null;
-  carriageReturn: boolean;
+  // carriageReturn: boolean;
   secret: boolean;
 }
 
@@ -17,7 +17,7 @@ export class ColoredConsole {
     strikethrough: false,
     foregroundColor: null,
     backgroundColor: null,
-    carriageReturn: false,
+    // carriageReturn: false,
     secret: false,
   };
 
@@ -27,17 +27,17 @@ export class ColoredConsole {
     const re = /(?:\033|\\033)(?:\[(.*?)[@-~]|\].*?(?:\007|\033\\))/g;
     let i = 0;
 
-    if (this.state.carriageReturn) {
-      if (line !== "\n") {
-        // don't remove if \r\n
-        this.targetElement.removeChild(this.targetElement.lastChild!);
-      }
-      this.state.carriageReturn = false;
-    }
+    // if (this.state.carriageReturn) {
+    //   if (line !== "\n") {
+    //     // don't remove if \r\n
+    //     this.targetElement.removeChild(this.targetElement.lastChild!);
+    //   }
+    //   this.state.carriageReturn = false;
+    // }
 
-    if (line.includes("\r")) {
-      this.state.carriageReturn = true;
-    }
+    // if (line.includes("\r")) {
+    //   this.state.carriageReturn = true;
+    // }
 
     const lineSpan = document.createElement("span");
     lineSpan.classList.add("line");
