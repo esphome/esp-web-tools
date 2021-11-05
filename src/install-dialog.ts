@@ -72,6 +72,7 @@ class EwtInstallDialog extends LitElement {
     let heading: string | undefined;
     let content: TemplateResult;
     let hideActions = false;
+    let allowClosing = false;
 
     // During installation phase we temporarily remove the client
     if (
@@ -86,12 +87,12 @@ class EwtInstallDialog extends LitElement {
         hideActions = true;
       }
     } else if (this._state === "INSTALL") {
-      [heading, content, hideActions] = this._renderInstall();
+      [heading, content, hideActions, allowClosing] = this._renderInstall();
     } else if (this._state === "ERROR") {
       heading = "Error";
       content = this._renderMessage(ERROR_ICON, this._error!, true);
     } else if (this._state === "DASHBOARD") {
-      [heading, content, hideActions] = this._renderDashboard();
+      [heading, content, hideActions, allowClosing] = this._renderDashboard();
     } else if (this._state === "PROVISION") {
       [heading, content, hideActions] = this._renderProvision();
     } else if (this._state === "CONSOLE") {
@@ -105,8 +106,20 @@ class EwtInstallDialog extends LitElement {
         scrimClickAction
         @closed=${this._handleClose}
         .hideActions=${hideActions}
-        >${content!}</ewt-dialog
       >
+        ${heading && allowClosing
+          ? html`
+              <button class="close-button" type="button" dialogAction="close">
+                <svg width="24" height="24" viewBox="0 0 24 24">
+                  <path
+                    d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z"
+                  />
+                </svg>
+              </button>
+            `
+          : ""}
+        ${content!}
+      </ewt-dialog>
     `;
   }
 
@@ -142,10 +155,11 @@ class EwtInstallDialog extends LitElement {
     `;
   }
 
-  _renderDashboard(): [string, TemplateResult, boolean] {
+  _renderDashboard(): [string, TemplateResult, boolean, boolean] {
     const heading = this._info!.name;
     let content: TemplateResult;
     let hideActions = true;
+    let allowClosing = true;
 
     const isSameFirmware = this._info!.firmware === this._manifest!.name;
     const isSameVersion =
@@ -208,13 +222,10 @@ class EwtInstallDialog extends LitElement {
             }}
           ></ewt-button>
         </div>
-        <div>
-          <ewt-button label="Close" dialogAction="close"></ewt-button>
-        </div>
       </div>
     `;
 
-    return [heading, content, hideActions];
+    return [heading, content, hideActions, allowClosing];
   }
 
   _renderProvision(): [string | undefined, TemplateResult, boolean] {
@@ -315,10 +326,11 @@ class EwtInstallDialog extends LitElement {
     return [heading, content, hideActions];
   }
 
-  _renderInstall(): [string | undefined, TemplateResult, boolean] {
+  _renderInstall(): [string | undefined, TemplateResult, boolean, boolean] {
     let heading: string | undefined = `Install ${this._manifest!.name}`;
     let content: TemplateResult;
     let hideActions = false;
+    let allowClosing = false;
 
     const isUpdate = !this._installErase && this._isUpdate;
 
@@ -361,6 +373,7 @@ class EwtInstallDialog extends LitElement {
               ></ewt-button>
             `}
       `;
+      allowClosing = !this._client;
     } else if (
       !this._installState ||
       this._installState.state === FlashStateType.INITIALIZING ||
@@ -436,7 +449,7 @@ class EwtInstallDialog extends LitElement {
         ></ewt-button>
       `;
     }
-    return [heading, content!, hideActions];
+    return [heading, content!, hideActions, allowClosing];
   }
 
   _renderConsole(): [string | undefined, TemplateResult, boolean] {
@@ -644,6 +657,15 @@ class EwtInstallDialog extends LitElement {
       --mdc-dialog-max-width: 390px;
       --mdc-theme-primary: var(--improv-primary-color, #03a9f4);
       --mdc-theme-on-primary: var(--improv-on-primary-color, #fff);
+    }
+    .close-button {
+      cursor: pointer;
+      position: absolute;
+      right: 4px;
+      top: 14px;
+      padding: 8px;
+      background: 0;
+      border: 0;
     }
     ewt-textfield {
       display: block;
