@@ -27,6 +27,7 @@ export class ColoredConsole {
     const re = /(?:\033|\\033)(?:\[(.*?)[@-~]|\].*?(?:\007|\033\\))/g;
     let i = 0;
 
+    // This doesn't work for some reason
     // if (this.state.carriageReturn) {
     //   if (line !== "\n") {
     //     // don't remove if \r\n

@@ -299,25 +299,26 @@ class EwtInstallDialog extends LitElement {
       }
       content = html`
         <div>
-          Enter the Wi-Fi credentials of the network that you want your device
+          Enter the credentials of the Wi-Fi network that you want your device
           to connect to.
         </div>
         ${error ? html`<p class="error">${error}</p>` : ""}
-        <ewt-textfield label="Wi-Fi SSID" name="ssid"></ewt-textfield>
+        <ewt-textfield label="Network Name" name="ssid"></ewt-textfield>
         <ewt-textfield
-          label="Wi-Fi password"
+          label="Password"
           name="password"
           type="password"
         ></ewt-textfield>
         <ewt-button
           slot="primaryAction"
-          label="Save"
+          label="Connect"
           @click="${this._doProvision}"
         ></ewt-button>
         <ewt-button
           slot="secondaryAction"
-          label="Back"
+          .label=${this._installState && this._installErase ? "Skip" : "Back"}
           @click=${() => {
+            this._installState = undefined;
             this._state = "DASHBOARD";
           }}
         ></ewt-button>
@@ -380,7 +381,7 @@ class EwtInstallDialog extends LitElement {
       this._installState.state === FlashStateType.MANIFEST ||
       this._installState.state === FlashStateType.PREPARING
     ) {
-      content = this._renderProgress("Initializing installation");
+      content = this._renderProgress("Preparing installation");
       hideActions = true;
     } else if (this._installState.state === FlashStateType.ERASING) {
       content = this._renderProgress("Erasing");
@@ -411,7 +412,7 @@ class EwtInstallDialog extends LitElement {
         ${messageTemplate(OK_ICON, "Installation complete!")}
         <ewt-button
           slot="primaryAction"
-          .label=${supportsImprov ? "Connect to Wi-Fi" : "Close"}
+          .label=${supportsImprov ? "Next" : "Close"}
           dialogAction=${ifDefined(supportsImprov ? undefined : "close")}
           @click=${!supportsImprov
             ? undefined
@@ -419,18 +420,6 @@ class EwtInstallDialog extends LitElement {
                 this._state = this._installErase ? "PROVISION" : "DASHBOARD";
               }}
         ></ewt-button>
-        ${supportsImprov
-          ? html`
-              <ewt-button
-                slot="secondaryAction"
-                label="Skip"
-                @click=${() => {
-                  this._state = "DASHBOARD";
-                  this._installState = undefined;
-                }}
-              ></ewt-button>
-            `
-          : ""}
       `;
     } else if (this._installState.state === FlashStateType.ERROR) {
       content = html`
@@ -602,8 +591,7 @@ class EwtInstallDialog extends LitElement {
       this.port,
       this.logger,
       this.manifestPath,
-      false // TEMP, was `erase`
-      // erase
+      this._installErase
     );
   }
 
