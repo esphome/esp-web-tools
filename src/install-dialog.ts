@@ -170,20 +170,20 @@ class EwtInstallDialog extends LitElement {
         ${this._info!.firmware}&nbsp;${this._info!.version}
       </div>
       <div class="dashboard-buttons">
+        ${this._client!.nextUrl === undefined
+          ? ""
+          : html`
+              <div>
+                <a
+                  href=${this._client!.nextUrl}
+                  class="has-button"
+                  target="_blank"
+                >
+                  <ewt-button label="Setup Device"></ewt-button>
+                </a>
+              </div>
+            `}
         <div>
-          ${this._client!.nextUrl === undefined
-            ? ""
-            : html`
-                <div>
-                  <a
-                    href=${this._client!.nextUrl}
-                    class="has-button"
-                    target="_blank"
-                  >
-                    <ewt-button label="Setup Device"></ewt-button>
-                  </a>
-                </div>
-              `}
           <ewt-button
             .label=${this._client!.state === ImprovSerialCurrentState.READY
               ? "Connect to Wi-Fi"
