@@ -1,9 +1,10 @@
 import { LitElement, html, PropertyValues, css, TemplateResult } from "lit";
-import { customElement, state } from "lit/decorators.js";
+import { state } from "lit/decorators.js";
 import { ifDefined } from "lit/directives/if-defined.js";
 import "./components/ewt-dialog";
 import "./components/ewt-textfield";
 import "./components/ewt-button";
+import "./components/ewt-icon-button";
 import "./components/ewt-circular-progress";
 import type { EwtTextfield } from "./components/ewt-textfield";
 import { Logger, Manifest, FlashStateType, FlashState } from "./const.js";
@@ -28,7 +29,6 @@ const messageTemplate = (icon: string, label: string) => html`
   </div>
 `;
 
-@customElement("ewt-install-dialog")
 class EwtInstallDialog extends LitElement {
   public port!: SerialPort;
 
@@ -48,7 +48,7 @@ class EwtInstallDialog extends LitElement {
     | "DASHBOARD"
     | "PROVISION"
     | "INSTALL"
-    | "CONSOLE" = "DASHBOARD";
+    | "LOGS" = "DASHBOARD";
 
   @state() private _installErase = false;
   @state() private _installConfirmed = false;
@@ -78,7 +78,7 @@ class EwtInstallDialog extends LitElement {
     if (
       this._client === undefined &&
       this._state !== "INSTALL" &&
-      this._state !== "CONSOLE"
+      this._state !== "LOGS"
     ) {
       if (this._error) {
         content = this._renderMessage(ERROR_ICON, this._error, true);
@@ -95,8 +95,8 @@ class EwtInstallDialog extends LitElement {
       [heading, content, hideActions, allowClosing] = this._renderDashboard();
     } else if (this._state === "PROVISION") {
       [heading, content, hideActions] = this._renderProvision();
-    } else if (this._state === "CONSOLE") {
-      [heading, content, hideActions] = this._renderConsole();
+    } else if (this._state === "LOGS") {
+      [heading, content, hideActions] = this._renderLogs();
     }
 
     return html`
@@ -109,13 +109,13 @@ class EwtInstallDialog extends LitElement {
       >
         ${heading && allowClosing
           ? html`
-              <button class="close-button" type="button" dialogAction="close">
+              <ewt-icon-button dialogAction="close">
                 <svg width="24" height="24" viewBox="0 0 24 24">
                   <path
                     d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z"
                   />
                 </svg>
-              </button>
+              </ewt-icon-button>
             `
           : ""}
         ${content!}
@@ -200,16 +200,18 @@ class EwtInstallDialog extends LitElement {
         </div>
         <div>
           <ewt-button
-            .label=${isSameFirmware
-              ? "Update"
-              : `Install ${this._manifest!.name}`}
+            .label=${!isSameFirmware
+              ? `Install ${this._manifest!.name}`
+              : isSameVersion
+              ? "Up to date"
+              : "Update"}
             @click=${() => this._startInstall(!isSameFirmware)}
             .disabled=${isSameVersion}
           ></ewt-button>
         </div>
         <div>
           <ewt-button
-            label="Console"
+            label="Logs"
             @click=${async () => {
               const client = this._client;
               if (client) {
@@ -218,7 +220,7 @@ class EwtInstallDialog extends LitElement {
               }
               // Also set `null` back to undefined.
               this._client = undefined;
-              this._state = "CONSOLE";
+              this._state = "LOGS";
             }}
           ></ewt-button>
         </div>
@@ -365,11 +367,11 @@ class EwtInstallDialog extends LitElement {
           : html`
               <ewt-button
                 slot="secondaryAction"
-                label="Console"
+                label="Logs"
                 @click=${async () => {
                   // In case it was null
                   this._client = undefined;
-                  this._state = "CONSOLE";
+                  this._state = "LOGS";
                 }}
               ></ewt-button>
             `}
@@ -427,12 +429,9 @@ class EwtInstallDialog extends LitElement {
         <ewt-button
           slot="primaryAction"
           label="Back"
-          @click=${() => {
-            if (this._client === null) {
-              this._installConfirmed = false;
-            } else {
-              this._state = "DASHBOARD";
-            }
+          @click=${async () => {
+            this._initialize();
+            this._state = "DASHBOARD";
             this._installState = undefined;
           }}
         ></ewt-button>
@@ -441,8 +440,8 @@ class EwtInstallDialog extends LitElement {
     return [heading, content!, hideActions, allowClosing];
   }
 
-  _renderConsole(): [string | undefined, TemplateResult, boolean] {
-    let heading: string | undefined = `Console`;
+  _renderLogs(): [string | undefined, TemplateResult, boolean] {
+    let heading: string | undefined = `Logs`;
     let content: TemplateResult;
     let hideActions = false;
 
@@ -502,6 +501,9 @@ class EwtInstallDialog extends LitElement {
       if (textfield) {
         textfield.updateComplete.then(() => textfield.focus());
       }
+    } else if (this._state === "INSTALL") {
+      this._installConfirmed = false;
+      this._installState = undefined;
     }
   }
 
@@ -534,11 +536,12 @@ class EwtInstallDialog extends LitElement {
     });
     client.addEventListener("error-changed", () => this.requestUpdate());
     try {
-      await client.initialize();
-      this._info = client.info;
+      this._info = await client.initialize();
       this._client = client;
       client.addEventListener("disconnect", this._handleDisconnect);
     } catch (err: any) {
+      // Clear old value
+      this._info = undefined;
       if (err instanceof PortNotReady) {
         this._state = "ERROR";
         this._error =
@@ -581,10 +584,7 @@ class EwtInstallDialog extends LitElement {
       (state) => {
         this._installState = state;
 
-        if (
-          state.state === FlashStateType.ERROR ||
-          state.state === FlashStateType.FINISHED
-        ) {
+        if (state.state === FlashStateType.FINISHED) {
           this._initialize().then(() => this.requestUpdate());
         }
       },
@@ -646,14 +646,10 @@ class EwtInstallDialog extends LitElement {
       --mdc-theme-primary: var(--improv-primary-color, #03a9f4);
       --mdc-theme-on-primary: var(--improv-on-primary-color, #fff);
     }
-    .close-button {
-      cursor: pointer;
+    ewt-icon-button {
       position: absolute;
       right: 4px;
-      top: 14px;
-      padding: 8px;
-      background: 0;
-      border: 0;
+      top: 10px;
     }
     ewt-textfield {
       display: block;
@@ -702,7 +698,7 @@ class EwtInstallDialog extends LitElement {
       text-decoration: underline;
       cursor: pointer;
     }
-    :host([state="CONSOLE"]) ewt-dialog {
+    :host([state="LOGS"]) ewt-dialog {
       --mdc-dialog-max-width: 90vw;
     }
     ewt-console {
@@ -712,6 +708,8 @@ class EwtInstallDialog extends LitElement {
     }
   `;
 }
+
+customElements.define("ewt-install-dialog", EwtInstallDialog);
 
 declare global {
   interface HTMLElementTagNameMap {

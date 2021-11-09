@@ -1,10 +1,8 @@
-import { customElement } from "lit/decorators.js";
 import { ColoredConsole } from "../util/console-color";
 import { sleep } from "../util/sleep";
 import { LineBreakTransformer } from "../util/line-break-transformer";
 import { Logger } from "../const";
 
-@customElement("ewt-console")
 export class EwtConsole extends HTMLElement {
   public port!: SerialPort;
   public logger!: Logger;
@@ -219,6 +217,8 @@ export class EwtConsole extends HTMLElement {
     await new Promise((resolve) => setTimeout(resolve, 1000));
   }
 }
+
+customElements.define("ewt-console", EwtConsole);
 
 declare global {
   interface HTMLElementTagNameMap {
