@@ -125,8 +125,6 @@
         computer and hit the button:
       </p>
       <esp-web-install-button
-        log-console
-        erase-first
         manifest="static/firmware_build/manifest.json"
       ></esp-web-install-button>
       <p>
@@ -157,16 +155,15 @@
           allowfullscreen
         ></iframe>
       </div>
-      <h2 id="used-by">Projects using ESP Web Tools</h2>
+      <h2 id="used-by">Products using ESP Web Tools</h2>
       <div class="project">
         <a href="https://wled.me" class="logo"
           ><img src="static/logos/wled.png" alt="WLED logo"
         /></a>
         <h3>WLED</h3>
         <p>
-          A fast and feature-rich implementation of an ESP8266/ESP32 firmware to
-          control NeoPixel (WS2812B, WS2811, SK6812) LEDs or also SPI based
-          chipsets like the WS2801 and APA102.
+          Fast and feature-rich firmware to control NeoPixel (WS2812B, WS2811,
+          SK6812) LEDs and SPI based chipsets like the WS2801 and APA102.
         </p>
         <p>
           <a href="https://install.wled.me" target="_blank"
@@ -180,9 +177,9 @@
         /></a>
         <h3>Tasmota</h3>
         <p>
-          Alternative firmware for ESP8266 with easy configuration using webUI,
-          OTA updates, automation using timers or rules, expandability and
-          entirely local control over MQTT, HTTP, Serial or KNX.
+          Firmware with easy configuration using webUI, OTA updates, automation
+          using timers or rules, expandability and entirely local control over
+          MQTT, HTTP, Serial or KNX.
         </p>
         <p>
           <a href="https://arendst.github.io/Tasmota-firmware/" target="_blank"
@@ -200,6 +197,19 @@
           <a href="https://td-er.nl/ESPEasy/" target="_blank"
             >Installation Website</a
           >
+        </p>
+      </div>
+      <div class="project">
+        <a href="https://esphome.io" class="logo"
+          ><img src="static/logos/esphome.svg" alt="ESPHome logo"
+        /></a>
+        <h3>ESPHome</h3>
+        <p>
+          No-code platform for ESP devices. Uses ESP Web Tools in their
+          dashboard to install ESPHome on devices.
+        </p>
+        <p>
+          <a href="https://esphome.io" target="_blank">Website</a>
         </p>
       </div>
       <h2 id="add-website">Adding ESP Web Tools to your website</h2>
@@ -238,10 +248,6 @@
         >.
       </p>
 
-      <p>
-        Add the attribute <code>erase-first</code> if you want to first fully
-        erase the ESP prior to installation.
-      </p>
       <p>
         ESP Web Tools can also be integrated in your projects by installing it
         via NPM:<br />
@@ -299,24 +305,6 @@
         already installed devices and re-configure the wireless network
         settings.
       </p>
-      <p>TODO EXAMPLE VIDEO</p>
-      <!-- <p>
-        Each build also allows you to specify if it supports
-        <a href="https://www.improv-wifi.com">the Improv Wi-Fi standard</a>. If
-        it does, the user will be offered to configure the Wi-Fi after
-        installation is done as can be seen in the video below.
-      </p>
-      <div class="videoWrapper">
-        <iframe
-          width="560"
-          height="315"
-          src="https://www.youtube-nocookie.com/embed/k88BS8zgWq0?start=33"
-          title="YouTube video player"
-          frameborder="0"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowfullscreen
-        ></iframe>
-      </div> -->
 
       <h3 id="customize">Customizing the look and feel</h3>
       <p>
@@ -331,14 +319,6 @@
       <ul>
         <li><code>--esp-tools-button-color</code></li>
         <li><code>--esp-tools-button-text-color</code></li>
-
-        <li><code>--esp-tools-success-color</code></li>
-        <li><code>--esp-tools-error-color</code></li>
-
-        <li><code>--esp-tools-progress-color</code></li>
-
-        <li><code>--esp-tools-log-background</code></li>
-        <li><code>--esp-tools-log-text-color</code></li>
       </ul>
       <p>There are also some attributes that can be used for styling:</p>
       <table>
@@ -352,15 +332,7 @@
           </td>
           <td>Added if installing firmware is not supported</td>
         </tr>
-        <tr>
-          <td><code>active</code></td>
-          <td>Added when flashing is active</td>
-        </tr>
       </table>
-      <p>
-        When you are using a custom button, you should disable it when the
-        <code>active</code> attribute is present.
-      </p>
       <h4>Replace the button and message with a custom one</h4>
       <p>
         You can replace both the activation button and the message that is shown
@@ -371,8 +343,6 @@
       <pre>
 &lt;esp-web-install-button
   manifest="static/firmware_build/manifest.json"
-  show-log
-  erase-first
 >
   &lt;button slot="activate">Custom install button&lt;/button>
   &lt;span slot="unsupported">Ah snap, your browser doesn't work!&lt;/span>
@@ -380,92 +350,6 @@
 &lt;/esp-web-install-button>
     </pre
       >
-      <h4>Show or hide the progress bar and log</h4>
-      <p>
-        By default there is a progress bar showing the state and progress of the
-        flashing progress, you can change this progress bar to a log view with
-        the <code>show-log</code> attribute.
-      </p>
-      <p>
-        You can also hide all progress indicators by adding the
-        <code>hide-progress</code>
-        attribute. This will hide both the progress bar and the log view. You
-        can then implement your own progress elements using the
-        <a href="#state-events">state events</a>.
-      </p>
-
-      <h3 id="state-events">State events</h3>
-      <p>
-        During the flash progress the button will fire
-        <code>state-changed</code> events for every step of the progress and to
-        signal progress in the writing.
-      </p>
-      <p>
-        With these events you can create your own progress UI or trigger certain
-        actions. You can also find the current state as the
-        <code>state</code> property of the
-        <code>esp-web-install-button</code> element.
-      </p>
-      <p>Events for the following states are fired:</p>
-      <ul>
-        <li>initializing</li>
-        <li>manifest</li>
-        <li>preparing</li>
-        <li>erasing</li>
-        <li>writing</li>
-        <li>finished</li>
-        <li>error</li>
-      </ul>
-      <p>
-        A <code>state-changed</code> event contains the following information:
-      </p>
-      <table>
-        <tr>
-          <td><code>state</code></td>
-          <td>The current state; one of the above</td>
-        </tr>
-        <tr>
-          <td><code>message</code></td>
-          <td>A description of the current state</td>
-        </tr>
-        <tr>
-          <td><code>manifest</code></td>
-          <td>The loaded manifest</td>
-        </tr>
-        <tr>
-          <td><code>build</code></td>
-          <td>The manifest's build that was selected</td>
-        </tr>
-        <tr>
-          <td><code>chipFamily</code></td>
-          <td>
-            The chip that was detected;
-            <code>"ESP32" | "ESP8266" | "ESP32-S2" | "Unknown Chip"</code>
-          </td>
-        </tr>
-        <tr>
-          <td><code>details</code></td>
-          <td>
-            An optional extra field that is different
-            <a
-              href="https://github.com/esphome/esp-web-tools/blob/main/src/const.ts"
-              >per state</a
-            >
-          </td>
-        </tr>
-      </table>
-      <p>An example that logs all state events:</p>
-      <pre>
-&lt;esp-web-install-button
-  manifest="static/firmware_build/manifest.json"
->&lt;/esp-web-install-button>
-&lt;script>
-const espWebInstallButton = document.querySelector("esp-web-install-button");
-espWebInstallButton.addEventListener(
-  "state-changed", (ev) => { console.log(ev.detail) }
-);
-&lt;/script>
-      </pre>
       <h3 id="drivers">USB Serial Drivers</h3>
       <p>
         If the serial port is not showing up, your computer might be missing the
