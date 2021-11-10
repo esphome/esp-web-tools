@@ -63,11 +63,6 @@ The following variables can be used to change the colors of the default UI eleme
 
 - `--esp-tools-button-color`
 - `--esp-tools-button-text-color`
-- `--esp-tools-success-color`
-- `--esp-tools-error-color`
-- `--esp-tools-progress-color`
-- `--esp-tools-log-background`
-- `--esp-tools-log-text-color`
 
 ### Slots
 
@@ -78,21 +73,6 @@ The following slots are available:
 | `activate` | Button to start the flash progress
 | `unsupported` | Message to show when the browser is not supported
 | `not-allowed` | Message to show when not a secure context
-
-## Events
-
-When the state of flashing changes, a `state-changed` event is fired.
-
-A `state-changed` event contains the following information:
-
-Field | Description
--- | --
-state | The current [state](https://github.com/esphome/esp-web-tools/blob/main/src/const.ts)
-message | A description of the current state
-manifest | The loaded manifest
-build | The manifest's build that was selected
-chipFamily | The chip that was detected;&nbsp;"ESP32" \| "ESP8266" \| "ESP32-S2" \| "ESP32-C3" \| "Unknown Chip"
-details | An optional extra field that is different [per state](https://github.com/esphome/esp-web-tools/blob/main/src/const.ts)
 
 ## Development
 
