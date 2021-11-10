@@ -179,7 +179,7 @@ class EwtInstallDialog extends LitElement {
                   class="has-button"
                   target="_blank"
                 >
-                  <ewt-button label="Setup Device"></ewt-button>
+                  <ewt-button label="Set up Device"></ewt-button>
                 </a>
               </div>
             `}
@@ -263,7 +263,7 @@ class EwtInstallDialog extends LitElement {
                     this._state = "DASHBOARD";
                   }}
                 >
-                  <ewt-button label="Setup Device"></ewt-button>
+                  <ewt-button label="Set up Device"></ewt-button>
                 </a>
                 <ewt-button
                   slot="secondaryAction"
