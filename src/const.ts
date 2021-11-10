@@ -1,6 +1,11 @@
+export interface Logger {
+  log(msg: string, ...args: any[]): void;
+  error(msg: string, ...args: any[]): void;
+  debug(msg: string, ...args: any[]): void;
+}
+
 export interface Build {
   chipFamily: "ESP32" | "ESP8266" | "ESP32-S2" | "ESP32-C3";
-  improv: boolean;
   parts: {
     path: string;
     offset: number;
@@ -9,11 +14,12 @@ export interface Build {
 
 export interface Manifest {
   name: string;
+  version: string;
   builds: Build[];
 }
 
 export interface BaseFlashState {
-  state: State;
+  state: FlashStateType;
   message: string;
   manifest?: Manifest;
   build?: Build;
@@ -21,36 +27,36 @@ export interface BaseFlashState {
 }
 
 export interface InitializingState extends BaseFlashState {
-  state: State.INITIALIZING;
+  state: FlashStateType.INITIALIZING;
   details: { done: boolean };
 }
 
 export interface ManifestState extends BaseFlashState {
-  state: State.MANIFEST;
+  state: FlashStateType.MANIFEST;
   details: { done: boolean };
 }
 
 export interface PreparingState extends BaseFlashState {
-  state: State.PREPARING;
+  state: FlashStateType.PREPARING;
   details: { done: boolean };
 }
 
 export interface ErasingState extends BaseFlashState {
-  state: State.ERASING;
+  state: FlashStateType.ERASING;
   details: { done: boolean };
 }
 
 export interface WritingState extends BaseFlashState {
-  state: State.WRITING;
+  state: FlashStateType.WRITING;
   details: { bytesTotal: number; bytesWritten: number; percentage: number };
 }
 
 export interface FinishedState extends BaseFlashState {
-  state: State.FINISHED;
+  state: FlashStateType.FINISHED;
 }
 
 export interface ErrorState extends BaseFlashState {
-  state: State.ERROR;
+  state: FlashStateType.ERROR;
   details: { error: FlashError; details: string | Error };
 }
 
@@ -63,7 +69,7 @@ export type FlashState =
   | FinishedState
   | ErrorState;
 
-export const enum State {
+export const enum FlashStateType {
   INITIALIZING = "initializing",
   MANIFEST = "manifest",
   PREPARING = "preparing",
