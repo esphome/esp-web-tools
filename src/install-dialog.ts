@@ -55,6 +55,7 @@ class EwtInstallDialog extends LitElement {
   @state() private _installState?: FlashState;
 
   @state() private _provisionForce = false;
+  private _wasProvisioned = false;
 
   @state() private _error?: string;
 
@@ -246,44 +247,37 @@ class EwtInstallDialog extends LitElement {
       heading = undefined;
       content = html`
         ${messageTemplate(OK_ICON, "Device connected to the network!")}
-        ${
-          // If we went to provision after installing the firmware with a full erase,
-          // there is nothing left for the user, let them go to the device dashboard
-          // if available
-          this._installState?.state === FlashStateType.FINISHED &&
-          this._installErase &&
-          this._client!.nextUrl !== undefined
-            ? html`
-                <a
-                  slot="primaryAction"
-                  href=${this._client!.nextUrl}
-                  class="has-button"
-                  target="_blank"
-                  @click=${() => {
-                    this._state = "DASHBOARD";
-                  }}
-                >
-                  <ewt-button label="Set up Device"></ewt-button>
-                </a>
-                <ewt-button
-                  slot="secondaryAction"
-                  label="Skip"
-                  @click=${() => {
-                    this._state = "DASHBOARD";
-                    this._installState = undefined;
-                  }}
-                ></ewt-button>
-              `
-            : html`
-                <ewt-button
-                  slot="primaryAction"
-                  label="Continue"
-                  @click=${() => {
-                    this._state = "DASHBOARD";
-                  }}
-                ></ewt-button>
-              `
-        }
+        ${!this._wasProvisioned && this._client!.nextUrl !== undefined
+          ? html`
+              <a
+                slot="primaryAction"
+                href=${this._client!.nextUrl}
+                class="has-button"
+                target="_blank"
+                @click=${() => {
+                  this._state = "DASHBOARD";
+                }}
+              >
+                <ewt-button label="Set up Device"></ewt-button>
+              </a>
+              <ewt-button
+                slot="secondaryAction"
+                label="Skip"
+                @click=${() => {
+                  this._state = "DASHBOARD";
+                  this._installState = undefined;
+                }}
+              ></ewt-button>
+            `
+          : html`
+              <ewt-button
+                slot="primaryAction"
+                label="Continue"
+                @click=${() => {
+                  this._state = "DASHBOARD";
+                }}
+              ></ewt-button>
+            `}
       `;
     } else {
       let error: string | undefined;
@@ -597,6 +591,8 @@ class EwtInstallDialog extends LitElement {
 
   private async _doProvision() {
     this._busy = true;
+    this._wasProvisioned =
+      this._client!.state === ImprovSerialCurrentState.PROVISIONED;
     const ssid = (
       this.shadowRoot!.querySelector("ewt-textfield[name=ssid]") as EwtTextfield
     ).value;
