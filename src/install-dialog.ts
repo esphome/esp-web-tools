@@ -158,9 +158,30 @@ class EwtInstallDialog extends LitElement {
     let allowClosing = true;
 
     content = html`
-      <div class="device-info">
-        ${this._info!.firmware}&nbsp;${this._info!.version}
-      </div>
+      <table>
+        <tr>
+          <td>
+            <svg viewBox="0 0 24 24">
+              <path
+                fill="currentColor"
+                d="M9.5,8.5L11,10L8,13L11,16L9.5,17.5L5,13L9.5,8.5M14.5,17.5L13,16L16,13L13,10L14.5,8.5L19,13L14.5,17.5M21,2H3A2,2 0 0,0 1,4V20A2,2 0 0,0 3,22H21A2,2 0 0,0 23,20V4A2,2 0 0,0 21,2M21,20H3V6H21V20Z"
+              />
+            </svg>
+          </td>
+          <td>${this._info!.firmware}&nbsp;${this._info!.version}</td>
+        </tr>
+        <tr>
+          <td>
+            <svg viewBox="0 0 24 24">
+              <path
+                fill="currentColor"
+                d="M6,4H18V5H21V7H18V9H21V11H18V13H21V15H18V17H21V19H18V20H6V19H3V17H6V15H3V13H6V11H3V9H6V7H3V5H6V4M11,15V18H12V15H11M13,15V18H14V15H13M15,15V18H16V15H15Z"
+              />
+            </svg>
+          </td>
+          <td>${this._info!.chipFamily}</td>
+        </tr>
+      </table>
       <div class="dashboard-buttons">
         ${!this._isSameVersion
           ? html`
@@ -218,7 +239,7 @@ class EwtInstallDialog extends LitElement {
         </div>
         <div>
           <ewt-button
-            label="Logs"
+            label="Logs & Console"
             @click=${async () => {
               const client = this._client;
               if (client) {
@@ -715,6 +736,14 @@ class EwtInstallDialog extends LitElement {
       position: absolute;
       right: 4px;
       top: 10px;
+    }
+    table {
+      border-spacing: 0;
+      color: rgba(0, 0, 0, 0.6);
+    }
+    table svg {
+      width: 20px;
+      margin-right: 8px;
     }
     ewt-textfield {
       display: block;
