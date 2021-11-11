@@ -175,7 +175,7 @@ class EwtInstallDialog extends LitElement {
                   class="has-button"
                   target="_blank"
                 >
-                  <ewt-button label="Go to Device"></ewt-button>
+                  <ewt-button label="Visit Device"></ewt-button>
                 </a>
               </div>
             `}
@@ -273,7 +273,7 @@ class EwtInstallDialog extends LitElement {
                       this._state = "DASHBOARD";
                     }}
                   >
-                    <ewt-button label="Go to Device"></ewt-button>
+                    <ewt-button label="Visit Device"></ewt-button>
                   </a>
                 </div>
                 ${!this._manifest.home_assistant_domain
