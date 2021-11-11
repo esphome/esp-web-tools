@@ -16,6 +16,7 @@ export interface Manifest {
   name: string;
   version: string;
   home_assistant_domain?: string;
+  new_install_skip_erase?: boolean;
   builds: Build[];
 }
 

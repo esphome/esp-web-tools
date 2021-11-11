@@ -580,7 +580,7 @@ class EwtInstallDialog extends LitElement {
         // When it can't detect improv (ie because install failed)
         // We shouldn't reset settings but instead show the error
         if (this._state !== "INSTALL") {
-          this._startInstall(true);
+          this._startInstall(!this._manifest.new_install_skip_erase);
         }
       }
     }
