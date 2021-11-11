@@ -126,14 +126,18 @@ export class EwtConsole extends HTMLElement {
       <form>
         >
         <input autofocus>
-        <button type="button">Send</button>
       </form>
     `;
 
     this._console = new ColoredConsole(this.shadowRoot!.querySelector("div")!);
     const input = this.shadowRoot!.querySelector("input")!;
 
-    this.addEventListener("click", () => input.focus());
+    this.addEventListener("click", () => {
+      // Only focus input if user didn't select some text
+      if (getSelection()?.toString() === "") {
+        input.focus();
+      }
+    });
 
     input.addEventListener("keydown", (ev) => {
       if (ev.key === "Enter") {
