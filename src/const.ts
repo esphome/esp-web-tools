@@ -15,6 +15,7 @@ export interface Build {
 export interface Manifest {
   name: string;
   version: string;
+  home_assistant_domain?: string;
   builds: Build[];
 }
 
