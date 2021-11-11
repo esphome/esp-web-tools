@@ -266,6 +266,7 @@
 {
   "name": "ESPHome",
   "version": "2021.11.0",
+  "home_assistant_domain": "esphome",
   "builds": [
     {
       "chipFamily": "ESP32",
@@ -290,6 +291,11 @@
         Each part consists of a path to the file and an offset on the flash
         where it should be installed. Part paths are resolved relative to the
         path of the manifest, but can also be URLs to other hosts.
+      </p>
+      <p>
+        If your firmware is supported by Home Assistant, you can add the
+        optional key <code>home_assistant_domain</code>. If present, ESP Web
+        Tools will link the user to add this device to Home Assistant.
       </p>
       <h3 id="improv">Wi-Fi provisioning</h3>
       <p>

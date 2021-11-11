@@ -61,11 +61,6 @@ class EwtInstallDialog extends LitElement {
 
   @state() private _busy = false;
 
-  private _progressFeedback?: {
-    resolve: (_: unknown) => void;
-    reject: () => void;
-  };
-
   protected render() {
     if (!this.port) {
       return html``;
@@ -180,7 +175,21 @@ class EwtInstallDialog extends LitElement {
                   class="has-button"
                   target="_blank"
                 >
-                  <ewt-button label="Set up Device"></ewt-button>
+                  <ewt-button label="Go to Device"></ewt-button>
+                </a>
+              </div>
+            `}
+        ${!this._manifest.home_assistant_domain ||
+        this._client!.state !== ImprovSerialCurrentState.PROVISIONED
+          ? ""
+          : html`
+              <div>
+                <a
+                  href=${`https://my.home-assistant.io/redirect/config_flow_start/?domain=${this._manifest.home_assistant_domain}`}
+                  class="has-button"
+                  target="_blank"
+                >
+                  <ewt-button label="Add to Home Assistant"></ewt-button>
                 </a>
               </div>
             `}
@@ -245,29 +254,53 @@ class EwtInstallDialog extends LitElement {
       this._client!.state === ImprovSerialCurrentState.PROVISIONED
     ) {
       heading = undefined;
+      const showSetupLinks =
+        !this._wasProvisioned &&
+        (this._client!.nextUrl !== undefined ||
+          "home_assistant_domain" in this._manifest);
+      hideActions = showSetupLinks;
       content = html`
         ${messageTemplate(OK_ICON, "Device connected to the network!")}
-        ${!this._wasProvisioned && this._client!.nextUrl !== undefined
+        ${showSetupLinks
           ? html`
-              <a
-                slot="primaryAction"
-                href=${this._client!.nextUrl}
-                class="has-button"
-                target="_blank"
-                @click=${() => {
-                  this._state = "DASHBOARD";
-                }}
-              >
-                <ewt-button label="Set up Device"></ewt-button>
-              </a>
-              <ewt-button
-                slot="secondaryAction"
-                label="Skip"
-                @click=${() => {
-                  this._state = "DASHBOARD";
-                  this._installState = undefined;
-                }}
-              ></ewt-button>
+              <div class="dashboard-buttons">
+                <div>
+                  <a
+                    href=${this._client!.nextUrl}
+                    class="has-button"
+                    target="_blank"
+                    @click=${() => {
+                      this._state = "DASHBOARD";
+                    }}
+                  >
+                    <ewt-button label="Go to Device"></ewt-button>
+                  </a>
+                </div>
+                ${!this._manifest.home_assistant_domain
+                  ? ""
+                  : html`
+                      <div>
+                        <a
+                          href=${`https://my.home-assistant.io/redirect/config_flow_start/?domain=${this._manifest.home_assistant_domain}`}
+                          class="has-button"
+                          target="_blank"
+                        >
+                          <ewt-button
+                            label="Add to Home Assistant"
+                          ></ewt-button>
+                        </a>
+                      </div>
+                    `}
+                <div>
+                  <ewt-button
+                    label="Skip"
+                    @click=${() => {
+                      this._state = "DASHBOARD";
+                      this._installState = undefined;
+                    }}
+                  ></ewt-button>
+                </div>
+              </div>
             `
           : html`
               <ewt-button
@@ -617,9 +650,6 @@ class EwtInstallDialog extends LitElement {
   };
 
   private async _handleClose() {
-    if (this._progressFeedback) {
-      this._progressFeedback.reject();
-    }
     if (this._client) {
       await this._closeClientWithoutEvents(this._client);
     }

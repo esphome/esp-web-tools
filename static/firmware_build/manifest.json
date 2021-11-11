@@ -1,6 +1,7 @@
 {
   "name": "ESPHome",
   "version": "2021.11.0-dev",
+  "home_assistant_domain": "esphome",
   "builds": [
     {
       "chipFamily": "ESP32",
