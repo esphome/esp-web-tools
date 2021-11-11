@@ -272,18 +272,22 @@ class EwtInstallDialog extends LitElement {
         ${showSetupLinks
           ? html`
               <div class="dashboard-buttons">
-                <div>
-                  <a
-                    href=${this._client!.nextUrl}
-                    class="has-button"
-                    target="_blank"
-                    @click=${() => {
-                      this._state = "DASHBOARD";
-                    }}
-                  >
-                    <ewt-button label="Visit Device"></ewt-button>
-                  </a>
-                </div>
+                ${this._client!.nextUrl === undefined
+                  ? ""
+                  : html`
+                      <div>
+                        <a
+                          href=${this._client!.nextUrl}
+                          class="has-button"
+                          target="_blank"
+                          @click=${() => {
+                            this._state = "DASHBOARD";
+                          }}
+                        >
+                          <ewt-button label="Visit Device"></ewt-button>
+                        </a>
+                      </div>
+                    `}
                 ${!this._manifest.home_assistant_domain
                   ? ""
                   : html`
