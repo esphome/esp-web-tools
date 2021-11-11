@@ -466,6 +466,7 @@ class EwtInstallDialog extends LitElement {
         <ewt-button
           slot="primaryAction"
           .label=${supportsImprov ? "Next" : "Close"}
+          .disabled=${this._client === undefined}
           dialogAction=${ifDefined(supportsImprov ? undefined : "close")}
           @click=${!supportsImprov
             ? undefined
@@ -636,7 +637,9 @@ class EwtInstallDialog extends LitElement {
         this._installState = state;
 
         if (state.state === FlashStateType.FINISHED) {
-          this._initialize().then(() => this.requestUpdate());
+          sleep(100)
+            .then(() => this._initialize())
+            .then(() => this.requestUpdate());
         }
       },
       this.port,
