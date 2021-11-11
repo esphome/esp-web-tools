@@ -157,15 +157,23 @@ class EwtInstallDialog extends LitElement {
     let hideActions = true;
     let allowClosing = true;
 
-    const isSameFirmware = this._info!.firmware === this._manifest!.name;
-    const isSameVersion =
-      isSameFirmware && this._info!.version === this._manifest!.version;
-
     content = html`
       <div class="device-info">
         ${this._info!.firmware}&nbsp;${this._info!.version}
       </div>
       <div class="dashboard-buttons">
+        ${!this._isSameVersion
+          ? html`
+              <div>
+                <ewt-button
+                  .label=${!this._isSameFirmware
+                    ? `Install ${this._manifest!.name}`
+                    : "Update"}
+                  @click=${() => this._startInstall(!this._isSameFirmware)}
+                ></ewt-button>
+              </div>
+            `
+          : ""}
         ${this._client!.nextUrl === undefined
           ? ""
           : html`
@@ -210,17 +218,6 @@ class EwtInstallDialog extends LitElement {
         </div>
         <div>
           <ewt-button
-            .label=${!isSameFirmware
-              ? `Install ${this._manifest!.name}`
-              : isSameVersion
-              ? "Up to date"
-              : "Update"}
-            @click=${() => this._startInstall(!isSameFirmware)}
-            .disabled=${isSameVersion}
-          ></ewt-button>
-        </div>
-        <div>
-          <ewt-button
             label="Logs"
             @click=${async () => {
               const client = this._client;
@@ -234,6 +231,17 @@ class EwtInstallDialog extends LitElement {
             }}
           ></ewt-button>
         </div>
+        ${this._isSameVersion
+          ? html`
+              <div>
+                <ewt-button
+                  class="danger"
+                  label="Reset Data"
+                  @click=${() => this._startInstall(true)}
+                ></ewt-button>
+              </div>
+            `
+          : ""}
       </div>
     `;
 
@@ -362,9 +370,21 @@ class EwtInstallDialog extends LitElement {
     let hideActions = false;
     let allowClosing = false;
 
-    const isUpdate = !this._installErase && this._isUpdate;
+    const isUpdate = !this._installErase && this._isSameFirmware;
 
-    if (!this._installConfirmed) {
+    if (!this._installConfirmed && this._isSameVersion) {
+      heading = "Reset data";
+      content = html`
+        Do you want to reset your device and erase all existing data from your
+        device?
+        <ewt-button
+          class="danger"
+          slot="primaryAction"
+          label="Reset data"
+          @click=${this._confirmInstall}
+        ></ewt-button>
+      `;
+    } else if (!this._installConfirmed) {
       const action = isUpdate ? "update to" : "install";
       content = html`
         ${isUpdate
@@ -657,8 +677,20 @@ class EwtInstallDialog extends LitElement {
     this.parentNode!.removeChild(this);
   }
 
-  private get _isUpdate() {
+  /**
+   * Return if the device runs same firmware as manifest.
+   */
+  private get _isSameFirmware() {
     return this._info?.firmware === this._manifest!.name;
+  }
+
+  /**
+   * Return if the device runs same firmware and version as manifest.
+   */
+  private get _isSameVersion() {
+    return (
+      this._isSameFirmware && this._info!.version === this._manifest!.version
+    );
   }
 
   private async _closeClientWithoutEvents(client: ImprovSerial) {
@@ -713,6 +745,9 @@ class EwtInstallDialog extends LitElement {
     }
     .error {
       color: #db4437;
+    }
+    .danger {
+      --mdc-theme-primary: #db4437;
     }
     button.link {
       background: none;
