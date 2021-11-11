@@ -301,7 +301,10 @@
       <p>
         By default a new installation will erase the entire flash. If you want
         to skip this step, set the optional key
-        <code>new_install_skip_erase</code> to <code>true</code>.
+        <code>new_install_skip_erase</code> to <code>true</code>. ESP Web Tools
+        considers it a new installation if it is unable to detect the current
+        firmware of the device (via Improv Serial) or if the detected firmware
+        does not match the name specififed in the manifest.
       </p>
       <h3 id="improv">Wi-Fi provisioning</h3>
       <p>
