@@ -126,7 +126,6 @@ export class EwtConsole extends HTMLElement {
       <form>
         >
         <input autofocus>
-        <button type="button">Send</button>
       </form>
     `;
 
