@@ -5,8 +5,11 @@ export const connect = async (button: InstallButton) => {
   let port: SerialPort | undefined;
   try {
     port = await navigator.serial.requestPort();
-  } catch (err) {
-    console.error("User cancelled request", err);
+  } catch (err: any) {
+    if ((err as DOMException).name === "NotFoundError") {
+      return;
+    }
+    alert(`Error: ${err.message}`);
     return;
   }
 
