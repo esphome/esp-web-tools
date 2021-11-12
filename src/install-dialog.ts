@@ -390,7 +390,9 @@ class EwtInstallDialog extends LitElement {
   }
 
   _renderInstall(): [string | undefined, TemplateResult, boolean, boolean] {
-    let heading: string | undefined = `Install ${this._manifest!.name}`;
+    let heading: string | undefined = `${
+      this._installConfirmed ? "Installing" : "Install"
+    } ${this._manifest!.name}`;
     let content: TemplateResult;
     let hideActions = false;
     let allowClosing = false;
@@ -731,6 +733,7 @@ class EwtInstallDialog extends LitElement {
       --mdc-dialog-max-width: 390px;
       --mdc-theme-primary: var(--improv-primary-color, #03a9f4);
       --mdc-theme-on-primary: var(--improv-on-primary-color, #fff);
+      text-align: left;
     }
     ewt-icon-button {
       position: absolute;
