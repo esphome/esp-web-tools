@@ -317,6 +317,9 @@ class EwtInstallDialog extends LitElement {
                           href=${`https://my.home-assistant.io/redirect/config_flow_start/?domain=${this._manifest.home_assistant_domain}`}
                           class="has-button"
                           target="_blank"
+                          @click=${() => {
+                            this._state = "DASHBOARD";
+                          }}
                         >
                           <ewt-button
                             label="Add to Home Assistant"

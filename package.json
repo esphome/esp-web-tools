@@ -29,7 +29,7 @@
     "@material/mwc-linear-progress": "^0.25.1",
     "@material/mwc-textfield": "^0.25.3",
     "esp-web-flasher": "^4.0.0",
-    "improv-wifi-serial-sdk": "^1.0.1",
+    "improv-wifi-serial-sdk": "^2.0.0",
     "lit": "^2.0.0",
     "tslib": "^2.3.1"
   }
