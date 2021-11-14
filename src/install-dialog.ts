@@ -1,6 +1,5 @@
 import { LitElement, html, PropertyValues, css, TemplateResult } from "lit";
 import { state } from "lit/decorators.js";
-import { ifDefined } from "lit/directives/if-defined.js";
 import "./components/ewt-dialog";
 import "./components/ewt-textfield";
 import "./components/ewt-button";
@@ -88,7 +87,9 @@ class EwtInstallDialog extends LitElement {
       heading = "Error";
       content = this._renderMessage(ERROR_ICON, this._error!, true);
     } else if (this._state === "DASHBOARD") {
-      [heading, content, hideActions, allowClosing] = this._renderDashboard();
+      [heading, content, hideActions, allowClosing] = this._client
+        ? this._renderDashboard()
+        : this._renderDashboardNoImprov();
     } else if (this._state === "PROVISION") {
       [heading, content, hideActions] = this._renderProvision();
     } else if (this._state === "LOGS") {
@@ -161,7 +162,7 @@ class EwtInstallDialog extends LitElement {
       <table>
         <tr>
           <td>
-            <svg viewBox="0 0 24 24">
+            <svg viewBox="0 0 24 24" title="Software">
               <path
                 fill="currentColor"
                 d="M9.5,8.5L11,10L8,13L11,16L9.5,17.5L5,13L9.5,8.5M14.5,17.5L13,16L16,13L13,10L14.5,8.5L19,13L14.5,17.5M21,2H3A2,2 0 0,0 1,4V20A2,2 0 0,0 3,22H21A2,2 0 0,0 23,20V4A2,2 0 0,0 21,2M21,20H3V6H21V20Z"
@@ -172,7 +173,7 @@ class EwtInstallDialog extends LitElement {
         </tr>
         <tr>
           <td>
-            <svg viewBox="0 0 24 24">
+            <svg viewBox="0 0 24 24" title="Chipset">
               <path
                 fill="currentColor"
                 d="M6,4H18V5H21V7H18V9H21V11H18V13H21V15H18V17H21V19H18V20H6V19H3V17H6V15H3V13H6V11H3V9H6V7H3V5H6V4M11,15V18H12V15H11M13,15V18H14V15H13M15,15V18H16V15H15Z"
@@ -189,7 +190,7 @@ class EwtInstallDialog extends LitElement {
                 <ewt-button
                   .label=${!this._isSameFirmware
                     ? `Install ${this._manifest!.name}`
-                    : "Update"}
+                    : `Update ${this._manifest!.name}`}
                   @click=${() => this._startInstall(!this._isSameFirmware)}
                 ></ewt-button>
               </div>
@@ -263,6 +264,36 @@ class EwtInstallDialog extends LitElement {
               </div>
             `
           : ""}
+      </div>
+    `;
+
+    return [heading, content, hideActions, allowClosing];
+  }
+  _renderDashboardNoImprov(): [string, TemplateResult, boolean, boolean] {
+    const heading = "Device Dashboard";
+    let content: TemplateResult;
+    let hideActions = true;
+    let allowClosing = true;
+
+    content = html`
+      <div class="dashboard-buttons">
+        <div>
+          <ewt-button
+            .label=${`Install ${this._manifest.name}`}
+            @click=${() => this._startInstall(true)}
+          ></ewt-button>
+        </div>
+
+        <div>
+          <ewt-button
+            label="Logs & Console"
+            @click=${async () => {
+              // Also set `null` back to undefined.
+              this._client = undefined;
+              this._state = "LOGS";
+            }}
+          ></ewt-button>
+        </div>
       </div>
     `;
 
@@ -398,7 +429,7 @@ class EwtInstallDialog extends LitElement {
     } ${this._manifest!.name}`;
     let content: TemplateResult;
     let hideActions = false;
-    let allowClosing = false;
+    const allowClosing = false;
 
     const isUpdate = !this._installErase && this._isSameFirmware;
 
@@ -431,29 +462,14 @@ class EwtInstallDialog extends LitElement {
           label="Install"
           @click=${this._confirmInstall}
         ></ewt-button>
-        ${this._client
-          ? html`
-              <ewt-button
-                slot="secondaryAction"
-                label="Back"
-                @click=${() => {
-                  this._state = "DASHBOARD";
-                }}
-              ></ewt-button>
-            `
-          : html`
-              <ewt-button
-                slot="secondaryAction"
-                label="Logs"
-                @click=${async () => {
-                  // In case it was null
-                  this._client = undefined;
-                  this._state = "LOGS";
-                }}
-              ></ewt-button>
-            `}
+        <ewt-button
+          slot="secondaryAction"
+          label="Back"
+          @click=${() => {
+            this._state = "DASHBOARD";
+          }}
+        ></ewt-button>
       `;
-      allowClosing = !this._client;
     } else if (
       !this._installState ||
       this._installState.state === FlashStateType.INITIALIZING ||
@@ -491,14 +507,12 @@ class EwtInstallDialog extends LitElement {
         ${messageTemplate(OK_ICON, "Installation complete!")}
         <ewt-button
           slot="primaryAction"
-          .label=${supportsImprov ? "Next" : "Close"}
+          label="Next"
           .disabled=${this._client === undefined}
-          dialogAction=${ifDefined(supportsImprov ? undefined : "close")}
-          @click=${!supportsImprov
-            ? undefined
-            : () => {
-                this._state = this._installErase ? "PROVISION" : "DASHBOARD";
-              }}
+          @click=${() => {
+            this._state =
+              supportsImprov && this._installErase ? "PROVISION" : "DASHBOARD";
+          }}
         ></ewt-button>
       `;
     } else if (this._installState.state === FlashStateType.ERROR) {
@@ -627,12 +641,6 @@ class EwtInstallDialog extends LitElement {
       } else {
         this._client = null; // not supported
         this.logger.error("Improv initialization failed.", err);
-        // initialize is also called at the end of an installation
-        // When it can't detect improv (ie because install failed)
-        // We shouldn't reset settings but instead show the error
-        if (this._state !== "INSTALL") {
-          this._startInstall(!this._manifest.new_install_skip_erase);
-        }
       }
     }
 
@@ -746,6 +754,7 @@ class EwtInstallDialog extends LitElement {
     table {
       border-spacing: 0;
       color: rgba(0, 0, 0, 0.6);
+      margin-bottom: 16px;
     }
     table svg {
       width: 20px;
@@ -768,7 +777,7 @@ class EwtInstallDialog extends LitElement {
       text-align: center;
     }
     .dashboard-buttons {
-      margin: 16px 0 -16px -8px;
+      margin: 0 0 -16px -8px;
     }
     .dashboard-buttons div {
       display: block;
