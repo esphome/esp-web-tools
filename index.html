@@ -55,6 +55,18 @@
       a {
         color: #03a9f4;
       }
+      .screenshot {
+        text-align: center;
+      }
+      .screenshot img {
+        box-shadow: rgb(0 0 0 / 20%) 0px 2px 1px -1px,
+          rgb(0 0 0 / 14%) 0px 1px 1px 0px, rgb(0 0 0 / 12%) 0px 1px 3px 0px;
+        border-radius: 4px;
+      }
+      .screenshot i {
+        margin-top: 4px;
+        display: block;
+      }
       .videoWrapper {
         position: relative;
         padding-bottom: 56.25%; /* 16:9 */
@@ -113,12 +125,34 @@
     <div class="content">
       <h1>ESP Web Tools</h1>
       <p>
-        ESP Web Tools is a set of open source tools to allow working with ESP
-        devices in the browser.
-        <a href="https://github.com/esphome/esp-web-tools"
-          >The code is available on GitHub.</a
-        >
+        ESP Web Tools allows you to manage ESP8266 and ESP32 devices in the
+        browser: install new firmware, update firmware, connect device to the
+        Wi-Fi network, visit the device's hosted web interface and add devices
+        to <a href="https://www.home-assistant.io">Home Assistant</a>.
       </p>
+      <div class="videoWrapper">
+        <iframe
+          width="560"
+          height="315"
+          src="https://www.youtube-nocookie.com/embed/E8bdATqXM8c"
+          title="YouTube video player"
+          frameborder="0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowfullscreen
+        ></iframe>
+      </div>
+
+      <p>
+        ESP Web Tools works by combining
+        <a
+          href="https://developer.mozilla.org/en-US/docs/Web/API/Web_Serial_API"
+          >Web Serial</a
+        >, <a href="https://www.improv-wifi.com/">Improv Wi-Fi</a> (optional),
+        and a manifest which describes the firmware. It will automatically
+        detect the chipset of the connected ESP device and find the right
+        firmware files in the manifest.
+      </p>
+
       <p>
         To try it out and install
         <a href="https://esphome.io">ESPHome</a> on an ESP, connect it to your
@@ -134,27 +168,15 @@
           your ESP device, you might miss <a href="#drivers">drivers</a>.
         </i>
       </p>
-      <p>
-        This works by combining
-        <a
-          href="https://developer.mozilla.org/en-US/docs/Web/API/Web_Serial_API"
-          >Web Serial</a
-        >
-        with a manifest which describes the firmware. It will automatically
-        detect the type of the connected ESP device and find the right firmware
-        files in the manifest.
+
+      <p class="screenshot">
+        <img
+          src="/static/screenshot-dialog.png"
+          alt="Screenshot showing ESP Web Tools dialog offering visting the device, adding it to Home Assistant, change Wi-Fi, show logs and console and reset data."
+        />
+        <i>Screenshot showing the ESP Web Tools interface</i>
       </p>
-      <div class="videoWrapper">
-        <iframe
-          width="560"
-          height="315"
-          src="https://www.youtube-nocookie.com/embed/E8bdATqXM8c"
-          title="YouTube video player"
-          frameborder="0"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowfullscreen
-        ></iframe>
-      </div>
+
       <h2 id="used-by">Products using ESP Web Tools</h2>
       <div class="project">
         <a href="https://wled.me" class="logo"
@@ -339,8 +361,7 @@
 
       <h3 id="customize">Customizing the look and feel</h3>
       <p>
-        There are multiple options to change the look and feel of the button and
-        other elements.
+        There are multiple options to change the look and feel of the button.
       </p>
       <h4>Change colors</h4>
       <p>
