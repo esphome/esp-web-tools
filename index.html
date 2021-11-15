@@ -81,6 +81,15 @@
         width: 100%;
         height: 100%;
       }
+      .hidden {
+        display: none;
+      }
+      .supported-info {
+        display: none;
+      }
+      esp-web-install-button[install-supported] + .supported-info {
+        display: block;
+      }
       .content pre {
         max-width: 100%;
         overflow-y: scroll;
@@ -148,33 +157,37 @@
           href="https://developer.mozilla.org/en-US/docs/Web/API/Web_Serial_API"
           >Web Serial</a
         >, <a href="https://www.improv-wifi.com/">Improv Wi-Fi</a> (optional),
-        and a manifest which describes the firmware. It will automatically
-        detect the chipset of the connected ESP device and find the right
-        firmware files in the manifest.
+        and a manifest which describes the firmware. It will automatically find
+        the supported firmware files from the manifest by detecting the chipset
+        of the connected ESP device.
+      </p>
+      <p>
+        Web Serial is available in Google Chrome and Microsoft Edge
+        browsers<span class="not-supported-i hidden">
+          (but not on your iOS device)</span
+        >. Android support should be possible but has not been implemented yet.
       </p>
 
+      <h2 id="demo">Try a live demo</h2>
       <p>
-        To try it out and install
-        <a href="https://esphome.io">ESPHome</a> on an ESP, connect it to your
-        computer and hit the button:
+        This demo will install
+        <a href="https://esphome.io">ESPHome</a>. To get started, connect an ESP
+        device to your computer and hit the button:
       </p>
-      <esp-web-install-button
-        manifest="static/firmware_build/manifest.json"
-      ></esp-web-install-button>
-      <p>
-        <i>
-          Note, this only works in desktop Chrome and Edge. Android support
-          should be possible but has not been implemented yet. If you don't see
-          your ESP device, you might miss <a href="#drivers">drivers</a>.
+      <esp-web-install-button manifest="static/firmware_build/manifest.json">
+        <i slot="unsupported">
+          The demo is not available because your browser does not support Web
+          Serial. Open this page in Google Chrome or Microsoft Edge instead<span
+            class="not-supported-i hidden"
+          >
+            (but not on your iOS device)</span
+          >.
         </i>
-      </p>
-
-      <p class="screenshot">
-        <img
-          src="./static/screenshot-dialog.png"
-          alt="Screenshot showing ESP Web Tools dialog offering visting the device, adding it to Home Assistant, change Wi-Fi, show logs and console and reset data."
-        />
-        <i>Screenshot showing the ESP Web Tools interface</i>
+      </esp-web-install-button>
+      <p class="supported-info">
+        If you don't see your ESP device in the list of devices to choose, you
+        might need to install
+        <a href="#drivers">the drivers</a>.
       </p>
 
       <h2 id="used-by">Products using ESP Web Tools</h2>
@@ -252,12 +265,12 @@
       </div>
       <h2 id="add-website">Adding ESP Web Tools to your website</h2>
       <p>
-        To add this to your own website, create a manifest and add the button to
-        your website. Make sure you update the manifest attribute to point at
-        your manifest.
+        To add this to your own website, you need to include the ESP Web Tools
+        JavaScript files on your website, create a manifest file and render the
+        ESP Web Tools button.
       </p>
       <p>
-        You can import ESP Web Tools directly from the unpkg CDN or
+        You can import the JavaScript files directly from the unpkg CDN or
         <a href="https://unpkg.com/browse/esp-web-tools/dist/web/"
           >download the files</a
         >
@@ -267,20 +280,30 @@
 &lt;script
   type="module"
   src="https://unpkg.com/esp-web-tools@5.1.0/dist/web/install-button.js?module"
->&lt;/script>
-
+>&lt;/script></pre
+      >
+      <p>
+        Find a place on your page where you want the button to appear and
+        include the following bit of HTML. Update the
+        <code>manifest</code> attribute to point at your manifest file.
+      </p>
+      <pre>
 &lt;esp-web-install-button
-  manifest="static/firmware_build/manifest.json"
+  manifest="/static/firmware_build/manifest.json"
 >&lt;/esp-web-install-button></pre
       >
       <p>
-        Your website needs to be served over <code>https://</code>. If your
-        manifest is hosted on another server, make sure you configure
+        ESP Web Tools requires that your website is served over
+        <code>https://</code> to work. This is a Web Serial security limitation.
+      </p>
+      <p>
+        If your manifest or the firmware files are hosted on another server,
+        make sure you configure
         <a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS"
           >the CORS-headers</a
         >
-        for your manifest and firmware files such that your website is allowed
-        to fetch those files by adding the header
+        such that your website is allowed to fetch those files by adding the
+        header
         <code
           >Access-Control-Allow-Origin: https://domain-of-your-website.com</code
         >.
@@ -288,17 +311,16 @@
 
       <p>
         ESP Web Tools can also be integrated in your projects by installing it
-        via NPM:<br />
-        <code>npm install --save esp-web-tools</code>
+        <a href="https://www.npmjs.com/package/esp-web-tools">via NPM</a>.
       </p>
       <h3 id="manifest">Creating your manifest</h3>
       <p>
-        ESP Web Tools manifest describe the firmware that you want to install.
-        It allows specifying different builds for the different types of ESP
-        devices. Current supported chip families are <code>ESP8266</code>,
-        <code>ESP32</code>, <code>ESP32C3</code> and <code>ESP32S2</code>. The
-        correct build will be automatically selected based on the type of the
-        ESP device we detect via the serial port.
+        Manifests describe the firmware that you want to offer the user to
+        install. It allows specifying different builds for the different types
+        of ESP devices. Current supported chip families are
+        <code>ESP8266</code>, <code>ESP32</code>, <code>ESP32C3</code> and
+        <code>ESP32S2</code>. The correct build will be automatically selected
+        based on the type of the ESP device we detect via the serial port.
       </p>
       <pre>
 {
@@ -340,30 +362,38 @@
         By default a new installation will erase the entire flash. If you want
         to skip this step, set the optional key
         <code>new_install_skip_erase</code> to <code>true</code>. ESP Web Tools
-        considers it a new installation if it is unable to detect the current
+        offers users a new installation if it is unable to detect the current
         firmware of the device (via Improv Serial) or if the detected firmware
         does not match the name specififed in the manifest.
       </p>
-      <h3 id="improv">Wi-Fi provisioning</h3>
+      <h2 id="improv">Wi-Fi provisioning</h2>
       <p>
-        ESP Web Tools has support for the
+        ESP Web Tools supports the
         <a href="https://www.improv-wifi.com/serial"
           >Improv Wi-Fi serial standard</a
         >. This is an open standard to allow configuring Wi-Fi via the serial
         port.
       </p>
       <p>
-        If Improv is supported, a user will be guided to connect the device to
-        the network after installation. It also allows the user to connect
-        already installed devices and re-configure the wireless network
-        settings.
+        If the firmware supports Improv, a user will be guided to connect the
+        device to the network after installation. Once connected, the device can
+        sent a URL to the user to finish configuration. This can for example be
+        a link to the device's IP address where it serves a local UI.
+      </p>
+      <p>
+        At any time in the future a user can use ESP Web Tools to find the
+        device link or to reconfigure the Wi-Fi settings without doing a
+        reinstall.
+      </p>
+      <p class="screenshot">
+        <img
+          src="./static/screenshots/dashboard.png"
+          alt="Screenshot showing ESP Web Tools dialog offering visting the device, adding it to Home Assistant, change Wi-Fi, show logs and console and reset data."
+        />
+        <i>Screenshot showing the ESP Web Tools interface</i>
       </p>
 
       <h3 id="customize">Customizing the look and feel</h3>
-      <p>
-        There are multiple options to change the look and feel of the button.
-      </p>
-      <h4>Change colors</h4>
       <p>
         You can change the colors of the default UI elements with CSS custom
         properties (variables), the following variables are available:
@@ -394,7 +424,7 @@
       </p>
       <pre>
 &lt;esp-web-install-button
-  manifest="static/firmware_build/manifest.json"
+  manifest="/static/firmware_build/manifest.json"
 >
   &lt;button slot="activate">Custom install button&lt;/button>
   &lt;span slot="unsupported">Ah snap, your browser doesn't work!&lt;/span>
@@ -402,7 +432,20 @@
 &lt;/esp-web-install-button>
     </pre
       >
-      <h3 id="drivers">USB Serial Drivers</h3>
+      <h2 id="logs">Viewing logs & sending commands</h2>
+      <p>
+        ESP Web Tools allows users to open a serial console to see the logs and
+        send commands.
+      </p>
+      <p class="screenshot">
+        <img
+          src="./static/screenshots/logs.png"
+          alt="Screenshot showing ESP Web Tools dialog with a console showing ESPHome logs and a terminal prompt to sent commands."
+        />
+        <i>Screenshot showing the ESP Web Tools logs & console</i>
+      </p>
+
+      <h2 id="drivers">USB Serial Drivers</h2>
       <p>
         If the serial port is not showing up, your computer might be missing the
         drivers for the USB serial chip used in your ESP device. These drivers
@@ -437,5 +480,10 @@
         </div>
       </div>
     </div>
+    <script>
+      if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
+        document.querySelector(".not-supported-i").classList.remove("hidden");
+      }
+    </script>
   </body>
 </html>
