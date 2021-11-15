@@ -21,6 +21,7 @@ export const connect = async (button: InstallButton) => {
     await port.open({ baudRate: 115200 });
   } catch (err: any) {
      alert(err.message);
+     return;
   }
 
   const el = document.createElement("ewt-install-dialog");
