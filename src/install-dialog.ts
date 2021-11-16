@@ -481,12 +481,28 @@ class EwtInstallDialog extends LitElement {
     } else if (this._installState.state === FlashStateType.ERASING) {
       content = this._renderProgress("Erasing");
       hideActions = true;
-    } else if (this._installState.state === FlashStateType.WRITING) {
+    } else if (
+      this._installState.state === FlashStateType.WRITING ||
+      // When we're finished, keep showing this screen with 100% written
+      // until Improv is initialized / not detected.
+      (this._installState.state === FlashStateType.FINISHED &&
+        this._client === undefined)
+    ) {
+      let percentage: number | undefined;
+      let undeterminateLabel: string | undefined;
+      if (this._installState.state === FlashStateType.FINISHED) {
+        // We're done writing and detecting improv, show spinner
+        undeterminateLabel = "Wrapping up";
+      } else if (this._installState.details.percentage < 4) {
+        // We're writing the firmware under 4%, show spinner or else we don't show any pixels
+        undeterminateLabel = "Installing";
+      } else {
+        // We're writing the firmware over 4%, show progress bar
+        percentage = this._installState.details.percentage;
+      }
       content = this._renderProgress(
         html`
-          ${this._installState.details.percentage > 3
-            ? ""
-            : html`Installing<br />`}
+          ${undeterminateLabel ? html`${undeterminateLabel}<br />` : ""}
           <br />
           This will take
           ${this._installState.chipFamily === "ESP8266"
@@ -494,10 +510,7 @@ class EwtInstallDialog extends LitElement {
             : "2 minutes"}.<br />
           Keep this page visible to prevent slow down
         `,
-        // Show as undeterminate under 3% or else we don't show any pixels
-        this._installState.details.percentage > 3
-          ? this._installState.details.percentage
-          : undefined
+        percentage
       );
       hideActions = true;
     } else if (this._installState.state === FlashStateType.FINISHED) {
@@ -508,7 +521,6 @@ class EwtInstallDialog extends LitElement {
         <ewt-button
           slot="primaryAction"
           label="Next"
-          .disabled=${this._client === undefined}
           @click=${() => {
             this._state =
               supportsImprov && this._installErase ? "PROVISION" : "DASHBOARD";
@@ -613,7 +625,7 @@ class EwtInstallDialog extends LitElement {
     );
   }
 
-  private async _initialize() {
+  private async _initialize(justErased = false) {
     if (this.port.readable === null || this.port.writable === null) {
       this._state = "ERROR";
       this._error =
@@ -628,7 +640,10 @@ class EwtInstallDialog extends LitElement {
     });
     client.addEventListener("error-changed", () => this.requestUpdate());
     try {
-      this._info = await client.initialize();
+      // If a device was just erased, the new firmware might need some time to
+      // format the rest of the flash.
+      const timeout = justErased ? 10000 : 1000;
+      this._info = await client.initialize(timeout);
       this._client = client;
       client.addEventListener("disconnect", this._handleDisconnect);
     } catch (err: any) {
@@ -672,7 +687,7 @@ class EwtInstallDialog extends LitElement {
 
         if (state.state === FlashStateType.FINISHED) {
           sleep(100)
-            .then(() => this._initialize())
+            .then(() => this._initialize(this._installErase))
             .then(() => this.requestUpdate());
         }
       },
