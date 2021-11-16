@@ -488,21 +488,17 @@ class EwtInstallDialog extends LitElement {
       (this._installState.state === FlashStateType.FINISHED &&
         this._client === undefined)
     ) {
-      // We represent 3 states:
-      // 1. We're writing the firmware under 4%, show spinner
-      // 2. We're writing the firmware over 4%, show progress bar
-      // 3. We're done writing and detecting improv, show spinner
       let percentage: number | undefined;
       let undeterminateLabel: string | undefined;
-      if (this._installState.state === FlashStateType.WRITING) {
-        // Show as undeterminate under 4% or else we don't show any pixels
-        if (this._installState.details.percentage < 4) {
-          undeterminateLabel = "Installing";
-        } else {
-          percentage = this._installState.details.percentage;
-        }
-      } else {
+      if (this._installState.state === FlashStateType.FINISHED) {
+        // We're done writing and detecting improv, show spinner
         undeterminateLabel = "Wrapping up";
+      } else if (this._installState.details.percentage < 4) {
+        // We're writing the firmware under 4%, show spinner or else we don't show any pixels
+        undeterminateLabel = "Installing";
+      } else {
+        // We're writing the firmware over 4%, show progress bar
+        percentage = this._installState.details.percentage;
       }
       content = this._renderProgress(
         html`
