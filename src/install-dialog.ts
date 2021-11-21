@@ -191,7 +191,12 @@ class EwtInstallDialog extends LitElement {
                   .label=${!this._isSameFirmware
                     ? `Install ${this._manifest!.name}`
                     : `Update ${this._manifest!.name}`}
-                  @click=${() => this._startInstall(!this._isSameFirmware)}
+                  @click=${() =>
+                    this._startInstall(
+                      // Erase if manifest doens't force skipping it and it's not same firmware
+                      !this._manifest.new_install_skip_erase &&
+                        !this._isSameFirmware
+                    )}
                 ></ewt-button>
               </div>
             `
@@ -280,7 +285,9 @@ class EwtInstallDialog extends LitElement {
         <div>
           <ewt-button
             .label=${`Install ${this._manifest.name}`}
-            @click=${() => this._startInstall(true)}
+            @click=${() =>
+              // Erase if manifest doens't force skipping it
+              this._startInstall(!this._manifest.new_install_skip_erase)}
           ></ewt-button>
         </div>
 
