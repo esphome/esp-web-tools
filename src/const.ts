@@ -16,7 +16,9 @@ export interface Manifest {
   name: string;
   version: string;
   home_assistant_domain?: string;
+  /** @deprecated use `new_install_prompt_erase` instead */
   new_install_skip_erase?: boolean;
+  new_install_prompt_erase?: boolean;
   builds: Build[];
 }
 

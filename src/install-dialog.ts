@@ -4,6 +4,8 @@ import "./components/ewt-dialog";
 import "./components/ewt-textfield";
 import "./components/ewt-button";
 import "./components/ewt-icon-button";
+import "./components/ewt-checkbox";
+import "./components/ewt-formfield";
 import "./components/ewt-circular-progress";
 import type { EwtTextfield } from "./components/ewt-textfield";
 import { Logger, Manifest, FlashStateType, FlashState } from "./const.js";
@@ -47,6 +49,7 @@ class EwtInstallDialog extends LitElement {
     | "DASHBOARD"
     | "PROVISION"
     | "INSTALL"
+    | "ASK_ERASE"
     | "LOGS" = "DASHBOARD";
 
   @state() private _installErase = false;
@@ -83,6 +86,8 @@ class EwtInstallDialog extends LitElement {
       }
     } else if (this._state === "INSTALL") {
       [heading, content, hideActions, allowClosing] = this._renderInstall();
+    } else if (this._state === "ASK_ERASE") {
+      [heading, content] = this._renderAskErase();
     } else if (this._state === "ERROR") {
       heading = "Error";
       content = this._renderMessage(ERROR_ICON, this._error!, true);
@@ -191,12 +196,15 @@ class EwtInstallDialog extends LitElement {
                   .label=${!this._isSameFirmware
                     ? `Install ${this._manifest!.name}`
                     : `Update ${this._manifest!.name}`}
-                  @click=${() =>
-                    this._startInstall(
-                      // Erase if manifest doens't force skipping it and it's not same firmware
-                      !this._manifest.new_install_skip_erase &&
-                        !this._isSameFirmware
-                    )}
+                  @click=${() => {
+                    if (this._isSameFirmware) {
+                      this._startInstall(false);
+                    } else if (this._manifest.new_install_prompt_erase) {
+                      this._state = "ASK_ERASE";
+                    } else {
+                      this._startInstall(true);
+                    }
+                  }}
                 ></ewt-button>
               </div>
             `
@@ -285,9 +293,14 @@ class EwtInstallDialog extends LitElement {
         <div>
           <ewt-button
             .label=${`Install ${this._manifest.name}`}
-            @click=${() =>
-              // Erase if manifest doens't force skipping it
-              this._startInstall(!this._manifest.new_install_skip_erase)}
+            @click=${() => {
+              if (this._manifest.new_install_prompt_erase) {
+                this._state = "ASK_ERASE";
+              } else {
+                // Default is to erase a device that does not support Improv Serial
+                this._startInstall(true);
+              }
+            }}
           ></ewt-button>
         </div>
 
@@ -415,7 +428,7 @@ class EwtInstallDialog extends LitElement {
         <ewt-button
           slot="primaryAction"
           label="Connect"
-          @click="${this._doProvision}"
+          @click=${this._doProvision}
         ></ewt-button>
         <ewt-button
           slot="secondaryAction"
@@ -428,6 +441,36 @@ class EwtInstallDialog extends LitElement {
       `;
     }
     return [heading, content, hideActions];
+  }
+
+  _renderAskErase(): [string | undefined, TemplateResult] {
+    const heading = "Erase device";
+    const content = html`
+      <div>
+        Do you want to erase the device before installing
+        ${this._manifest.name}? All data on the device will be lost.
+      </div>
+      <ewt-formfield label="Erase device" class="danger">
+        <ewt-checkbox></ewt-checkbox>
+      </ewt-formfield>
+      <ewt-button
+        slot="primaryAction"
+        label="Next"
+        @click=${() => {
+          const checkbox = this.shadowRoot!.querySelector("ewt-checkbox")!;
+          this._startInstall(checkbox.checked);
+        }}
+      ></ewt-button>
+      <ewt-button
+        slot="secondaryAction"
+        label="Back"
+        @click=${() => {
+          this._state = "DASHBOARD";
+        }}
+      ></ewt-button>
+    `;
+
+    return [heading, content];
   }
 
   _renderInstall(): [string | undefined, TemplateResult, boolean, boolean] {
@@ -630,6 +673,14 @@ class EwtInstallDialog extends LitElement {
     this._manifest = await fetch(manifestURL).then(
       (resp): Promise<Manifest> => resp.json()
     );
+    if ("new_install_skip_erase" in this._manifest) {
+      console.warn(
+        'Manifest option "new_install_skip_erase" is deprecated. Use "new_install_prompt_erase" instead.'
+      );
+      if (this._manifest.new_install_skip_erase) {
+        this._manifest.new_install_prompt_erase = true;
+      }
+    }
   }
 
   private async _initialize(justErased = false) {
@@ -766,6 +817,10 @@ class EwtInstallDialog extends LitElement {
       --mdc-dialog-max-width: 390px;
       --mdc-theme-primary: var(--improv-primary-color, #03a9f4);
       --mdc-theme-on-primary: var(--improv-on-primary-color, #fff);
+      --improv-danger-color: #db4437;
+      --improv-text-color: rgba(0, 0, 0, 0.6);
+      --mdc-theme-text-primary-on-background: var(--improv-text-color);
+      --mdc-dialog-content-ink-color: var(--improv-text-color);
       text-align: left;
     }
     ewt-icon-button {
@@ -775,7 +830,7 @@ class EwtInstallDialog extends LitElement {
     }
     table {
       border-spacing: 0;
-      color: rgba(0, 0, 0, 0.6);
+      color: var(--improv-text-color);
       margin-bottom: 16px;
     }
     table svg {
@@ -817,10 +872,11 @@ class EwtInstallDialog extends LitElement {
       color: black;
     }
     .error {
-      color: #db4437;
+      color: var(--improv-danger-color);
     }
     .danger {
-      --mdc-theme-primary: #db4437;
+      --mdc-theme-primary: var(--improv-danger-color);
+      --mdc-theme-secondary: var(--improv-danger-color);
     }
     button.link {
       background: none;
