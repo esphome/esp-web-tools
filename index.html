@@ -329,7 +329,7 @@
   "name": "ESPHome",
   "version": "2021.11.0",
   "home_assistant_domain": "esphome",
-  "new_install_skip_erase": false,
+  "new_install_prompt_erase": false,
   "builds": [
     {
       "chipFamily": "ESP32",
@@ -350,7 +350,7 @@
 }</pre
       >
       <p>
-        Each build contains a list of parts to be flashed to the ESP device.
+        Each build contains a list of parts to be installed to the ESP device.
         Each part consists of a path to the file and an offset on the flash
         where it should be installed. Part paths are resolved relative to the
         path of the manifest, but can also be URLs to other hosts.
@@ -361,12 +361,12 @@
         Tools will link the user to add this device to Home Assistant.
       </p>
       <p>
-        By default a new installation will erase the entire flash. If you want
-        to skip this step, set the optional key
-        <code>new_install_skip_erase</code> to <code>true</code>. ESP Web Tools
-        offers users a new installation if it is unable to detect the current
-        firmware of the device (via Improv Serial) or if the detected firmware
-        does not match the name specififed in the manifest.
+        By default a new installation will erase all data before installation.
+        If you want to leave this choice to the user, set the optional key
+        <code>new_install_prompt_erase</code> to <code>true</code>. ESP Web
+        Tools offers users a new installation if it is unable to detect the
+        current firmware of the device (via Improv Serial) or if the detected
+        firmware does not match the name specififed in the manifest.
       </p>
       <h2 id="improv">Configuring Wi-Fi</h2>
       <p>
