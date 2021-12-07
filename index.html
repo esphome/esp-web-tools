@@ -74,14 +74,7 @@
         padding-bottom: 56.25%; /* 16:9 */
         height: 0;
         margin-bottom: 25px;
-        background: #000;
-      }
-      .videoWrapper iframe {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
+        background: #ccc;
       }
       .hidden {
         display: none;
@@ -142,15 +135,10 @@
         to <a href="https://www.home-assistant.io">Home Assistant</a>.
       </p>
       <div class="videoWrapper">
-        <iframe
-          width="560"
-          height="315"
-          src="https://www.youtube-nocookie.com/embed/E8bdATqXM8c"
-          title="YouTube video player"
-          frameborder="0"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowfullscreen
-        ></iframe>
+        <lite-youtube
+          videoid="E8bdATqXM8c"
+          videotitle="ESP Web Tools in action"
+        ></lite-youtube>
       </div>
 
       <p>
@@ -498,5 +486,9 @@
         document.querySelector(".not-supported-i").classList.remove("hidden");
       }
     </script>
+    <script
+      type="module"
+      src="https://unpkg.com/@justinribeiro/lite-youtube@1.3.0/lite-youtube.js"
+    ></script>
   </body>
 </html>
