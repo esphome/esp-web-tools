@@ -705,7 +705,7 @@ class EwtInstallDialog extends LitElement {
       const timeout = !justInstalled
         ? 1000
         : this._manifest.new_install_improv_wait_time !== undefined
-        ? this._manifest.new_install_improv_wait_time
+        ? this._manifest.new_install_improv_wait_time * 1000
         : 10000;
       this._info = await client.initialize(timeout);
       this._client = client;
