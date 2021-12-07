@@ -661,18 +661,25 @@ class EwtInstallDialog extends LitElement {
     }
   }
 
-  private async _fetchManifest() {
-    if (this._manifest) {
-      return;
+  private async _initialize(justInstalled = false) {
+    if (this.port.readable === null || this.port.writable === null) {
+      this._state = "ERROR";
+      this._error =
+        "Serial port is not readable/writable. Close any other application using it and try again.";
     }
 
     const manifestURL = new URL(
       this.manifestPath,
       location.toString()
     ).toString();
-    this._manifest = await fetch(manifestURL).then(
-      (resp): Promise<Manifest> => resp.json()
-    );
+    try {
+      this._manifest = await fetch(manifestURL).then(
+        (resp): Promise<Manifest> => resp.json()
+      );
+    } catch (err: any) {
+      this._state = "ERROR";
+      this._error = "Failed to download manifest";
+    }
     if ("new_install_skip_erase" in this._manifest) {
       console.warn(
         'Manifest option "new_install_skip_erase" is deprecated. Use "new_install_prompt_erase" instead.'
@@ -681,16 +688,11 @@ class EwtInstallDialog extends LitElement {
         this._manifest.new_install_prompt_erase = true;
       }
     }
-  }
 
-  private async _initialize(justErased = false) {
-    if (this.port.readable === null || this.port.writable === null) {
-      this._state = "ERROR";
-      this._error =
-        "Serial port is not readable/writable. Close any other application using it and try again.";
+    if (this._manifest.new_install_improv_wait_time === 0) {
+      this._client = null;
+      return;
     }
-
-    const manifestProm = this._fetchManifest();
 
     const client = new ImprovSerial(this.port!, this.logger);
     client.addEventListener("state-changed", () => {
@@ -698,9 +700,13 @@ class EwtInstallDialog extends LitElement {
     });
     client.addEventListener("error-changed", () => this.requestUpdate());
     try {
-      // If a device was just erased, the new firmware might need some time to
-      // format the rest of the flash.
-      const timeout = justErased ? 10000 : 1000;
+      // If a device was just installed, give new firmware 10 seconds (overridable) to
+      // format the rest of the flash and do other stuff.
+      const timeout = !justInstalled
+        ? 1000
+        : this._manifest.new_install_improv_wait_time !== undefined
+        ? this._manifest.new_install_improv_wait_time
+        : 10000;
       this._info = await client.initialize(timeout);
       this._client = client;
       client.addEventListener("disconnect", this._handleDisconnect);
@@ -715,13 +721,6 @@ class EwtInstallDialog extends LitElement {
         this._client = null; // not supported
         this.logger.error("Improv initialization failed.", err);
       }
-    }
-
-    try {
-      await manifestProm;
-    } catch (err: any) {
-      this._state = "ERROR";
-      this._error = "Failed to download manifest";
     }
   }
 
@@ -745,7 +744,7 @@ class EwtInstallDialog extends LitElement {
 
         if (state.state === FlashStateType.FINISHED) {
           sleep(100)
-            .then(() => this._initialize(this._installErase))
+            .then(() => this._initialize(true))
             .then(() => this.requestUpdate());
         }
       },
