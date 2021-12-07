@@ -362,11 +362,21 @@
       </p>
       <p>
         By default a new installation will erase all data before installation.
-        If you want to leave this choice to the user, set the optional key
+        If you want to leave this choice to the user, set the optional manifest
+        key
         <code>new_install_prompt_erase</code> to <code>true</code>. ESP Web
         Tools offers users a new installation if it is unable to detect the
         current firmware of the device (via Improv Serial) or if the detected
         firmware does not match the name specififed in the manifest.
+      </p>
+      <p>
+        When a firmware is first installed on a device, it might need to do some
+        time consuming tasks like initializing the file system. By default ESP
+        Web Tools will wait 10 seconds to receive an Improv Serial response to
+        indicate that the boot is completed. You can increase this timeout by
+        setting the optional manifest key
+        <code>new_install_improv_wait_time</code> to the number of seconds to
+        wait. Set to <code>0</code> to disable Improv Serial detection.
       </p>
       <h2 id="improv">Configuring Wi-Fi</h2>
       <p>
