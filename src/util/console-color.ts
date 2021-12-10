@@ -5,7 +5,7 @@ interface ConsoleState {
   strikethrough: boolean;
   foregroundColor: string | null;
   backgroundColor: string | null;
-  // carriageReturn: boolean;
+  carriageReturn: boolean;
   secret: boolean;
 }
 
@@ -17,7 +17,7 @@ export class ColoredConsole {
     strikethrough: false,
     foregroundColor: null,
     backgroundColor: null,
-    // carriageReturn: false,
+    carriageReturn: false,
     secret: false,
   };
 
@@ -27,18 +27,17 @@ export class ColoredConsole {
     const re = /(?:\033|\\033)(?:\[(.*?)[@-~]|\].*?(?:\007|\033\\))/g;
     let i = 0;
 
-    // This doesn't work for some reason
-    // if (this.state.carriageReturn) {
-    //   if (line !== "\n") {
-    //     // don't remove if \r\n
-    //     this.targetElement.removeChild(this.targetElement.lastChild!);
-    //   }
-    //   this.state.carriageReturn = false;
-    // }
+    if (this.state.carriageReturn) {
+      if (line !== "\n") {
+        // don't remove if \r\n
+        this.targetElement.removeChild(this.targetElement.lastChild!);
+      }
+      this.state.carriageReturn = false;
+    }
 
-    // if (line.includes("\r")) {
-    //   this.state.carriageReturn = true;
-    // }
+    if (line.includes("\r")) {
+      this.state.carriageReturn = true;
+    }
 
     const lineSpan = document.createElement("span");
     lineSpan.classList.add("line");
@@ -186,3 +185,95 @@ export class ColoredConsole {
     }
   }
 }
+
+export const coloredConsoleStyles = `
+  .log {
+    height: var(--remote-process-height, 100%);
+    background-color: #1c1c1c;
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier,
+      monospace;
+    font-size: 12px;
+    padding: 16px;
+    overflow: auto;
+    line-height: 1.45;
+    border-radius: 3px;
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+    color: #ddd;
+  }
+
+  .log-bold {
+    font-weight: bold;
+  }
+  .log-italic {
+    font-style: italic;
+  }
+  .log-underline {
+    text-decoration: underline;
+  }
+  .log-strikethrough {
+    text-decoration: line-through;
+  }
+  .log-underline.log-strikethrough {
+    text-decoration: underline line-through;
+  }
+  .log-secret {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+  }
+  .log-secret-redacted {
+    opacity: 0;
+    width: 1px;
+    font-size: 1px;
+  }
+  .log-fg-black {
+    color: rgb(128, 128, 128);
+  }
+  .log-fg-red {
+    color: rgb(255, 0, 0);
+  }
+  .log-fg-green {
+    color: rgb(0, 255, 0);
+  }
+  .log-fg-yellow {
+    color: rgb(255, 255, 0);
+  }
+  .log-fg-blue {
+    color: rgb(0, 0, 255);
+  }
+  .log-fg-magenta {
+    color: rgb(255, 0, 255);
+  }
+  .log-fg-cyan {
+    color: rgb(0, 255, 255);
+  }
+  .log-fg-white {
+    color: rgb(187, 187, 187);
+  }
+  .log-bg-black {
+    background-color: rgb(0, 0, 0);
+  }
+  .log-bg-red {
+    background-color: rgb(255, 0, 0);
+  }
+  .log-bg-green {
+    background-color: rgb(0, 255, 0);
+  }
+  .log-bg-yellow {
+    background-color: rgb(255, 255, 0);
+  }
+  .log-bg-blue {
+    background-color: rgb(0, 0, 255);
+  }
+  .log-bg-magenta {
+    background-color: rgb(255, 0, 255);
+  }
+  .log-bg-cyan {
+    background-color: rgb(0, 255, 255);
+  }
+  .log-bg-white {
+    background-color: rgb(255, 255, 255);
+  }
+`;
