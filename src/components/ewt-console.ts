@@ -1,4 +1,4 @@
-import { ColoredConsole } from "../util/console-color";
+import { ColoredConsole, coloredConsoleStyles } from "../util/console-color";
 import { sleep } from "../util/sleep";
 import { LineBreakTransformer } from "../util/line-break-transformer";
 import { Logger } from "../const";
@@ -6,6 +6,7 @@ import { Logger } from "../const";
 export class EwtConsole extends HTMLElement {
   public port!: SerialPort;
   public logger!: Logger;
+  public allowInput = true;
 
   private _console?: ColoredConsole;
   private _cancelConnection?: () => Promise<void>;
@@ -24,90 +25,8 @@ export class EwtConsole extends HTMLElement {
           font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier,
             monospace;
           line-height: 1.45;
-        }
-        .log {
-          box-sizing: border-box;
-          height: calc(100% - 28px);
-          font-size: 12px;
-          padding: 16px;
-          overflow: auto;
-          white-space: pre-wrap;
-          overflow-wrap: break-word;
-        }
-
-        .log-bold {
-          font-weight: bold;
-        }
-        .log-italic {
-          font-style: italic;
-        }
-        .log-underline {
-          text-decoration: underline;
-        }
-        .log-strikethrough {
-          text-decoration: line-through;
-        }
-        .log-underline.log-strikethrough {
-          text-decoration: underline line-through;
-        }
-        .log-secret {
-          -webkit-user-select: none;
-          -moz-user-select: none;
-          -ms-user-select: none;
-          user-select: none;
-        }
-        .log-secret-redacted {
-          opacity: 0;
-          width: 1px;
-          font-size: 1px;
-        }
-        .log-fg-black {
-          color: rgb(128, 128, 128);
-        }
-        .log-fg-red {
-          color: rgb(255, 0, 0);
-        }
-        .log-fg-green {
-          color: rgb(0, 255, 0);
-        }
-        .log-fg-yellow {
-          color: rgb(255, 255, 0);
-        }
-        .log-fg-blue {
-          color: rgb(0, 0, 255);
-        }
-        .log-fg-magenta {
-          color: rgb(255, 0, 255);
-        }
-        .log-fg-cyan {
-          color: rgb(0, 255, 255);
-        }
-        .log-fg-white {
-          color: rgb(187, 187, 187);
-        }
-        .log-bg-black {
-          background-color: rgb(0, 0, 0);
-        }
-        .log-bg-red {
-          background-color: rgb(255, 0, 0);
-        }
-        .log-bg-green {
-          background-color: rgb(0, 255, 0);
-        }
-        .log-bg-yellow {
-          background-color: rgb(255, 255, 0);
-        }
-        .log-bg-blue {
-          background-color: rgb(0, 0, 255);
-        }
-        .log-bg-magenta {
-          background-color: rgb(255, 0, 255);
-        }
-        .log-bg-cyan {
-          background-color: rgb(0, 255, 255);
-        }
-        .log-bg-white {
-          background-color: rgb(255, 255, 255);
+          display: flex;
+          flex-direction: column;
         }
         form {
           display: flex;
@@ -121,31 +40,40 @@ export class EwtConsole extends HTMLElement {
           border: 0;
           outline: none;
         }
+        ${coloredConsoleStyles}
       </style>
       <div class="log"></div>
-      <form>
-        >
-        <input autofocus>
-      </form>
+      ${
+        this.allowInput
+          ? `<form>
+                >
+                <input autofocus>
+              </form>
+            `
+          : ""
+      }
     `;
 
     this._console = new ColoredConsole(this.shadowRoot!.querySelector("div")!);
-    const input = this.shadowRoot!.querySelector("input")!;
 
-    this.addEventListener("click", () => {
-      // Only focus input if user didn't select some text
-      if (getSelection()?.toString() === "") {
-        input.focus();
-      }
-    });
+    if (this.allowInput) {
+      const input = this.shadowRoot!.querySelector("input")!;
 
-    input.addEventListener("keydown", (ev) => {
-      if (ev.key === "Enter") {
-        ev.preventDefault();
-        ev.stopPropagation();
-        this._sendCommand();
-      }
-    });
+      this.addEventListener("click", () => {
+        // Only focus input if user didn't select some text
+        if (getSelection()?.toString() === "") {
+          input.focus();
+        }
+      });
+
+      input.addEventListener("keydown", (ev) => {
+        if (ev.key === "Enter") {
+          ev.preventDefault();
+          ev.stopPropagation();
+          this._sendCommand();
+        }
+      });
+    }
 
     const abortController = new AbortController();
     const connection = this._connect(abortController.signal);
@@ -166,7 +94,7 @@ export class EwtConsole extends HTMLElement {
         .pipeTo(
           new WritableStream({
             write: (chunk) => {
-              this._console!.addLine(chunk);
+              this._console!.addLine(chunk.replace("\r", ""));
             },
           })
         );
