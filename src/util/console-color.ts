@@ -188,7 +188,7 @@ export class ColoredConsole {
 
 export const coloredConsoleStyles = `
   .log {
-    height: var(--remote-process-height, 100%);
+    flex: 1;
     background-color: #1c1c1c;
     font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier,
       monospace;

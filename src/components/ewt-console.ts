@@ -25,6 +25,8 @@ export class EwtConsole extends HTMLElement {
           font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier,
             monospace;
           line-height: 1.45;
+          display: flex;
+          flex-direction: column;
         }
         form {
           display: flex;
