@@ -1,12 +1,15 @@
 import { LitElement, html, PropertyValues, css, TemplateResult } from "lit";
 import { state } from "lit/decorators.js";
-import "./components/ewt-dialog";
-import "./components/ewt-textfield";
 import "./components/ewt-button";
-import "./components/ewt-icon-button";
 import "./components/ewt-checkbox";
+import "./components/ewt-console";
+import "./components/ewt-dialog";
 import "./components/ewt-formfield";
-import "./components/ewt-circular-progress";
+import "./components/ewt-icon-button";
+import "./components/ewt-textfield";
+import "./pages/ewt-page-progress";
+import "./pages/ewt-page-message";
+import { chipIcon, closeIcon, firmwareIcon } from "./components/svg";
 import type { EwtTextfield } from "./components/ewt-textfield";
 import { Logger, Manifest, FlashStateType, FlashState } from "./const.js";
 import { ImprovSerial } from "improv-wifi-serial-sdk/dist/serial";
@@ -15,20 +18,13 @@ import {
   ImprovSerialErrorState,
   PortNotReady,
 } from "improv-wifi-serial-sdk/dist/const";
-import { fireEvent } from "./util/fire-event";
 import { flash } from "./flash";
-import "./components/ewt-console";
+import { fireEvent } from "./util/fire-event";
 import { sleep } from "./util/sleep";
+import { downloadManifest } from "./util/manifest";
 
 const ERROR_ICON = "⚠️";
 const OK_ICON = "🎉";
-
-const messageTemplate = (icon: string, label: string) => html`
-  <div class="center">
-    <div class="icon">${icon}</div>
-    ${label}
-  </div>
-`;
 
 class EwtInstallDialog extends LitElement {
   public port!: SerialPort;
@@ -79,7 +75,7 @@ class EwtInstallDialog extends LitElement {
       this._state !== "LOGS"
     ) {
       if (this._error) {
-        content = this._renderMessage(ERROR_ICON, this._error, true);
+        [heading, content, hideActions] = this._renderError(this._error);
       } else {
         content = this._renderProgress("Connecting");
         hideActions = true;
@@ -89,8 +85,7 @@ class EwtInstallDialog extends LitElement {
     } else if (this._state === "ASK_ERASE") {
       [heading, content] = this._renderAskErase();
     } else if (this._state === "ERROR") {
-      heading = "Error";
-      content = this._renderMessage(ERROR_ICON, this._error!, true);
+      [heading, content, hideActions] = this._renderError(this._error!);
     } else if (this._state === "DASHBOARD") {
       [heading, content, hideActions, allowClosing] = this._client
         ? this._renderDashboard()
@@ -112,11 +107,7 @@ class EwtInstallDialog extends LitElement {
         ${heading && allowClosing
           ? html`
               <ewt-icon-button dialogAction="close">
-                <svg width="24" height="24" viewBox="0 0 24 24">
-                  <path
-                    d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z"
-                  />
-                </svg>
+                ${closeIcon}
               </ewt-icon-button>
             `
           : ""}
@@ -127,34 +118,25 @@ class EwtInstallDialog extends LitElement {
 
   _renderProgress(label: string | TemplateResult, progress?: number) {
     return html`
-      <div class="center">
-        <div>
-          <ewt-circular-progress
-            active
-            ?indeterminate=${progress === undefined}
-            .progress=${progress !== undefined ? progress / 100 : undefined}
-            density="8"
-          ></ewt-circular-progress>
-          ${progress !== undefined
-            ? html`<div class="progress-pct">${progress}%</div>`
-            : ""}
-        </div>
-        ${label}
-      </div>
+      <ewt-page-progress
+        .label=${label}
+        .progress=${progress}
+      ></ewt-page-progress>
     `;
   }
-  _renderMessage(icon: string, label: string, showClose: boolean) {
-    return html`
-      ${messageTemplate(icon, label)}
-      ${showClose &&
-      html`
-        <ewt-button
-          slot="primaryAction"
-          dialogAction="ok"
-          label="Close"
-        ></ewt-button>
-      `}
+
+  _renderError(label: string): [string, TemplateResult, boolean] {
+    const heading = "Error";
+    const content = html`
+      <ewt-page-message .icon=${ERROR_ICON} .label=${label}></ewt-page-message>
+      <ewt-button
+        slot="primaryAction"
+        dialogAction="ok"
+        label="Close"
+      ></ewt-button>
     `;
+    const hideActions = false;
+    return [heading, content, hideActions];
   }
 
   _renderDashboard(): [string, TemplateResult, boolean, boolean] {
@@ -166,25 +148,11 @@ class EwtInstallDialog extends LitElement {
     content = html`
       <table>
         <tr>
-          <td>
-            <svg viewBox="0 0 24 24" title="Software">
-              <path
-                fill="currentColor"
-                d="M9.5,8.5L11,10L8,13L11,16L9.5,17.5L5,13L9.5,8.5M14.5,17.5L13,16L16,13L13,10L14.5,8.5L19,13L14.5,17.5M21,2H3A2,2 0 0,0 1,4V20A2,2 0 0,0 3,22H21A2,2 0 0,0 23,20V4A2,2 0 0,0 21,2M21,20H3V6H21V20Z"
-              />
-            </svg>
-          </td>
+          <td>${firmwareIcon}</td>
           <td>${this._info!.firmware}&nbsp;${this._info!.version}</td>
         </tr>
         <tr>
-          <td>
-            <svg viewBox="0 0 24 24" title="Chipset">
-              <path
-                fill="currentColor"
-                d="M6,4H18V5H21V7H18V9H21V11H18V13H21V15H18V17H21V19H18V20H6V19H3V17H6V15H3V13H6V11H3V9H6V7H3V5H6V4M11,15V18H12V15H11M13,15V18H14V15H13M15,15V18H16V15H15Z"
-              />
-            </svg>
-          </td>
+          <td>${chipIcon}</td>
           <td>${this._info!.chipFamily}</td>
         </tr>
       </table>
@@ -340,7 +308,10 @@ class EwtInstallDialog extends LitElement {
           "home_assistant_domain" in this._manifest);
       hideActions = showSetupLinks;
       content = html`
-        ${messageTemplate(OK_ICON, "Device connected to the network!")}
+        <ewt-page-message
+          .icon=${OK_ICON}
+          label="Device connected to the network!"
+        ></ewt-page-message>
         ${showSetupLinks
           ? html`
               <div class="dashboard-buttons">
@@ -567,7 +538,10 @@ class EwtInstallDialog extends LitElement {
       heading = undefined;
       const supportsImprov = this._client !== null;
       content = html`
-        ${messageTemplate(OK_ICON, "Installation complete!")}
+        <ewt-page-message
+          .icon=${OK_ICON}
+          label="Installation complete!"
+        ></ewt-page-message>
         <ewt-button
           slot="primaryAction"
           label="Next"
@@ -579,7 +553,10 @@ class EwtInstallDialog extends LitElement {
       `;
     } else if (this._installState.state === FlashStateType.ERROR) {
       content = html`
-        ${messageTemplate(ERROR_ICON, this._installState.message)}
+        <ewt-page-message
+          .icon=${OK_ICON}
+          .label=${this._installState.message}
+        ></ewt-page-message>
         <ewt-button
           slot="primaryAction"
           label="Back"
@@ -668,25 +645,11 @@ class EwtInstallDialog extends LitElement {
         "Serial port is not readable/writable. Close any other application using it and try again.";
     }
 
-    const manifestURL = new URL(
-      this.manifestPath,
-      location.toString()
-    ).toString();
     try {
-      this._manifest = await fetch(manifestURL).then(
-        (resp): Promise<Manifest> => resp.json()
-      );
+      this._manifest = await downloadManifest(this.manifestPath);
     } catch (err: any) {
       this._state = "ERROR";
       this._error = "Failed to download manifest";
-    }
-    if ("new_install_skip_erase" in this._manifest) {
-      console.warn(
-        'Manifest option "new_install_skip_erase" is deprecated. Use "new_install_prompt_erase" instead.'
-      );
-      if (this._manifest.new_install_skip_erase) {
-        this._manifest.new_install_prompt_erase = true;
-      }
     }
 
     if (this._manifest.new_install_improv_wait_time === 0) {
@@ -840,18 +803,6 @@ class EwtInstallDialog extends LitElement {
       display: block;
       margin-top: 16px;
     }
-    .center {
-      text-align: center;
-    }
-    .flash {
-      font-weight: bold;
-      margin-bottom: 1em;
-      background-color: var(--mdc-theme-primary);
-      padding: 8px 4px;
-      color: var(--mdc-theme-on-primary);
-      border-radius: 4px;
-      text-align: center;
-    }
     .dashboard-buttons {
       margin: 0 0 -16px -8px;
     }
@@ -859,16 +810,8 @@ class EwtInstallDialog extends LitElement {
       display: block;
       margin: 4px 0;
     }
-    ewt-circular-progress {
-      margin-bottom: 16px;
-    }
     a.has-button {
       text-decoration: none;
-    }
-    .icon {
-      font-size: 50px;
-      line-height: 80px;
-      color: black;
     }
     .error {
       color: var(--improv-danger-color);
