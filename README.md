@@ -19,28 +19,34 @@ Manifest definition:
     {
       "chipFamily": "ESP32",
       "parts": [
-        { "path": "bootloader.bin", "offset": 4096 },
+        { "path": "bootloader_dout_40m.bin", "offset": 4096 },
         { "path": "partitions.bin", "offset": 32768 },
-        { "path": "ota.bin", "offset": 57344 },
-        { "path": "firmware.bin", "offset": 65536 }
+        { "path": "boot_app0.bin", "offset": 57344 },
+        { "path": "esp32.bin", "offset": 65536 }
       ]
     },
     {
       "chipFamily": "ESP32-C3",
       "parts": [
-        { "path": "esp32-c3.bin", "offset": 0 },
+        { "path": "bootloader_dout_40m.bin", "offset": 0 },
+        { "path": "partitions.bin", "offset": 32768 },
+        { "path": "boot_app0.bin", "offset": 57344 },
+        { "path": "esp32-c3.bin", "offset": 65536 }
       ]
     },
     {
       "chipFamily": "ESP32-S2",
       "parts": [
-        { "path": "esp32-s2.bin", "offset": 0 },
+        { "path": "bootloader_dout_40m.bin", "offset": 4096 },
+        { "path": "partitions.bin", "offset": 32768 },
+        { "path": "boot_app0.bin", "offset": 57344 },
+        { "path": "esp32-s2.bin", "offset": 65536 }
       ]
     },
     {
       "chipFamily": "ESP8266",
       "parts": [
-        { "path": "esp8266.bin", "offset": 0 },
+        { "path": "esp8266.bin", "offset": 0 }
       ]
     }
   ]
