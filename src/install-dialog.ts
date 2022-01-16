@@ -554,7 +554,7 @@ class EwtInstallDialog extends LitElement {
     } else if (this._installState.state === FlashStateType.ERROR) {
       content = html`
         <ewt-page-message
-          .icon=${OK_ICON}
+          .icon=${ERROR_ICON}
           .label=${this._installState.message}
         ></ewt-page-message>
         <ewt-button
