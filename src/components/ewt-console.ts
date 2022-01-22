@@ -11,6 +11,10 @@ export class EwtConsole extends HTMLElement {
   private _console?: ColoredConsole;
   private _cancelConnection?: () => Promise<void>;
 
+  public logs(): string {
+    return this._console?.logs() || "";
+  }
+
   public connectedCallback() {
     if (this._console) {
       return;
