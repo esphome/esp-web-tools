@@ -19,6 +19,7 @@ import {
   PortNotReady,
 } from "improv-wifi-serial-sdk/dist/const";
 import { flash } from "./flash";
+import { textDownload } from "./util/file-download";
 import { fireEvent } from "./util/fire-event";
 import { sleep } from "./util/sleep";
 import { downloadManifest } from "./util/manifest";
@@ -585,6 +586,18 @@ class EwtInstallDialog extends LitElement {
           await this.shadowRoot!.querySelector("ewt-console")!.disconnect();
           this._state = "DASHBOARD";
           this._initialize();
+        }}
+      ></ewt-button>
+      <ewt-button
+        slot="secondaryAction"
+        label="Download Logs"
+        @click=${() => {
+          textDownload(
+            this.shadowRoot!.querySelector("ewt-console")!.logs(),
+            `esp-web-tools-logs.txt`
+          );
+
+          this.shadowRoot!.querySelector("ewt-console")!.reset();
         }}
       ></ewt-button>
       <ewt-button

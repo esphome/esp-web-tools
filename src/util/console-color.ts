@@ -23,6 +23,10 @@ export class ColoredConsole {
 
   constructor(public targetElement: HTMLElement) {}
 
+  logs(): string {
+    return this.targetElement.innerText;
+  }
+
   addLine(line: string) {
     const re = /(?:\033|\\033)(?:\[(.*?)[@-~]|\].*?(?:\007|\033\\))/g;
     let i = 0;
