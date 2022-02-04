@@ -240,7 +240,7 @@ class EwtInstallDialog extends LitElement {
               <div>
                 <ewt-button
                   class="danger"
-                  label="Reset Data"
+                  label="Erase User Data"
                   @click=${() => this._startInstall(true)}
                 ></ewt-button>
               </div>
@@ -456,14 +456,14 @@ class EwtInstallDialog extends LitElement {
     const isUpdate = !this._installErase && this._isSameFirmware;
 
     if (!this._installConfirmed && this._isSameVersion) {
-      heading = "Reset data";
+      heading = "Erase User Data";
       content = html`
-        Do you want to reset your device and erase all existing data from your
+        Do you want to reset your device and erase all user data from your
         device?
         <ewt-button
           class="danger"
           slot="primaryAction"
-          label="Reset data"
+          label="Erase User Data"
           @click=${this._confirmInstall}
         ></ewt-button>
       `;
