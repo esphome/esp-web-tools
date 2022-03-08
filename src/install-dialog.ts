@@ -23,6 +23,7 @@ import { textDownload } from "./util/file-download";
 import { fireEvent } from "./util/fire-event";
 import { sleep } from "./util/sleep";
 import { downloadManifest } from "./util/manifest";
+import { dialogStyles } from "./styles";
 
 const ERROR_ICON = "⚠️";
 const OK_ICON = "🎉";
@@ -787,70 +788,66 @@ class EwtInstallDialog extends LitElement {
     await client.close();
   }
 
-  static styles = css`
-    :host {
-      --mdc-dialog-max-width: 390px;
-      --mdc-theme-primary: var(--improv-primary-color, #03a9f4);
-      --mdc-theme-on-primary: var(--improv-on-primary-color, #fff);
-      --improv-danger-color: #db4437;
-      --improv-text-color: rgba(0, 0, 0, 0.6);
-      --mdc-theme-text-primary-on-background: var(--improv-text-color);
-      --mdc-dialog-content-ink-color: var(--improv-text-color);
-      text-align: left;
-    }
-    ewt-icon-button {
-      position: absolute;
-      right: 4px;
-      top: 10px;
-    }
-    table {
-      border-spacing: 0;
-      color: var(--improv-text-color);
-      margin-bottom: 16px;
-    }
-    table svg {
-      width: 20px;
-      margin-right: 8px;
-    }
-    ewt-textfield {
-      display: block;
-      margin-top: 16px;
-    }
-    .dashboard-buttons {
-      margin: 0 0 -16px -8px;
-    }
-    .dashboard-buttons div {
-      display: block;
-      margin: 4px 0;
-    }
-    a.has-button {
-      text-decoration: none;
-    }
-    .error {
-      color: var(--improv-danger-color);
-    }
-    .danger {
-      --mdc-theme-primary: var(--improv-danger-color);
-      --mdc-theme-secondary: var(--improv-danger-color);
-    }
-    button.link {
-      background: none;
-      color: inherit;
-      border: none;
-      padding: 0;
-      font: inherit;
-      text-align: left;
-      text-decoration: underline;
-      cursor: pointer;
-    }
-    :host([state="LOGS"]) ewt-dialog {
-      --mdc-dialog-max-width: 90vw;
-    }
-    ewt-console {
-      width: calc(80vw - 48px);
-      height: 80vh;
-    }
-  `;
+  static styles = [
+    dialogStyles,
+    css`
+      :host {
+        --mdc-dialog-max-width: 390px;
+      }
+      ewt-icon-button {
+        position: absolute;
+        right: 4px;
+        top: 10px;
+      }
+      table {
+        border-spacing: 0;
+        color: var(--improv-text-color);
+        margin-bottom: 16px;
+      }
+      table svg {
+        width: 20px;
+        margin-right: 8px;
+      }
+      ewt-textfield {
+        display: block;
+        margin-top: 16px;
+      }
+      .dashboard-buttons {
+        margin: 0 0 -16px -8px;
+      }
+      .dashboard-buttons div {
+        display: block;
+        margin: 4px 0;
+      }
+      a.has-button {
+        text-decoration: none;
+      }
+      .error {
+        color: var(--improv-danger-color);
+      }
+      .danger {
+        --mdc-theme-primary: var(--improv-danger-color);
+        --mdc-theme-secondary: var(--improv-danger-color);
+      }
+      button.link {
+        background: none;
+        color: inherit;
+        border: none;
+        padding: 0;
+        font: inherit;
+        text-align: left;
+        text-decoration: underline;
+        cursor: pointer;
+      }
+      :host([state="LOGS"]) ewt-dialog {
+        --mdc-dialog-max-width: 90vw;
+      }
+      ewt-console {
+        width: calc(80vw - 48px);
+        height: 80vh;
+      }
+    `,
+  ];
 }
 
 customElements.define("ewt-install-dialog", EwtInstallDialog);
