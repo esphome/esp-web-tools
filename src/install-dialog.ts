@@ -656,6 +656,7 @@ class EwtInstallDialog extends LitElement {
       this._state = "ERROR";
       this._error =
         "Serial port is not readable/writable. Close any other application using it and try again.";
+      return;
     }
 
     try {
@@ -663,6 +664,7 @@ class EwtInstallDialog extends LitElement {
     } catch (err: any) {
       this._state = "ERROR";
       this._error = "Failed to download manifest";
+      return;
     }
 
     if (this._manifest.new_install_improv_wait_time === 0) {
