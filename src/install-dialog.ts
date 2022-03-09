@@ -7,12 +7,14 @@ import "./components/ewt-dialog";
 import "./components/ewt-formfield";
 import "./components/ewt-icon-button";
 import "./components/ewt-textfield";
+import type { EwtTextfield } from "./components/ewt-textfield";
+import "./components/ewt-select";
+import "./components/ewt-list-item";
 import "./pages/ewt-page-progress";
 import "./pages/ewt-page-message";
 import { chipIcon, closeIcon, firmwareIcon } from "./components/svg";
-import type { EwtTextfield } from "./components/ewt-textfield";
 import { Logger, Manifest, FlashStateType, FlashState } from "./const.js";
-import { ImprovSerial } from "improv-wifi-serial-sdk/dist/serial";
+import { ImprovSerial, Ssid } from "improv-wifi-serial-sdk/dist/serial";
 import {
   ImprovSerialCurrentState,
   ImprovSerialErrorState,
@@ -60,6 +62,13 @@ class EwtInstallDialog extends LitElement {
   @state() private _error?: string;
 
   @state() private _busy = false;
+
+  // undefined = not loaded
+  // null = not available
+  @state() private _ssids?: Ssid[] | null;
+
+  // -1 = custom
+  @state() private _selectedSsid = -1;
 
   protected render() {
     if (!this.port) {
@@ -296,7 +305,15 @@ class EwtInstallDialog extends LitElement {
     let hideActions = false;
 
     if (this._busy) {
-      return [heading, this._renderProgress("Trying to connect"), true];
+      return [
+        heading,
+        this._renderProgress(
+          this._ssids === undefined
+            ? "Scanning for networks"
+            : "Trying to connect"
+        ),
+        true,
+      ];
     }
 
     if (
@@ -356,7 +373,6 @@ class EwtInstallDialog extends LitElement {
                     label="Skip"
                     @click=${() => {
                       this._state = "DASHBOARD";
-                      this._installState = undefined;
                     }}
                   ></ewt-button>
                 </div>
@@ -392,7 +408,46 @@ class EwtInstallDialog extends LitElement {
           to connect to.
         </div>
         ${error ? html`<p class="error">${error}</p>` : ""}
-        <ewt-textfield label="Network Name" name="ssid"></ewt-textfield>
+        ${this._ssids !== null
+          ? html`
+              <ewt-select
+                fixedMenuPosition
+                label="Network"
+                @selected=${(ev: { detail: { index: number } }) => {
+                  const index = ev.detail.index;
+                  // The "Join Other" item is always the last item.
+                  this._selectedSsid =
+                    index === this._ssids!.length ? -1 : index;
+                }}
+                @closed=${(ev: Event) => ev.stopPropagation()}
+              >
+                ${this._ssids!.map(
+                  (info, idx) => html`
+                    <ewt-list-item
+                      .selected=${this._selectedSsid === idx}
+                      value=${idx}
+                    >
+                      ${info.name}
+                    </ewt-list-item>
+                  `
+                )}
+                <ewt-list-item
+                  .selected=${this._selectedSsid === -1}
+                  value="-1"
+                >
+                  Join other…
+                </ewt-list-item>
+              </ewt-select>
+            `
+          : ""}
+        ${
+          // Show input box if command not supported or "Join Other" selected
+          this._selectedSsid === -1
+            ? html`
+                <ewt-textfield label="Network Name" name="ssid"></ewt-textfield>
+              `
+            : ""
+        }
         <ewt-textfield
           label="Password"
           name="password"
@@ -407,7 +462,6 @@ class EwtInstallDialog extends LitElement {
           slot="secondaryAction"
           .label=${this._installState && this._installErase ? "Skip" : "Back"}
           @click=${() => {
-            this._installState = undefined;
             this._state = "DASHBOARD";
           }}
         ></ewt-button>
@@ -565,7 +619,6 @@ class EwtInstallDialog extends LitElement {
           @click=${async () => {
             this._initialize();
             this._state = "DASHBOARD";
-            this._installState = undefined;
           }}
         ></ewt-button>
       `;
@@ -622,8 +675,30 @@ class EwtInstallDialog extends LitElement {
     if (this._state !== "ERROR") {
       this._error = undefined;
     }
-    if (this._state !== "PROVISION") {
+    // Scan for SSIDs on provision
+    if (this._state === "PROVISION") {
+      this._ssids = undefined;
+      this._busy = true;
+      this._client!.scan().then(
+        (ssids) => {
+          this._busy = false;
+          this._ssids = ssids;
+          this._selectedSsid = ssids.length ? 0 : -1;
+        },
+        () => {
+          this._busy = false;
+          this._ssids = null;
+          this._selectedSsid = -1;
+        }
+      );
+    } else {
+      // Reset this value if we leave provisioning.
       this._provisionForce = false;
+    }
+
+    if (this._state === "INSTALL") {
+      this._installConfirmed = false;
+      this._installState = undefined;
     }
   }
 
@@ -635,20 +710,29 @@ class EwtInstallDialog extends LitElement {
   protected override updated(changedProps: PropertyValues) {
     super.updated(changedProps);
 
-    if (!changedProps.has("_state")) {
+    if (changedProps.has("_state")) {
+      this.setAttribute("state", this._state);
+    }
+
+    if (this._state !== "PROVISION") {
       return;
     }
 
-    this.setAttribute("state", this._state);
+    if (changedProps.has("_selectedSsid") && this._selectedSsid === -1) {
+      // If we pick "Join other", select SSID input.
+      this._focusFormElement("ewt-textfield[name=ssid]");
+    } else if (changedProps.has("_ssids")) {
+      // Form is shown when SSIDs are loaded/marked not supported
+      this._focusFormElement();
+    }
+  }
 
-    if (this._state === "PROVISION") {
-      const textfield = this.shadowRoot!.querySelector("ewt-textfield");
-      if (textfield) {
-        textfield.updateComplete.then(() => textfield.focus());
-      }
-    } else if (this._state === "INSTALL") {
-      this._installConfirmed = false;
-      this._installState = undefined;
+  private _focusFormElement(selector = "ewt-textfield, ewt-select") {
+    const formEl = this.shadowRoot!.querySelector(
+      selector
+    ) as LitElement | null;
+    if (formEl) {
+      formEl.updateComplete.then(() => setTimeout(() => formEl.focus(), 100));
     }
   }
 
@@ -738,9 +822,14 @@ class EwtInstallDialog extends LitElement {
     this._busy = true;
     this._wasProvisioned =
       this._client!.state === ImprovSerialCurrentState.PROVISIONED;
-    const ssid = (
-      this.shadowRoot!.querySelector("ewt-textfield[name=ssid]") as EwtTextfield
-    ).value;
+    const ssid =
+      this._selectedSsid === -1
+        ? (
+            this.shadowRoot!.querySelector(
+              "ewt-textfield[name=ssid]"
+            ) as EwtTextfield
+          ).value
+        : this._ssids![this._selectedSsid].name;
     const password = (
       this.shadowRoot!.querySelector(
         "ewt-textfield[name=password]"
@@ -810,7 +899,8 @@ class EwtInstallDialog extends LitElement {
         width: 20px;
         margin-right: 8px;
       }
-      ewt-textfield {
+      ewt-textfield,
+      ewt-select {
         display: block;
         margin-top: 16px;
       }
