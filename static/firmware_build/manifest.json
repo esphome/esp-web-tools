@@ -1,6 +1,6 @@
 {
   "name": "ESPHome",
-  "version": "2021.12.0-dev",
+  "version": "2022.2.0-dev",
   "home_assistant_domain": "esphome",
   "builds": [
     {
