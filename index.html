@@ -47,11 +47,28 @@
         margin: 0 auto;
         padding: 12px;
       }
-      .project .logo {
-        float: right;
+      h2 {
+        margin-top: 2em;
+      }
+      h3 {
+        margin-top: 1.5em;
+      }
+      .projects {
+        display: flex;
+        text-align: center;
+        flex-wrap: wrap;
+        gap: 24px;
+        justify-content: center;
+      }
+      .projects a {
+        color: initial;
+        text-decoration: none;
       }
       .project .logo img {
         height: 50px;
+      }
+      .project .name {
+        margin-top: 8px;
       }
       a {
         color: #03a9f4;
@@ -78,12 +95,6 @@
       }
       .hidden {
         display: none;
-      }
-      .supported-info {
-        display: none;
-      }
-      esp-web-install-button[install-supported] + .supported-info {
-        display: block;
       }
       .content pre {
         max-width: 100%;
@@ -133,34 +144,24 @@
     <div class="content">
       <h1>ESP Web Tools</h1>
       <p>
-        ESP Web Tools allows you to manage ESP8266 and ESP32 devices in the
-        browser: install new firmware, update firmware, connect device to the
-        Wi-Fi network, visit the device's hosted web interface and add devices
-        to <a href="https://www.home-assistant.io">Home Assistant</a>.
+        User friendly tools to manage ESP8266 and ESP32 devices in the browser:
       </p>
+      <ul>
+        <li>Install &amp; update firmware</li>
+        <li>Connect device to the Wi-Fi network</li>
+        <li>Visit the device's hosted web interface</li>
+        <li>Access logs and send terminal commands</li>
+        <li>
+          Add devices to
+          <a href="https://www.home-assistant.io">Home Assistant</a>
+        </li>
+      </ul>
       <div class="videoWrapper">
         <lite-youtube
           videoid="E8bdATqXM8c"
           videotitle="ESP Web Tools in action"
         ></lite-youtube>
       </div>
-
-      <p>
-        ESP Web Tools works by combining
-        <a
-          href="https://developer.mozilla.org/en-US/docs/Web/API/Web_Serial_API"
-          >Web Serial</a
-        >, <a href="https://www.improv-wifi.com/">Improv Wi-Fi</a> (optional),
-        and a manifest which describes the firmware. It will automatically find
-        the supported firmware files from the manifest by detecting the chipset
-        of the connected ESP device.
-      </p>
-      <p>
-        Web Serial is available in Google Chrome and Microsoft Edge
-        browsers<span class="not-supported-i hidden">
-          (but not on your iOS device)</span
-        >. Android support should be possible but has not been implemented yet.
-      </p>
 
       <h2 id="demo">Try a live demo</h2>
       <p>
@@ -178,90 +179,113 @@
           >.
         </i>
       </esp-web-install-button>
-      <p class="supported-info">
-        If you don't see your ESP device in the list of devices to choose, you
-        might need to install
-        <a href="#drivers">the drivers</a>.
-      </p>
 
       <h2 id="used-by">Products using ESP Web Tools</h2>
-      <div class="project">
-        <a href="https://wled.me" class="logo"
-          ><img src="static/logos/wled.png" alt="WLED logo"
-        /></a>
-        <h3>WLED</h3>
-        <p>
-          Fast and feature-rich firmware to control NeoPixel (WS2812B, WS2811,
-          SK6812) LEDs and SPI based chipsets like the WS2801 and APA102.
-        </p>
-        <p>
-          <a href="https://install.wled.me" target="_blank"
-            >Installation Website</a
-          >
-        </p>
+      <div class="projects">
+        <a href="https://install.wled.me" target="_blank" class="project">
+          <div class="logo">
+            <img src="static/logos/wled.png" alt="WLED logo" />
+          </div>
+          <div class="name">WLED</div>
+        </a>
+        <a
+          href="https://arendst.github.io/Tasmota-firmware/"
+          target="_blank"
+          class="project"
+        >
+          <div class="logo">
+            <img src="static/logos/tasmota.svg" alt="Tasmota logo" />
+          </div>
+          <div class="name">Tasmota</div>
+        </a>
+        <a href="https://td-er.nl/ESPEasy/" target="_blank" class="project">
+          <div class="logo">
+            <img src="static/logos/espeasy.png" alt="ESPEasy logo" />
+          </div>
+          <div class="name">ESPEasy</div>
+        </a>
+        <a
+          href="https://canair.io/installer.html"
+          target="_blank"
+          class="project"
+        >
+          <div class="logo">
+            <img src="static/logos/canairio.png" alt="CanAirIO logo" />
+          </div>
+          <div class="name">CanAirIO</div>
+        </a>
+        <a href="https://web.esphome.io" target="_blank" class="project">
+          <div class="logo">
+            <img src="static/logos/esphome.svg" alt="ESPHome logo" />
+          </div>
+          <div class="name">ESPHome</div>
+        </a>
       </div>
-      <div class="project">
-        <a href="https://tasmota.github.io" class="logo"
-          ><img src="static/logos/tasmota.svg" alt="Tasmota logo"
-        /></a>
-        <h3>Tasmota</h3>
-        <p>
-          Firmware with easy configuration using webUI, OTA updates, automation
-          using timers or rules, expandability and entirely local control over
-          MQTT, HTTP, Serial or KNX.
-        </p>
-        <p>
-          <a href="https://arendst.github.io/Tasmota-firmware/" target="_blank"
-            >Installation Website</a
-          >
-        </p>
-      </div>
-      <div class="project">
-        <a href="http://www.espeasy.com/" class="logo"
-          ><img src="static/logos/espeasy.png" alt="ESPEasy logo"
-        /></a>
-        <h3>ESPEasy</h3>
-        <p>Easy MultiSensor device based on ESP8266/ESP32.</p>
-        <p>
-          <a href="https://td-er.nl/ESPEasy/" target="_blank"
-            >Installation Website</a
-          >
-        </p>
-      </div>
-      <div class="project">
-        <a href="https://canair.io" class="logo"
-          ><img src="static/logos/canairio.png" alt="CanAirIO logo"
-        /></a>
-        <h3>CanAirIO</h3>
-        <p>
-          Citizen science initiative for monitoring air quality. CanAirIO uses
-          mobile and fixed sensors to measure air quality with smartphones and
-          ESP32 devices.
-        </p>
-        <p>
-          <a href="https://canair.io/installer.html" target="_blank"
-            >Installation Website</a
-          >
-        </p>
-      </div>
-      <div class="project">
-        <a href="https://esphome.io" class="logo"
-          ><img src="static/logos/esphome.svg" alt="ESPHome logo"
-        /></a>
-        <h3>ESPHome</h3>
-        <p>
-          No-code platform for ESP devices. Uses ESP Web Tools in their
-          dashboard to install ESPHome on devices.
-        </p>
-        <p>
-          <a href="https://esphome.io" target="_blank">Website</a>
-        </p>
-      </div>
+
+      <h2>How it works</h2>
+      <p>
+        ESP Web Tools works by combining
+        <a
+          href="https://developer.mozilla.org/en-US/docs/Web/API/Web_Serial_API"
+          >Web Serial</a
+        >, <a href="https://www.improv-wifi.com/">Improv Wi-Fi</a> (optional),
+        and a manifest which describes the firmware. ESP Web Tools detects the
+        chipset of the connected ESP device and automatically selects the right
+        firmware variant from the manifest.
+      </p>
+      <p>
+        Web Serial is available in Google Chrome and Microsoft Edge
+        browsers<span class="not-supported-i hidden">
+          (but not on your iOS device)</span
+        >. Android support should be possible but has not been implemented yet.
+      </p>
+
+      <h3 id="improv">Configuring Wi-Fi</h3>
+      <p>
+        ESP Web Tools supports the
+        <a href="https://www.improv-wifi.com/serial"
+          >Improv Wi-Fi serial standard</a
+        >. This is an open standard to allow configuring Wi-Fi via the serial
+        port.
+      </p>
+      <p>
+        If the firmware supports Improv, a user will be asked to connect the
+        device to the network after installing the firmware. Once connected, the
+        device can send the user to a URL to finish configuration. For example,
+        this can be a link to the device's IP address where it serves a local
+        UI.
+      </p>
+      <p>
+        At any time in the future a user can use ESP Web Tools to find the
+        device link or to reconfigure the Wi-Fi settings without doing a
+        reinstall.
+      </p>
+      <p class="screenshot">
+        <img
+          src="./static/screenshots/dashboard.png"
+          alt="Screenshot showing ESP Web Tools dialog offering visting the device, adding it to Home Assistant, change Wi-Fi, show logs and console and reset data."
+        />
+        <i>Screenshot showing the ESP Web Tools interface</i>
+      </p>
+
+      <h3 id="logs">Viewing logs & sending commands</h3>
+      <p>
+        ESP Web Tools allows users to open a serial console to see the logs and
+        send commands.
+      </p>
+      <p class="screenshot">
+        <img
+          src="./static/screenshots/logs.png"
+          alt="Screenshot showing ESP Web Tools dialog with a console showing ESPHome logs and a terminal prompt to sent commands."
+        />
+        <i>Screenshot showing the ESP Web Tools logs & console</i>
+      </p>
+
       <h2 id="add-website">Adding ESP Web Tools to your website</h2>
       <p>
         To add this to your own website, you need to include the ESP Web Tools
-        JavaScript files on your website, create a manifest file and render the
-        ESP Web Tools button.
+        JavaScript files on your website, create a manifest file and add the ESP
+        Web Tools button HTML.
       </p>
       <p>
         You can import the JavaScript files directly from the unpkg CDN or
@@ -288,7 +312,8 @@
       >
       <p>
         ESP Web Tools requires that your website is served over
-        <code>https://</code> to work. This is a Web Serial security limitation.
+        <code>https://</code> to work. This is a Web Serial security
+        requirement.
       </p>
       <p>
         If your manifest or the firmware files are hosted on another server,
@@ -314,7 +339,7 @@
         of ESP devices. Current supported chip families are
         <code>ESP8266</code>, <code>ESP32</code>, <code>ESP32-C3</code> and
         <code>ESP32-S2</code>. The correct build will be automatically selected
-        based on the type of the ESP device we detect via the serial port.
+        based on the type of the connected ESP device.
       </p>
       <pre>
 {
@@ -370,33 +395,6 @@
         <code>new_install_improv_wait_time</code> to the number of seconds to
         wait. Set to <code>0</code> to disable Improv Serial detection.
       </p>
-      <h2 id="improv">Configuring Wi-Fi</h2>
-      <p>
-        ESP Web Tools supports the
-        <a href="https://www.improv-wifi.com/serial"
-          >Improv Wi-Fi serial standard</a
-        >. This is an open standard to allow configuring Wi-Fi via the serial
-        port.
-      </p>
-      <p>
-        If the firmware supports Improv, a user will be asked to connect the
-        device to the network after installing the firmware. Once connected, the
-        device can send the user to a URL to finish configuration. For example,
-        this can be a link to the device's IP address where it serves a local
-        UI.
-      </p>
-      <p>
-        At any time in the future a user can use ESP Web Tools to find the
-        device link or to reconfigure the Wi-Fi settings without doing a
-        reinstall.
-      </p>
-      <p class="screenshot">
-        <img
-          src="./static/screenshots/dashboard.png"
-          alt="Screenshot showing ESP Web Tools dialog offering visting the device, adding it to Home Assistant, change Wi-Fi, show logs and console and reset data."
-        />
-        <i>Screenshot showing the ESP Web Tools interface</i>
-      </p>
 
       <h3 id="customize">Customizing the look and feel</h3>
       <p>
@@ -437,41 +435,6 @@
 &lt;/esp-web-install-button>
     </pre
       >
-      <h2 id="logs">Viewing logs & sending commands</h2>
-      <p>
-        ESP Web Tools allows users to open a serial console to see the logs and
-        send commands.
-      </p>
-      <p class="screenshot">
-        <img
-          src="./static/screenshots/logs.png"
-          alt="Screenshot showing ESP Web Tools dialog with a console showing ESPHome logs and a terminal prompt to sent commands."
-        />
-        <i>Screenshot showing the ESP Web Tools logs & console</i>
-      </p>
-
-      <h2 id="drivers">USB Serial Drivers</h2>
-      <p>
-        If the serial port is not showing up, your computer might be missing the
-        drivers for the USB serial chip used in your ESP device. These drivers
-        work for most ESP devices:
-      </p>
-      <ul>
-        <li>
-          CP2102 (square chip):
-          <a
-            href="https://www.silabs.com/products/development-tools/software/usb-to-uart-bridge-vcp-drivers"
-            >driver</a
-          >
-        </li>
-        <li>
-          CH341:
-          <a
-            href="https://github.com/nodemcu/nodemcu-devkit/tree/master/Drivers"
-            >driver</a
-          >
-        </li>
-      </ul>
 
       <h2>Why we created ESP Web Tools</h2>
       <div class="videoWrapper">
