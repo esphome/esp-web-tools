@@ -9,7 +9,6 @@ import "./components/ewt-icon-button";
 import "./components/ewt-textfield";
 import type { EwtTextfield } from "./components/ewt-textfield";
 import "./components/ewt-select";
-import type { EwtSelect } from "./components/ewt-select";
 import "./components/ewt-list-item";
 import "./pages/ewt-page-progress";
 import "./pages/ewt-page-message";
@@ -27,7 +26,6 @@ import { fireEvent } from "./util/fire-event";
 import { sleep } from "./util/sleep";
 import { downloadManifest } from "./util/manifest";
 import { dialogStyles } from "./styles";
-import { TextField } from "@material/mwc-textfield";
 
 const ERROR_ICON = "⚠️";
 const OK_ICON = "🎉";
