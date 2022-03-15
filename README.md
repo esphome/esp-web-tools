@@ -15,6 +15,20 @@ Manifest definition:
   "name": "ESPHome",
   "version": "2021.10.3",
   "home_assistant_domain": "esphome",
+  "serialPortFilter": [
+    {
+      "usbVendorId": "0x1a86",
+      "usbProductId": "0x7523"
+    },
+    {
+      "usbVendorId": "0x2341",
+      "usbProductId": "0x0043"
+    },
+    {
+      "usbVendorId": "0x2341",
+      "usbProductId": "0x0001"
+    }
+  ],
   "builds": [
     {
       "chipFamily": "ESP32",

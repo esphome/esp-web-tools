@@ -1,6 +1,8 @@
 export interface Logger {
   log(msg: string, ...args: any[]): void;
+
   error(msg: string, ...args: any[]): void;
+
   debug(msg: string, ...args: any[]): void;
 }
 
@@ -21,6 +23,7 @@ export interface Manifest {
   new_install_prompt_erase?: boolean;
   /* Time to wait to detect Improv Wi-Fi. Set to 0 to disable. */
   new_install_improv_wait_time?: number;
+  serialPortFilter: SerialPortFilter[];
   builds: Build[];
 }
 

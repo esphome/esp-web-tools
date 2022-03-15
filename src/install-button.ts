@@ -71,6 +71,7 @@ export class InstallButton extends HTMLElement {
 
   public renderRoot?: ShadowRoot;
 
+
   public static preload() {
     import("./connect");
   }
@@ -99,7 +100,15 @@ export class InstallButton extends HTMLElement {
     slot.addEventListener("click", async (ev) => {
       ev.preventDefault();
       const mod = await import("./connect");
-      mod.connect(this);
+      mod.connect(
+        (state) => {
+          if (state.state === "error" /* ERROR */) {
+            //TODO: Display error to the user
+            console.error("Manifest could not be fetched for reading serialPortFilter properties.");
+          }
+        },
+        this
+      );
     });
 
     slot.name = "activate";
