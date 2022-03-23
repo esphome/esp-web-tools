@@ -397,6 +397,8 @@ class EwtInstallDialog extends LitElement {
           break;
 
         case ImprovSerialErrorState.NO_ERROR:
+        // Happens when list SSIDs not supported.
+        case ImprovSerialErrorState.UNKNOWN_RPC_COMMAND:
           break;
 
         default:
