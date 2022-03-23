@@ -44,6 +44,15 @@ Manifest definition:
       ]
     },
     {
+      "chipFamily": "ESP32-S3",
+      "parts": [
+        { "path": "bootloader_dout_40m.bin", "offset": 4096 },
+        { "path": "partitions.bin", "offset": 32768 },
+        { "path": "boot_app0.bin", "offset": 57344 },
+        { "path": "esp32-s3.bin", "offset": 65536 }
+      ]
+    },
+    {
       "chipFamily": "ESP8266",
       "parts": [
         { "path": "esp8266.bin", "offset": 0 }
