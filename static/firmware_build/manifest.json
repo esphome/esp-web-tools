@@ -1,16 +1,11 @@
 {
   "name": "ESPHome",
-  "version": "2022.2.0-dev",
+  "version": "2022.3.0",
   "home_assistant_domain": "esphome",
   "builds": [
     {
       "chipFamily": "ESP32",
-      "parts": [
-        { "path": "bootloader.bin", "offset": 4096 },
-        { "path": "partitions.bin", "offset": 32768 },
-        { "path": "ota.bin", "offset": 57344 },
-        { "path": "firmware.bin", "offset": 65536 }
-      ]
+      "parts": [{ "path": "esp32.bin", "offset": 0 }]
     },
     {
       "chipFamily": "ESP8266",
