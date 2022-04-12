@@ -409,8 +409,8 @@
         be setting the <code>overrides</code> property on
         <code>&lt;esp-web-install-button&gt;</code>. The value is an object
         containing a
-        <code>checkSameFirmwareVersion(manifest, improvInfo)</code> function.
-        The <code>manifest</code> parameter is your manifest and
+        <code>checkSameFirmware(manifest, improvInfo)</code> function. The
+        <code>manifest</code> parameter is your manifest and
         <code>improvInfo</code> is the information returned from Improv:
         <code>{ name, firmware, version, chipFamily }</code>. This check is only
         called if the device firmware was detected via Improv.
@@ -418,7 +418,7 @@
       <pre>
 const button = document.querySelector('esp-web-install-button');
 button.overrides = {
-  checkSameFirmwareVersion(manifest, improvInfo) {
+  checkSameFirmware(manifest, improvInfo) {
     const manifestFirmware = manifest.name.toLowerCase();
     const deviceFirmware = improvInfo.firmware.toLowerCase();
     return manifestFirmware.includes(deviceFirmware);

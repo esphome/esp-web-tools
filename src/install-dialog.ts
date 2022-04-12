@@ -38,7 +38,7 @@ export class EwtInstallDialog extends LitElement {
   public logger: Logger = console;
 
   public overrides?: {
-    checkSameFirmwareVersion?: (
+    checkSameFirmware?: (
       manifest: Manifest,
       deviceImprov: ImprovSerial["info"]
     ) => boolean;
@@ -886,8 +886,8 @@ export class EwtInstallDialog extends LitElement {
   private get _isSameFirmware() {
     return !this._info
       ? false
-      : this.overrides?.checkSameFirmwareVersion
-      ? this.overrides.checkSameFirmwareVersion(this._manifest, this._info)
+      : this.overrides?.checkSameFirmware
+      ? this.overrides.checkSameFirmware(this._manifest, this._info)
       : this._info.firmware === this._manifest.name;
   }
 
