@@ -403,6 +403,28 @@
         is visible in the ESP Web Tools menu when connected to a device running
         your firmware (as detected via Improv).
       </p>
+      <p>
+        ESP Web Tools allows you to provide your own check if the device is
+        running the same firmware as specified in the manifest. This check can
+        be setting the <code>overrides</code> property on
+        <code>&lt;esp-web-install-button&gt;</code>. The value is an object
+        containing a
+        <code>checkSameFirmwareVersion(manifest, improvInfo)</code> function.
+        The <code>manifest</code> parameter is your manifest and
+        <code>improvInfo</code> is the information returned from Improv:
+        <code>{ name, firmware, version, chipFamily }</code>. This check is only
+        called if the device firmware was detected via Improv.
+      </p>
+      <pre>
+const button = document.querySelector('esp-web-install-button');
+button.overrides = {
+  checkSameFirmwareVersion(manifest, improvInfo) {
+    const manifestFirmware = manifest.name.toLowerCase();
+    const deviceFirmware = improvInfo.firmware.toLowerCase();
+    return manifestFirmware.includes(deviceFirmware);
+  }
+};</pre
+      >
 
       <h3 id="customize">Customizing the look and feel</h3>
       <p>

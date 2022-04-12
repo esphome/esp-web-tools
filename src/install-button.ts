@@ -1,4 +1,5 @@
-import { FlashState } from "./const";
+import type { FlashState } from "./const";
+import type { EwtInstallDialog } from "./install-dialog";
 
 export class InstallButton extends HTMLElement {
   public static isSupported = "serial" in navigator;
@@ -70,6 +71,8 @@ export class InstallButton extends HTMLElement {
   public state?: FlashState;
 
   public renderRoot?: ShadowRoot;
+
+  public overrides: EwtInstallDialog["overrides"];
 
   public static preload() {
     import("./connect");
