@@ -14,4 +14,8 @@ export const dialogStyles = css`
   a {
     color: var(--improv-primary-color, #03a9f4);
   }
+
+  a.button {
+    text-decoration: none;
+  }
 `;

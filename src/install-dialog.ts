@@ -245,6 +245,19 @@ class EwtInstallDialog extends LitElement {
             }}
           ></ewt-button>
         </div>
+        ${this._isSameFirmware && this._manifest.funding_url
+          ? html`
+              <div>
+                <a
+                  class="button"
+                  href=${this._manifest.funding_url}
+                  target="_blank"
+                >
+                  <ewt-button label="Fund Development"></ewt-button>
+                </a>
+              </div>
+            `
+          : ""}
         ${this._isSameVersion
           ? html`
               <div>

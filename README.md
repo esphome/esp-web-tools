@@ -15,6 +15,7 @@ Manifest definition:
   "name": "ESPHome",
   "version": "2021.10.3",
   "home_assistant_domain": "esphome",
+  "funding_url": "https://esphome.io/guides/supporters.html",
   "builds": [
     {
       "chipFamily": "ESP32",
