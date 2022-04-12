@@ -30,6 +30,7 @@ export const connect = async (button: InstallButton) => {
   const el = document.createElement("ewt-install-dialog");
   el.port = port;
   el.manifestPath = button.manifest || button.getAttribute("manifest")!;
+  el.overrides = button.overrides;
   el.addEventListener(
     "closed",
     () => {

@@ -30,12 +30,19 @@ import { dialogStyles } from "./styles";
 const ERROR_ICON = "⚠️";
 const OK_ICON = "🎉";
 
-class EwtInstallDialog extends LitElement {
+export class EwtInstallDialog extends LitElement {
   public port!: SerialPort;
 
   public manifestPath!: string;
 
   public logger: Logger = console;
+
+  public overrides?: {
+    checkSameFirmwareVersion?: (
+      manifest: Manifest,
+      deviceImprov: ImprovSerial["info"]
+    ) => boolean;
+  };
 
   private _manifest!: Manifest;
 
@@ -877,7 +884,11 @@ class EwtInstallDialog extends LitElement {
    * Return if the device runs same firmware as manifest.
    */
   private get _isSameFirmware() {
-    return this._info?.firmware === this._manifest!.name;
+    return !this._info
+      ? false
+      : this.overrides?.checkSameFirmwareVersion
+      ? this.overrides.checkSameFirmwareVersion(this._manifest, this._info)
+      : this._info.firmware === this._manifest.name;
   }
 
   /**
