@@ -20,6 +20,8 @@ export const dialogStyles = css`
     --mdc-typography-body1-line-height: 1.5em;
     --mdc-typography-button-font-size: 0.875em;
     --mdc-typography-button-line-height: 2.25em;
+    --mdc-typography-subtitle1-font-size: 1em;
+    --mdc-typography-subtitle1-line-height: 1.75em;
   }
 
   a {
