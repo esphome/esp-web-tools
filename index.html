@@ -98,7 +98,8 @@
         display: none;
       }
       .content pre {
-        max-width: 100%;
+        display: block;
+        padding-left: 8px;
         overflow-y: scroll;
       }
       .footer {
@@ -289,11 +290,13 @@
         Web Tools button HTML.
       </p>
       <p>
-        You can import the JavaScript files directly from the unpkg CDN or
-        <a href="https://unpkg.com/browse/esp-web-tools/dist/web/"
-          >download the files</a
+        <a href="https://github.com/balloob/squeezelite-esp32-install"
+          >Click here to see a full example.</a
         >
-        and put them on your website.
+      </p>
+      <p>
+        <b>Step 1:</b> Load ESP Web Tools JavaScript on your website by adding
+        the following HTML snippet.
       </p>
       <pre>
 &lt;script
@@ -302,8 +305,14 @@
 >&lt;/script></pre
       >
       <p>
-        Find a place on your page where you want the button to appear and
-        include the following bit of HTML. Update the
+        (If you prefer to locally host the JavaScript,
+        <a href="https://unpkg.com/browse/esp-web-tools/dist/web/"
+          >download it here</a
+        >)
+      </p>
+      <p>
+        <b>Step 2:</b> Find a place on your page where you want the button to
+        appear and include the following bit of HTML. Update the
         <code>manifest</code> attribute to point at your manifest file.
       </p>
       <pre>
@@ -312,7 +321,7 @@
 >&lt;/esp-web-install-button></pre
       >
       <p>
-        ESP Web Tools requires that your website is served over
+        <b>Note:</b> ESP Web Tools requires that your website is served over
         <code>https://</code> to work. This is a Web Serial security
         requirement.
       </p>
