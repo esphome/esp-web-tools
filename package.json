@@ -27,7 +27,7 @@
     "@material/mwc-dialog": "^0.25.3",
     "@material/mwc-formfield": "^0.25.3",
     "@material/mwc-icon-button": "^0.25.3",
-    "@material/mwc-textfield": "^0.25.3",
+    "@material/mwc-textfield": "^0.26.1",
     "esp-web-flasher": "^5.1.1",
     "improv-wifi-serial-sdk": "^2.1.0",
     "lit": "^2.0.0",
