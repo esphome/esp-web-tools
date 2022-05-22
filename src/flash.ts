@@ -85,7 +85,7 @@ export const flash = async (
     return;
   }
 
-  build = manifest.builds.find((b) => b.chipFamily === chipFamily);
+  build = manifest.builds.find((b) => b.chipFamily === chipFamily.replace('-', ''));
 
   fireStateEvent({
     state: FlashStateType.MANIFEST,
