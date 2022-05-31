@@ -48,13 +48,13 @@ export const flash = async (
     await esploader.initialize();
   } catch (err: any) {
     logger.error(err);
+    fireStateEvent({
+      state: FlashStateType.ERROR,
+      message:
+        "Failed to initialize. Try resetting your device or holding the BOOT button while clicking INSTALL.",
+      details: { error: FlashError.FAILED_INITIALIZING, details: err },
+    });
     if (esploader.connected) {
-      fireStateEvent({
-        state: FlashStateType.ERROR,
-        message:
-          "Failed to initialize. Try resetting your device or holding the BOOT button while clicking INSTALL.",
-        details: { error: FlashError.FAILED_INITIALIZING, details: err },
-      });
       await esploader.disconnect();
     }
     return;
