@@ -68,7 +68,7 @@ class EwtNoPortPickedDialog extends LitElement {
                 >
               </li>
               <li>
-                CH9102 drivers:
+                CH342, CH343, CH9102 drivers:
                 <a
                   href="https://www.wch.cn/downloads/CH343SER_ZIP.html"
                   target="_blank"
@@ -85,7 +85,7 @@ class EwtNoPortPickedDialog extends LitElement {
                 (download via blue button with ${cloudDownload} icon)
               </li>
               <li>
-                CH341 drivers:
+                CH340, CH341 drivers:
                 <a
                   href="https://www.wch.cn/downloads/CH341SER_ZIP.html"
                   target="_blank"
