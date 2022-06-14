@@ -15,6 +15,9 @@ export class EwtButton extends ButtonBase {
       .mdc-button {
         min-width: initial;
       }
+      :host([text-left]) .mdc-button__label {
+        text-align: left;
+      }
     `,
   ];
 }
