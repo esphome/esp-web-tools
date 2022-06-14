@@ -164,24 +164,23 @@ export class EwtInstallDialog extends LitElement {
     let allowClosing = true;
 
     content = html`
-      <table>
-        <tr>
-          <td>${firmwareIcon}</td>
-          <td>${this._info!.firmware}&nbsp;${this._info!.version}</td>
-        </tr>
-        <tr>
-          <td>${chipIcon}</td>
-          <td>${this._info!.chipFamily}</td>
-        </tr>
-      </table>
+      <div class="table-row">
+        ${firmwareIcon}
+        <div>${this._info!.firmware}&nbsp;${this._info!.version}</div>
+      </div>
+      <div class="table-row last">
+        ${chipIcon}
+        <div>${this._info!.chipFamily}</div>
+      </div>
       <div class="dashboard-buttons">
         ${!this._isSameVersion
           ? html`
               <div>
                 <ewt-button
+                  text-left
                   .label=${!this._isSameFirmware
-                    ? `Install ${this._manifest!.name}`
-                    : `Update ${this._manifest!.name}`}
+                    ? `Install ${this._manifest.name}`
+                    : `Update ${this._manifest.name}`}
                   @click=${() => {
                     if (this._isSameFirmware) {
                       this._startInstall(false);
@@ -291,6 +290,7 @@ export class EwtInstallDialog extends LitElement {
       <div class="dashboard-buttons">
         <div>
           <ewt-button
+            text-left
             .label=${`Install ${this._manifest.name}`}
             @click=${() => {
               if (this._manifest.new_install_prompt_erase) {
@@ -523,9 +523,7 @@ export class EwtInstallDialog extends LitElement {
   }
 
   _renderInstall(): [string | undefined, TemplateResult, boolean, boolean] {
-    let heading: string | undefined = `${
-      this._installConfirmed ? "Installing" : "Install"
-    } ${this._manifest!.name}`;
+    let heading: string | undefined;
     let content: TemplateResult;
     let hideActions = false;
     const allowClosing = false;
@@ -545,6 +543,7 @@ export class EwtInstallDialog extends LitElement {
         ></ewt-button>
       `;
     } else if (!this._installConfirmed) {
+      heading = "Confirm Installation";
       const action = isUpdate ? "update to" : "install";
       content = html`
         ${isUpdate
@@ -552,9 +551,9 @@ export class EwtInstallDialog extends LitElement {
               ${this._info!.firmware}&nbsp;${this._info!.version}.<br /><br />`
           : ""}
         Do you want to ${action}
-        ${this._manifest!.name}&nbsp;${this._manifest!.version}?
+        ${this._manifest.name}&nbsp;${this._manifest.version}?
         ${this._installErase
-          ? "All existing data will be erased from your device."
+          ? html`<br /><br />All data on the device will be erased.`
           : ""}
         <ewt-button
           slot="primaryAction"
@@ -575,9 +574,11 @@ export class EwtInstallDialog extends LitElement {
       this._installState.state === FlashStateType.MANIFEST ||
       this._installState.state === FlashStateType.PREPARING
     ) {
+      heading = "Installing";
       content = this._renderProgress("Preparing installation");
       hideActions = true;
     } else if (this._installState.state === FlashStateType.ERASING) {
+      heading = "Installing";
       content = this._renderProgress("Erasing");
       hideActions = true;
     } else if (
@@ -587,6 +588,7 @@ export class EwtInstallDialog extends LitElement {
       (this._installState.state === FlashStateType.FINISHED &&
         this._client === undefined)
     ) {
+      heading = "Installing";
       let percentage: number | undefined;
       let undeterminateLabel: string | undefined;
       if (this._installState.state === FlashStateType.FINISHED) {
@@ -630,6 +632,7 @@ export class EwtInstallDialog extends LitElement {
         ></ewt-button>
       `;
     } else if (this._installState.state === FlashStateType.ERROR) {
+      heading = "Installation failed";
       content = html`
         <ewt-page-message
           .icon=${ERROR_ICON}
@@ -896,7 +899,7 @@ export class EwtInstallDialog extends LitElement {
    */
   private get _isSameVersion() {
     return (
-      this._isSameFirmware && this._info!.version === this._manifest!.version
+      this._isSameFirmware && this._info!.version === this._manifest.version
     );
   }
 
@@ -916,12 +919,13 @@ export class EwtInstallDialog extends LitElement {
         right: 4px;
         top: 10px;
       }
-      table {
-        border-spacing: 0;
-        color: var(--improv-text-color);
+      .table-row {
+        display: flex;
+      }
+      .table-row.last {
         margin-bottom: 16px;
       }
-      table svg {
+      .table-row svg {
         width: 20px;
         margin-right: 8px;
       }
