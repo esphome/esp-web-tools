@@ -61,7 +61,7 @@ class EwtNoPortPickedDialog extends LitElement {
               <li>
                 CP2102 drivers:
                 <a
-                  href="https://www.silabs.com/products/development-tools/software/usb-to-uart-bridge-vcp-drivers"
+                  href="https://www.silabs.com/developers/usb-to-uart-bridge-vcp-drivers"
                   target="_blank"
                   rel="noopener"
                   >Windows & Mac</a
