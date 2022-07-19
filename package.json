@@ -7,7 +7,8 @@
   "author": "ESPHome maintainers",
   "license": "Apache-2.0",
   "scripts": {
-    "prepublishOnly": "script/build"
+    "prepublishOnly": "script/build",
+    "postinstall": "patch -Ntu node_modules/esptool-js/ESPLoader.js -i patches/esploader.patch || true"
   },
   "devDependencies": {
     "@rollup/plugin-json": "^4.1.0",
@@ -28,9 +29,10 @@
     "@material/mwc-formfield": "^0.26.1",
     "@material/mwc-icon-button": "^0.26.1",
     "@material/mwc-textfield": "^0.26.1",
-    "esp-web-flasher": "^5.1.4",
+    "esptool-js": "github:espressif/esptool-js#0c1b972a05d691c85da23fcc937d91dcf7e283eb",
     "improv-wifi-serial-sdk": "^2.2.2",
     "lit": "^2.0.0",
+    "pako": "^2.0.4",
     "tslib": "^2.3.1"
   }
 }

@@ -826,18 +826,25 @@ export class EwtInstallDialog extends LitElement {
     }
     this._client = undefined;
 
+    // Close port. ESPLoader likes opening it.
+    await this.port.close();
     flash(
       (state) => {
         this._installState = state;
 
         if (state.state === FlashStateType.FINISHED) {
           sleep(100)
+            // Flashing closes the port
+            .then(() => this.port.open({ baudRate: 115200 }))
             .then(() => this._initialize(true))
             .then(() => this.requestUpdate());
+        } else if (state.state === FlashStateType.ERROR) {
+          sleep(100)
+            // Flashing closes the port
+            .then(() => this.port.open({ baudRate: 115200 }));
         }
       },
       this.port,
-      this.logger,
       this.manifestPath,
       this._installErase
     );

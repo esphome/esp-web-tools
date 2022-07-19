@@ -1,3 +1,10 @@
+export type ChipFamily =
+  | "ESP8266"
+  | "ESP32"
+  | "ESP32-S2"
+  | "ESP32-S3(beta2)"
+  | "ESP32-C3";
+
 export interface Logger {
   log(msg: string, ...args: any[]): void;
   error(msg: string, ...args: any[]): void;
@@ -5,7 +12,7 @@ export interface Logger {
 }
 
 export interface Build {
-  chipFamily: "ESP32" | "ESP8266" | "ESP32-S2" | "ESP32-S3" | "ESP32-C3";
+  chipFamily: ChipFamily;
   parts: {
     path: string;
     offset: number;

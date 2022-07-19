@@ -1,24 +1,38 @@
-import { ESPLoader, Logger } from "esp-web-flasher";
+// @ts-ignore-next-line
+import { Transport } from "esptool-js/webserial.js";
+// @ts-ignore-next-line
+import { ESPLoader } from "esptool-js/esploader.js";
 import {
   Build,
+  ChipFamily,
   FlashError,
   FlashState,
   Manifest,
   FlashStateType,
 } from "./const";
-import { getChipFamilyName } from "./util/chip-family-name";
 import { sleep } from "./util/sleep";
+
+const resetTransport = async (transport: Transport) => {
+  await transport.device.setSignals({
+    dataTerminalReady: false,
+    requestToSend: true,
+  });
+  await transport.device.setSignals({
+    dataTerminalReady: false,
+    requestToSend: false,
+  });
+};
 
 export const flash = async (
   onEvent: (state: FlashState) => void,
   port: SerialPort,
-  logger: Logger,
   manifestPath: string,
   eraseFirst: boolean
 ) => {
+  const logger = console;
   let manifest: Manifest;
   let build: Build | undefined;
-  let chipFamily: ReturnType<typeof getChipFamilyName>;
+  let chipFamily: ChipFamily;
 
   const fireStateEvent = (stateUpdate: FlashState) =>
     onEvent({
@@ -33,7 +47,8 @@ export const flash = async (
     (resp): Promise<Manifest> => resp.json()
   );
 
-  const esploader = new ESPLoader(port, logger);
+  const transport = new Transport(port);
+  const esploader = new ESPLoader(transport, 115200);
 
   // For debugging
   (window as any).esploader = esploader;
@@ -45,7 +60,8 @@ export const flash = async (
   });
 
   try {
-    await esploader.initialize();
+    await esploader.main_fn();
+    await esploader.flash_id();
   } catch (err: any) {
     logger.error(err);
     fireStateEvent({
@@ -54,13 +70,24 @@ export const flash = async (
         "Failed to initialize. Try resetting your device or holding the BOOT button while clicking INSTALL.",
       details: { error: FlashError.FAILED_INITIALIZING, details: err },
     });
-    if (esploader.connected) {
-      await esploader.disconnect();
-    }
+    await transport.disconnect();
     return;
   }
 
-  chipFamily = getChipFamilyName(esploader);
+  chipFamily = await esploader.chip.CHIP_NAME;
+
+  if (!esploader.chip.ROM_TEXT) {
+    fireStateEvent({
+      state: FlashStateType.ERROR,
+      message: `Chip ${chipFamily} is not supported`,
+      details: {
+        error: FlashError.NOT_SUPPORTED,
+        details: `Chip ${chipFamily} is not supported`,
+      },
+    });
+    await transport.disconnect();
+    return;
+  }
 
   fireStateEvent({
     state: FlashStateType.INITIALIZING,
@@ -81,7 +108,7 @@ export const flash = async (
       message: `Unable to fetch manifest: ${err}`,
       details: { error: FlashError.FAILED_MANIFEST_FETCH, details: err },
     });
-    await esploader.disconnect();
+    await transport.disconnect();
     return;
   }
 
@@ -99,7 +126,7 @@ export const flash = async (
       message: `Your ${chipFamily} board is not supported.`,
       details: { error: FlashError.NOT_SUPPORTED, details: chipFamily },
     });
-    await esploader.disconnect();
+    await transport.disconnect();
     return;
   }
 
@@ -117,20 +144,24 @@ export const flash = async (
         `Downlading firmware ${part.path} failed: ${resp.status}`
       );
     }
-    return resp.arrayBuffer();
+
+    const reader = new FileReader();
+    const blob = await resp.blob();
+
+    return new Promise<string>((resolve) => {
+      reader.addEventListener("load", () => resolve(reader.result as string));
+      reader.readAsBinaryString(blob);
+    });
   });
 
-  // Run the stub while we wait for files to download
-  const espStub = await esploader.runStub();
-
-  const files: ArrayBuffer[] = [];
+  const fileArray: Array<{ data: string; address: number }> = [];
   let totalSize = 0;
 
-  for (const prom of filePromises) {
+  for (let part = 0; part < filePromises.length; part++) {
     try {
-      const data = await prom;
-      files.push(data);
-      totalSize += data.byteLength;
+      const data = await filePromises[part];
+      fileArray.push({ data, address: build.parts[part].offset });
+      totalSize += data.length;
     } catch (err: any) {
       fireStateEvent({
         state: FlashStateType.ERROR,
@@ -140,7 +171,7 @@ export const flash = async (
           details: err.message,
         },
       });
-      await esploader.disconnect();
+      await transport.disconnect();
       return;
     }
   }
@@ -157,7 +188,7 @@ export const flash = async (
       message: "Erasing device...",
       details: { done: false },
     });
-    await espStub.eraseFlash();
+    await esploader.erase_flash();
     fireStateEvent({
       state: FlashStateType.ERASING,
       message: "Device erased",
@@ -165,56 +196,54 @@ export const flash = async (
     });
   }
 
-  let lastPct = 0;
-
   fireStateEvent({
     state: FlashStateType.WRITING,
-    message: `Writing progress: ${lastPct}%`,
+    message: `Writing progress: 0%`,
     details: {
       bytesTotal: totalSize,
       bytesWritten: 0,
-      percentage: lastPct,
+      percentage: 0,
     },
   });
 
   let totalWritten = 0;
 
-  for (const part of build.parts) {
-    const file = files.shift()!;
-    try {
-      await espStub.flashData(
-        file,
-        (bytesWritten: number) => {
-          const newPct = Math.floor(
-            ((totalWritten + bytesWritten) / totalSize) * 100
-          );
-          if (newPct === lastPct) {
-            return;
-          }
-          lastPct = newPct;
-          fireStateEvent({
-            state: FlashStateType.WRITING,
-            message: `Writing progress: ${newPct}%`,
-            details: {
-              bytesTotal: totalSize,
-              bytesWritten: totalWritten + bytesWritten,
-              percentage: newPct,
-            },
-          });
-        },
-        part.offset,
-        true
-      );
-    } catch (err: any) {
-      fireStateEvent({
-        state: FlashStateType.ERROR,
-        message: err.message,
-        details: { error: FlashError.WRITE_FAILED, details: err },
-      });
-      await esploader.disconnect();
-      return;
-    }
-    totalWritten += file.byteLength;
+  try {
+    await esploader.write_flash({
+      fileArray,
+      reportProgress(fileIndex: number, written: number, total: number) {
+        const uncompressedWritten =
+          (written / total) * fileArray[fileIndex].data.length;
+
+        const newPct = Math.floor(
+          ((totalWritten + uncompressedWritten) / totalSize) * 100
+        );
+
+        // we're done with this file
+        if (written === total) {
+          totalWritten += uncompressedWritten;
+          return;
+        }
+
+        fireStateEvent({
+          state: FlashStateType.WRITING,
+          message: `Writing progress: ${newPct}%`,
+          details: {
+            bytesTotal: totalSize,
+            bytesWritten: totalWritten + written,
+            percentage: newPct,
+          },
+        });
+      },
+    });
+  } catch (err: any) {
+    fireStateEvent({
+      state: FlashStateType.ERROR,
+      message: err.message,
+      details: { error: FlashError.WRITE_FAILED, details: err },
+    });
+    await transport.disconnect();
+    return;
   }
 
   fireStateEvent({
@@ -228,10 +257,10 @@ export const flash = async (
   });
 
   await sleep(100);
-  console.log("DISCONNECT");
-  await esploader.disconnect();
   console.log("HARD RESET");
-  await esploader.hardReset();
+  await resetTransport(transport);
+  console.log("DISCONNECT");
+  await transport.disconnect();
 
   fireStateEvent({
     state: FlashStateType.FINISHED,
