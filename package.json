@@ -8,7 +8,7 @@
   "license": "Apache-2.0",
   "scripts": {
     "prepublishOnly": "script/build",
-    "postinstall": "patch -Ntu node_modules/esptool-js/ESPLoader.js -i patches/esploader.patch || true"
+    "postinstall": "patch -Ntu node_modules/esptool-js/ESPLoader.js -i patches/0001-import-pako-and-not-change-baud.patch && patch -Ntu node_modules/esptool-js/ESPLoader.js -i patches/0002-async-class-method-esploader.patch && patch -Ntu node_modules/esptool-js/webserial.js -i patches/0003-async-class-method-webserial.patch || true"
   },
   "devDependencies": {
     "@rollup/plugin-json": "^4.1.0",
