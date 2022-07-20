@@ -1,0 +1,16 @@
+--- node_modules/esptool-js/ESPLoader.js	2022-07-19 09:17:05.000000000 -0700
++++ node_modules/esptool-js/ESPLoader.fixed.js	2022-07-19 09:19:04.000000000 -0700
+@@ -1,3 +1,4 @@
++import pako from 'pako';
+ import {ESPError, TimeoutError} from "./error.js";
+ 
+ const MAGIC_TO_CHIP = {
+@@ -680,7 +681,7 @@
+ 
+         await this.run_stub();
+ 
+-        await this.change_baud();
++        // await this.change_baud();
+         return chip;
+     }
+ 

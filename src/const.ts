@@ -38,11 +38,6 @@ export interface InitializingState extends BaseFlashState {
   details: { done: boolean };
 }
 
-export interface ManifestState extends BaseFlashState {
-  state: FlashStateType.MANIFEST;
-  details: { done: boolean };
-}
-
 export interface PreparingState extends BaseFlashState {
   state: FlashStateType.PREPARING;
   details: { done: boolean };
@@ -69,7 +64,6 @@ export interface ErrorState extends BaseFlashState {
 
 export type FlashState =
   | InitializingState
-  | ManifestState
   | PreparingState
   | ErasingState
   | WritingState
@@ -78,7 +72,6 @@ export type FlashState =
 
 export const enum FlashStateType {
   INITIALIZING = "initializing",
-  MANIFEST = "manifest",
   PREPARING = "preparing",
   ERASING = "erasing",
   WRITING = "writing",
