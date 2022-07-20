@@ -4,7 +4,6 @@ import { Transport } from "esptool-js/webserial.js";
 import { ESPLoader } from "esptool-js/esploader.js";
 import {
   Build,
-  ChipFamily,
   FlashError,
   FlashState,
   Manifest,
@@ -27,12 +26,11 @@ export const flash = async (
   onEvent: (state: FlashState) => void,
   port: SerialPort,
   manifestPath: string,
+  manifest: Manifest,
   eraseFirst: boolean
 ) => {
-  const logger = console;
-  let manifest: Manifest;
   let build: Build | undefined;
-  let chipFamily: ChipFamily;
+  let chipFamily: Build["chipFamily"];
 
   const fireStateEvent = (stateUpdate: FlashState) =>
     onEvent({
@@ -41,11 +39,6 @@ export const flash = async (
       build,
       chipFamily,
     });
-
-  const manifestURL = new URL(manifestPath, location.toString()).toString();
-  const manifestProm = fetch(manifestURL).then(
-    (resp): Promise<Manifest> => resp.json()
-  );
 
   const transport = new Transport(port);
   const esploader = new ESPLoader(transport, 115200);
@@ -63,13 +56,14 @@ export const flash = async (
     await esploader.main_fn();
     await esploader.flash_id();
   } catch (err: any) {
-    logger.error(err);
+    console.error(err);
     fireStateEvent({
       state: FlashStateType.ERROR,
       message:
         "Failed to initialize. Try resetting your device or holding the BOOT button while clicking INSTALL.",
       details: { error: FlashError.FAILED_INITIALIZING, details: err },
     });
+    await resetTransport(transport);
     await transport.disconnect();
     return;
   }
@@ -85,6 +79,7 @@ export const flash = async (
         details: `Chip ${chipFamily} is not supported`,
       },
     });
+    await resetTransport(transport);
     await transport.disconnect();
     return;
   }
@@ -94,31 +89,8 @@ export const flash = async (
     message: `Initialized. Found ${chipFamily}`,
     details: { done: true },
   });
-  fireStateEvent({
-    state: FlashStateType.MANIFEST,
-    message: "Fetching manifest...",
-    details: { done: false },
-  });
-
-  try {
-    manifest = await manifestProm;
-  } catch (err: any) {
-    fireStateEvent({
-      state: FlashStateType.ERROR,
-      message: `Unable to fetch manifest: ${err}`,
-      details: { error: FlashError.FAILED_MANIFEST_FETCH, details: err },
-    });
-    await transport.disconnect();
-    return;
-  }
 
   build = manifest.builds.find((b) => b.chipFamily === chipFamily);
-
-  fireStateEvent({
-    state: FlashStateType.MANIFEST,
-    message: `Found manifest for ${manifest.name}`,
-    details: { done: true },
-  });
 
   if (!build) {
     fireStateEvent({
@@ -126,6 +98,7 @@ export const flash = async (
       message: `Your ${chipFamily} board is not supported.`,
       details: { error: FlashError.NOT_SUPPORTED, details: chipFamily },
     });
+    await resetTransport(transport);
     await transport.disconnect();
     return;
   }
@@ -136,6 +109,7 @@ export const flash = async (
     details: { done: false },
   });
 
+  const manifestURL = new URL(manifestPath, location.toString()).toString();
   const filePromises = build.parts.map(async (part) => {
     const url = new URL(part.path, manifestURL).toString();
     const resp = await fetch(url);
@@ -171,6 +145,7 @@ export const flash = async (
           details: err.message,
         },
       });
+      await resetTransport(transport);
       await transport.disconnect();
       return;
     }
@@ -242,6 +217,7 @@ export const flash = async (
       message: err.message,
       details: { error: FlashError.WRITE_FAILED, details: err },
     });
+    await resetTransport(transport);
     await transport.disconnect();
     return;
   }

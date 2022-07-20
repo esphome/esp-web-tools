@@ -571,7 +571,6 @@ export class EwtInstallDialog extends LitElement {
     } else if (
       !this._installState ||
       this._installState.state === FlashStateType.INITIALIZING ||
-      this._installState.state === FlashStateType.MANIFEST ||
       this._installState.state === FlashStateType.PREPARING
     ) {
       heading = "Installing";
@@ -846,6 +845,7 @@ export class EwtInstallDialog extends LitElement {
       },
       this.port,
       this.manifestPath,
+      this._manifest,
       this._installErase
     );
   }

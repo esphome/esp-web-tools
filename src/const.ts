@@ -1,10 +1,3 @@
-export type ChipFamily =
-  | "ESP8266"
-  | "ESP32"
-  | "ESP32-S2"
-  | "ESP32-S3(beta2)"
-  | "ESP32-C3";
-
 export interface Logger {
   log(msg: string, ...args: any[]): void;
   error(msg: string, ...args: any[]): void;
@@ -12,7 +5,7 @@ export interface Logger {
 }
 
 export interface Build {
-  chipFamily: ChipFamily;
+  chipFamily: "ESP32" | "ESP8266" | "ESP32-S2" | "ESP32-S3" | "ESP32-C3";
   parts: {
     path: string;
     offset: number;
@@ -45,11 +38,6 @@ export interface InitializingState extends BaseFlashState {
   details: { done: boolean };
 }
 
-export interface ManifestState extends BaseFlashState {
-  state: FlashStateType.MANIFEST;
-  details: { done: boolean };
-}
-
 export interface PreparingState extends BaseFlashState {
   state: FlashStateType.PREPARING;
   details: { done: boolean };
@@ -76,7 +64,6 @@ export interface ErrorState extends BaseFlashState {
 
 export type FlashState =
   | InitializingState
-  | ManifestState
   | PreparingState
   | ErasingState
   | WritingState
@@ -85,7 +72,6 @@ export type FlashState =
 
 export const enum FlashStateType {
   INITIALIZING = "initializing",
-  MANIFEST = "manifest",
   PREPARING = "preparing",
   ERASING = "erasing",
   WRITING = "writing",
