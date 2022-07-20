@@ -8,9 +8,11 @@
   "license": "Apache-2.0",
   "scripts": {
     "prepublishOnly": "script/build",
-    "postinstall": "patch -Ntu node_modules/esptool-js/ESPLoader.js -i patches/0001-import-pako-and-not-change-baud.patch && patch -Ntu node_modules/esptool-js/ESPLoader.js -i patches/0002-async-class-method-esploader.patch && patch -Ntu node_modules/esptool-js/webserial.js -i patches/0003-async-class-method-webserial.patch || true"
+    "postinstall": "patch -Ntu node_modules/esptool-js/ESPLoader.js -i patches/0001-import-pako-and-not-change-baud.patch || true"
   },
   "devDependencies": {
+    "@babel/plugin-proposal-class-properties": "^7.18.6",
+    "@rollup/plugin-babel": "^5.3.1",
     "@rollup/plugin-json": "^4.1.0",
     "@rollup/plugin-node-resolve": "^13.0.0",
     "@rollup/plugin-typescript": "^8.2.1",
