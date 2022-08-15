@@ -25,7 +25,7 @@
   },
   "dependencies": {
     "@material/mwc-button": "^0.26.1",
-    "@material/mwc-checkbox": "^0.26.1",
+    "@material/mwc-checkbox": "^0.27.0",
     "@material/mwc-circular-progress": "^0.26.1",
     "@material/mwc-dialog": "^0.26.1",
     "@material/mwc-formfield": "^0.26.1",
