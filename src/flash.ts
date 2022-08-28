@@ -1,7 +1,7 @@
 // @ts-ignore-next-line
 import { Transport } from "esptool-js/webserial.js";
 // @ts-ignore-next-line
-import { ESPLoader } from "esptool-js/esploader.js";
+import { ESPLoader } from "esptool-js/ESPLoader.js";
 import {
   Build,
   FlashError,
