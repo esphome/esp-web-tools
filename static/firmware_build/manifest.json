@@ -1,8 +1,9 @@
 {
-  "name": "Sleep Sensor Gateway",
-  "version": "0.61",
+  "name": "sleep_sensor",
+  "version": "0.6",
   "home_assistant_domain": "esphome",
   "funding_url": "https://esphome.io/guides/supporters.html",
+  "new_install_improv_wait_time": 20,
   "builds": [
     {
       "chipFamily": "ESP32",
