@@ -1,13 +1,13 @@
 {
   "name": "Sleep Sensor Gateway",
-  "version": "0.6",
+  "version": "0.61",
   "home_assistant_domain": "esphome",
   "funding_url": "https://esphome.io/guides/supporters.html",
   "builds": [
     {
       "chipFamily": "ESP32",
       "parts": [        
-      { "path": "bootloader_dout_40m.bin", "offset": 4096 },
+      { "path": "bootloader_dio_40m.bin", "offset": 4096 },
       { "path": "partitions.bin", "offset": 32768 },
       { "path": "boot_app0.bin", "offset": 57344 },
       { "path": "sleep_sensor_v6.bin", "offset": 65536 }]
