@@ -6,7 +6,8 @@
   "builds": [
     {
       "chipFamily": "ESP32",
-      "parts": [{ "path": "sleep_sensor_v6.bin", "offset": 0 }]
+      "parts": [{ "path": "sleep_sensor_v6.bin", "offset": 65536 }]
     }
+
   ]
 }
