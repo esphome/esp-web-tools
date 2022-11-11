@@ -1,16 +1,12 @@
 {
-  "name": "ESPHome",
-  "version": "2022.3.0",
+  "name": "Sleep Sensor Gateway",
+  "version": "0.6",
   "home_assistant_domain": "esphome",
   "funding_url": "https://esphome.io/guides/supporters.html",
   "builds": [
     {
       "chipFamily": "ESP32",
-      "parts": [{ "path": "esp32.bin", "offset": 0 }]
-    },
-    {
-      "chipFamily": "ESP8266",
-      "parts": [{ "path": "esp8266.bin", "offset": 0 }]
+      "parts": [{ "path": "sleep_sensor_v6.bin", "offset": 0 }]
     }
   ]
 }
