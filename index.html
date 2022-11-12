@@ -148,7 +148,7 @@
 
       <!-- <h2 id="demo">Try a live demo</h2> -->
       <p>
-        This webpage is to install Smart Pillow gateway to ESP32 as well as debugging and configuration via serial (USB).
+        This webpage is for installing Smart Pillow gateway to ESP32 device, as well as debugging and configuration via serial (USB).
       </p>
       <esp-web-install-button manifest="static/firmware_build/manifest.json">
         <i slot="unsupported">
@@ -160,6 +160,8 @@
           >.
         </i>
       </esp-web-install-button>
+
+
 
       <div class="footer">
         <div class="initiative">
@@ -178,6 +180,18 @@
       if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
         document.querySelector(".not-supported-i").classList.remove("hidden");
       }
+
+
+      const button = document.querySelector('esp-web-install-button');
+    button.overrides = {
+      checkSameFirmware(manifest, improvInfo) {
+        const manifestFirmware = manifest.name.toLowerCase();
+        const deviceFirmware = improvInfo.firmware.toLowerCase();
+        console.log("overide btn "+ manifestFirmware + " " + deviceFirmware );
+        return manifestFirmware.includes(deviceFirmware);
+      }
+    };
+
     </script>
   </body>
 </html>
