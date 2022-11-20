@@ -151,16 +151,18 @@
         This webpage is for installing Smart Pillow gateway to ESP32 device, as well as debugging and configuration via serial (USB).
       </p>
 
+      <p>
+      <label for="pillow_no">Select pillow gateway no.</label>
+      <select name="pillow_no" onclick="setManifest(this);" onkeypress="setManifest(this);" onchange="setManifest(this);">
+      <!-- <select name="pillow_no" onchange="if (this.selectedIndex) setManifest(this);"> -->
+      <option value="static/firmware_build/manifest1.json">1</option> 
+        <option value="static/firmware_build/manifest2.json">2</option>
+        <option value="static/firmware_build/manifest3.json">3</option>
+        <option value="static/firmware_build/manifest4.json">4</option>
+      </select>
+    </p>
+
       <esp-web-install-button id="install_button" manifest="static/firmware_build/manifest1.json">
-        <label for="pillow_no">Select pillow gateway no.</label>
-        <select name="pillow_no" onclick="setManifest(this);" onkeypress="setManifest(this);" onchange="setManifest(this);">
-        <!-- <select name="pillow_no" onchange="if (this.selectedIndex) setManifest(this);"> -->
-        <option value="static/firmware_build/manifest1.json">1</option> 
-          <option value="static/firmware_build/manifest2.json">2</option>
-          <option value="static/firmware_build/manifest3.json">3</option>
-          <option value="static/firmware_build/manifest4.json">4</option>
-        </select>
-        
         <i slot="unsupported">
           Feature is not available because your browser does not support Web
           Serial. Open this page in Google Chrome or Microsoft Edge instead<span
