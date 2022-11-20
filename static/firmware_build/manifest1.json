@@ -1,8 +1,7 @@
 {
-  "name": "sleep_sensor",
+  "name": "sleep_sensor_1",
   "version": "0.7",
   "home_assistant_domain": "esphome",
-  "funding_url": "https://esphome.io/guides/supporters.html",
   "new_install_improv_wait_time": 20,
   "new_install_prompt_erase": true,
   "builds": [
@@ -12,7 +11,7 @@
       { "path": "bootloader_dio_40m.bin", "offset": 4096 },
       { "path": "partitions.bin", "offset": 32768 },
       { "path": "boot_app0.bin", "offset": 57344 },
-      { "path": "sleep_sensor_v7.bin", "offset": 65536 }]
+      { "path": "sleep_sensor_v7_1.bin", "offset": 65536 }]
     }
 
   ]

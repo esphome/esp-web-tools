@@ -1,2 +1,6 @@
 dist
 node_modules
+
+static/.DS_Store
+
+static/firmware_build/.DS_Store
