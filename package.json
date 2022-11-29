@@ -30,7 +30,7 @@
     "@material/mwc-dialog": "^0.26.1",
     "@material/mwc-formfield": "^0.26.1",
     "@material/mwc-icon-button": "^0.26.1",
-    "@material/mwc-textfield": "^0.26.1",
+    "@material/mwc-textfield": "^0.27.0",
     "esptool-js": "github:espressif/esptool-js#076af269f44daa5b7823031221f39bf22124c129",
     "improv-wifi-serial-sdk": "^2.2.2",
     "lit": "^2.0.0",
