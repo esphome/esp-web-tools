@@ -352,6 +352,20 @@
         ESP Web Tools can also be integrated in your projects by installing it
         <a href="https://www.npmjs.com/package/esp-web-tools">via NPM</a>.
       </p>
+      <h3 id="preparing-firmware">Preparing your firmware</h3>
+      <p>
+        ESP32 firmware is usually split into 4 different files. When these files
+        are installed using `esptool`, it will patch certain bytes to match the
+        target device. Because ESP Web Tools is not able to do this, you will need
+        to use `esptool` to create a single binary file of your firmware and point
+        ESP Web Tools at that.
+      </p>
+      <p>
+        This can be done wit the following command:
+        <code
+          >esptool --chip esp32 merge_bin -o combined-firmware.bin --flash_mode dio --flash_freq 40m --flash_size 4MB 0x1000 srt.4.ino.bootloader.bin 0x8000 srt.4.ino.partitions.bin 0xe000 boot_app0.bin 0x10000 srt.4.ino.bin<
+        /code>
+      </p>
       <h3 id="manifest">Creating your manifest</h3>
       <p>
         Manifests describe the firmware that you want to offer the user to
