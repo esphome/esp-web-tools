@@ -361,10 +361,11 @@
         ESP Web Tools at that.
       </p>
       <p>
-        This can be done wit the following command:
+        This can be done with the following command:
         <code
           >esptool --chip esp32 merge_bin -o combined-firmware.bin --flash_mode dio --flash_freq 40m --flash_size 4MB 0x1000 srt.4.ino.bootloader.bin 0x8000 srt.4.ino.partitions.bin 0xe000 boot_app0.bin 0x10000 srt.4.ino.bin<
         /code>
+        The merged binary needs to be installed with offset 0.
       </p>
       <h3 id="manifest">Creating your manifest</h3>
       <p>
