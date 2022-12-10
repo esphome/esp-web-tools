@@ -354,12 +354,17 @@
       </p>
       <h3 id="preparing-firmware">Preparing your firmware</h3>
       <p>
-        ESP32 firmware is usually split into 4 different files. When these files
-        are installed using the command-line tool <code>esptool</code>, it will
-        patch certain bytes to match the target device when using IDF v4 or
-        later. ESP Web Tools is not able to do this on the fly, so you will need
-        to use <code>esptool</code> to create a single binary file of your
-        firmware for use within ESP Web Tools.
+        If you have ESP32 firmware and are using ESP-IDF framewowrk v4 or later,
+        you will need to create a merged version of your firmware before being
+        able to use it with ESP Web Tools.
+      </p>
+      <p>
+        ESP32 firmware is split into 4 different files. When these files are
+        installed using the command-line tool <code>esptool</code>, it will
+        patch flash frequency, flash size and flash mode to match the target
+        device. ESP Web Tools is not able to do this on the fly, so you will
+        need to use <code>esptool</code> to create the single binary file and
+        use that with ESP Web Tools.
       </p>
       <p>
         To create a single binary using <code>esptool</code>, you can use the
