@@ -354,9 +354,10 @@
       </p>
       <h3 id="preparing-firmware">Preparing your firmware</h3>
       <p>
-        If you have ESP32 firmware and are using ESP-IDF framewowrk v4 or later,
+        If you have ESP32 firmware and are using ESP-IDF framework v4 or later,
         you will need to create a merged version of your firmware before being
-        able to use it with ESP Web Tools.
+        able to use it with ESP Web Tools. If you use ESP8266 or ESP32 with
+        ESP-IDF v3 or earlier, you can skip this section.
       </p>
       <p>
         ESP32 firmware is split into 4 different files. When these files are
@@ -367,8 +368,8 @@
         use that with ESP Web Tools.
       </p>
       <p>
-        To create a single binary using <code>esptool</code>, you can use the
-        following command:
+        Create a single binary using <code>esptool</code> with the following
+        command:
       </p>
       <pre>
 esptool --chip esp32 merge_bin \
@@ -383,9 +384,9 @@ esptool --chip esp32 merge_bin \
       >
       <p>
         If your memory type is <code>opi_opi</code> or <code>opi_qspi</code>,
-        override your flash mode to be <code>dout</code>. Else, if your flash
-        mode is <code>qio</code> or <code>qout</code>, override your flash mode
-        to be <code>dio</code>.
+        set your flash mode to be <code>dout</code>. Else, if your flash mode is
+        <code>qio</code> or <code>qout</code>, override your flash mode to be
+        <code>dio</code>.
       </p>
       <h3 id="manifest">Creating your manifest</h3>
       <p>
