@@ -355,17 +355,32 @@
       <h3 id="preparing-firmware">Preparing your firmware</h3>
       <p>
         ESP32 firmware is usually split into 4 different files. When these files
-        are installed using <code>esptool</code>, it will patch certain bytes to match the
-        target device. Because ESP Web Tools is not able to do this, you will need
-        to use <code>esptool</code> to create a single binary file of your firmware and point
-        ESP Web Tools at that.
+        are installed using the command-line tool <code>esptool</code>, it will
+        patch certain bytes to match the target device when using IDF v4 or
+        later. ESP Web Tools is not able to do this on the fly, so you will need
+        to use <code>esptool</code> to create a single binary file of your
+        firmware for use within ESP Web Tools.
       </p>
       <p>
-        This can be done with the following command:
-        <code
-          >esptool --chip esp32 merge_bin -o combined-firmware.bin --flash_mode dio --flash_freq 40m --flash_size 4MB 0x1000 srt.4.ino.bootloader.bin 0x8000 srt.4.ino.partitions.bin 0xe000 boot_app0.bin 0x10000 srt.4.ino.bin<
-        /code>
-        The merged binary needs to be installed with offset 0.
+        To create a single binary using <code>esptool</code>, you can use the
+        following command:
+      </p>
+      <pre>
+esptool --chip esp32 merge_bin \
+  -o merged-firmware.bin \
+  --flash_mode dio \
+  --flash_freq 40m \
+  --flash_size 4MB \
+  0x1000 bootloader.bin \
+  0x8000 partitions.bin \
+  0xe000 boot.bin \
+  0x10000 your_app.bin</pre
+      >
+      <p>
+        If your memory type is <code>opi_opi</code> or <code>opi_qspi</code>,
+        override your flash mode to be <code>dout</code>. Else, if your flash
+        mode is <code>qio</code> or <code>qout</code>, override your flash mode
+        to be <code>dio</code>.
       </p>
       <h3 id="manifest">Creating your manifest</h3>
       <p>
@@ -387,10 +402,7 @@
     {
       "chipFamily": "ESP32",
       "parts": [
-        { "path": "bootloader.bin", "offset": 4096 },
-        { "path": "partitions.bin", "offset": 32768 },
-        { "path": "ota.bin", "offset": 57344 },
-        { "path": "firmware.bin", "offset": 65536 }
+        { "path": "merged-firmware.bin", "offset": 0 },
       ]
     },
     {
