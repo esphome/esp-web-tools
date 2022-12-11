@@ -352,6 +352,42 @@
         ESP Web Tools can also be integrated in your projects by installing it
         <a href="https://www.npmjs.com/package/esp-web-tools">via NPM</a>.
       </p>
+      <h3 id="preparing-firmware">Preparing your firmware</h3>
+      <p>
+        If you have ESP32 firmware and are using ESP-IDF framework v4 or later,
+        you will need to create a merged version of your firmware before being
+        able to use it with ESP Web Tools. If you use ESP8266 or ESP32 with
+        ESP-IDF v3 or earlier, you can skip this section.
+      </p>
+      <p>
+        ESP32 firmware is split into 4 different files. When these files are
+        installed using the command-line tool <code>esptool</code>, it will
+        patch flash frequency, flash size and flash mode to match the target
+        device. ESP Web Tools is not able to do this on the fly, so you will
+        need to use <code>esptool</code> to create the single binary file and
+        use that with ESP Web Tools.
+      </p>
+      <p>
+        Create a single binary using <code>esptool</code> with the following
+        command:
+      </p>
+      <pre>
+esptool --chip esp32 merge_bin \
+  -o merged-firmware.bin \
+  --flash_mode dio \
+  --flash_freq 40m \
+  --flash_size 4MB \
+  0x1000 bootloader.bin \
+  0x8000 partitions.bin \
+  0xe000 boot.bin \
+  0x10000 your_app.bin</pre
+      >
+      <p>
+        If your memory type is <code>opi_opi</code> or <code>opi_qspi</code>,
+        set your flash mode to be <code>dout</code>. Else, if your flash mode is
+        <code>qio</code> or <code>qout</code>, override your flash mode to be
+        <code>dio</code>.
+      </p>
       <h3 id="manifest">Creating your manifest</h3>
       <p>
         Manifests describe the firmware that you want to offer the user to
@@ -372,10 +408,7 @@
     {
       "chipFamily": "ESP32",
       "parts": [
-        { "path": "bootloader.bin", "offset": 4096 },
-        { "path": "partitions.bin", "offset": 32768 },
-        { "path": "ota.bin", "offset": 57344 },
-        { "path": "firmware.bin", "offset": 65536 }
+        { "path": "merged-firmware.bin", "offset": 0 },
       ]
     },
     {
