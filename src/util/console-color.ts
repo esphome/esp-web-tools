@@ -178,13 +178,14 @@ export class ColoredConsole {
         }
       }
     }
+    const atBottom =
+      this.targetElement.scrollTop >
+      this.targetElement.scrollHeight - this.targetElement.offsetHeight - 50;
+
     addSpan(line.substring(i));
 
-    if (
-      this.targetElement.scrollTop + 56 >=
-      this.targetElement.scrollHeight - this.targetElement.offsetHeight
-    ) {
-      // at bottom
+    // Keep scroll at bottom
+    if (atBottom) {
       this.targetElement.scrollTop = this.targetElement.scrollHeight;
     }
   }
