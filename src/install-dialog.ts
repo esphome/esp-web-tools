@@ -79,8 +79,6 @@ export class EwtInstallDialog extends LitElement {
   // null = not available
   @state() private _ssids?: Ssid[] | null;
 
-  private _ssidFetchPromise?: Promise<void>;
-
   // Name of Ssid. Null = other
   @state() private _selectedSsid: string | null = null;
 
@@ -435,6 +433,9 @@ export class EwtInstallDialog extends LitElement {
         default:
           error = `Unknown error (${this._client!.error})`;
       }
+      const selectedSsid = this._ssids?.find(
+        (info) => info.name === this._selectedSsid
+      );
       content = html`
         <div>
           Enter the credentials of the Wi-Fi network that you want your device
@@ -459,17 +460,14 @@ export class EwtInstallDialog extends LitElement {
                 ${this._ssids!.map(
                   (info) => html`
                     <ewt-list-item
-                      .selected=${this._selectedSsid === info.name}
+                      .selected=${selectedSsid === info}
                       .value=${info.name}
                     >
                       ${info.name}
                     </ewt-list-item>
                   `
                 )}
-                <ewt-list-item
-                  .selected=${this._selectedSsid === null}
-                  value="-1"
-                >
+                <ewt-list-item .selected=${!selectedSsid} value="-1">
                   Join other…
                 </ewt-list-item>
               </ewt-select>
@@ -480,17 +478,21 @@ export class EwtInstallDialog extends LitElement {
           : ""}
         ${
           // Show input box if command not supported or "Join Other" selected
-          this._selectedSsid === null
+          !selectedSsid
             ? html`
                 <ewt-textfield label="Network Name" name="ssid"></ewt-textfield>
               `
             : ""
         }
-        <ewt-textfield
-          label="Password"
-          name="password"
-          type="password"
-        ></ewt-textfield>
+        ${!selectedSsid || selectedSsid.secured
+          ? html`
+              <ewt-textfield
+                label="Password"
+                name="password"
+                type="password"
+              ></ewt-textfield>
+            `
+          : ""}
         <ewt-button
           slot="primaryAction"
           label="Connect"
@@ -900,11 +902,12 @@ export class EwtInstallDialog extends LitElement {
             ) as EwtTextfield
           ).value
         : this._selectedSsid;
-    const password = (
-      this.shadowRoot!.querySelector(
-        "ewt-textfield[name=password]"
-      ) as EwtTextfield
-    ).value;
+    const password =
+      (
+        this.shadowRoot!.querySelector(
+          "ewt-textfield[name=password]"
+        ) as EwtTextfield | null
+      )?.value || "";
     try {
       await this._client!.provision(ssid, password, 30000);
     } catch (err: any) {
