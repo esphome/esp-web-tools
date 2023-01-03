@@ -416,6 +416,10 @@ export class EwtInstallDialog extends LitElement {
           error = "Unable to connect";
           break;
 
+        case ImprovSerialErrorState.TIMEOUT:
+          error = "Timeout";
+          break;
+
         case ImprovSerialErrorState.NO_ERROR:
         // Happens when list SSIDs not supported.
         case ImprovSerialErrorState.UNKNOWN_RPC_COMMAND:
@@ -868,7 +872,7 @@ export class EwtInstallDialog extends LitElement {
       ) as EwtTextfield
     ).value;
     try {
-      await this._client!.provision(ssid, password);
+      await this._client!.provision(ssid, password, 30000);
     } catch (err: any) {
       return;
     } finally {
