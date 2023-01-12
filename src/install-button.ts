@@ -1,5 +1,6 @@
 import type { FlashState } from "./const";
 import type { EwtInstallDialog } from "./install-dialog";
+import { connect } from "./connect";
 
 export class InstallButton extends HTMLElement {
   public static isSupported = "serial" in navigator;
@@ -74,10 +75,6 @@ export class InstallButton extends HTMLElement {
 
   public overrides: EwtInstallDialog["overrides"];
 
-  public static preload() {
-    import("./connect");
-  }
-
   public connectedCallback() {
     if (this.renderRoot) {
       return;
@@ -95,14 +92,11 @@ export class InstallButton extends HTMLElement {
 
     this.toggleAttribute("install-supported", true);
 
-    this.addEventListener("mouseover", InstallButton.preload);
-
     const slot = document.createElement("slot");
 
     slot.addEventListener("click", async (ev) => {
       ev.preventDefault();
-      const mod = await import("./connect");
-      mod.connect(this);
+      connect(this);
     });
 
     slot.name = "activate";
