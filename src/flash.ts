@@ -1,7 +1,4 @@
-// @ts-ignore-next-line
-import { Transport } from "esptool-js/webserial.js";
-// @ts-ignore-next-line
-import { ESPLoader } from "esptool-js/ESPLoader.js";
+import { Transport, ESPLoader } from "esptool-js";
 import {
   Build,
   FlashError,
@@ -41,7 +38,12 @@ export const flash = async (
     });
 
   const transport = new Transport(port);
-  const esploader = new ESPLoader(transport, 115200);
+  const esploader = new ESPLoader(
+    transport,
+    115200,
+    // Wrong type, fixed in https://github.com/espressif/esptool-js/pull/75/files
+    undefined as any
+  );
 
   // For debugging
   (window as any).esploader = esploader;
@@ -68,7 +70,7 @@ export const flash = async (
     return;
   }
 
-  chipFamily = await esploader.chip.CHIP_NAME;
+  chipFamily = esploader.chip.CHIP_NAME as any;
 
   if (!esploader.chip.ROM_TEXT) {
     fireStateEvent({
@@ -184,9 +186,15 @@ export const flash = async (
   let totalWritten = 0;
 
   try {
-    await esploader.write_flash({
+    await esploader.write_flash(
       fileArray,
-      reportProgress(fileIndex: number, written: number, total: number) {
+      "keep",
+      "keep",
+      "keep",
+      false,
+      true,
+      // report progress
+      (fileIndex: number, written: number, total: number) => {
         const uncompressedWritten =
           (written / total) * fileArray[fileIndex].data.length;
 
@@ -209,8 +217,8 @@ export const flash = async (
             percentage: newPct,
           },
         });
-      },
-    });
+      }
+    );
   } catch (err: any) {
     fireStateEvent({
       state: FlashStateType.ERROR,
