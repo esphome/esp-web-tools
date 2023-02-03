@@ -31,6 +31,11 @@ import { fireEvent } from "./util/fire-event";
 import { sleep } from "./util/sleep";
 import { downloadManifest } from "./util/manifest";
 import { dialogStyles } from "./styles";
+import { version } from "./version";
+
+console.log(
+  `ESP Web Tools ${version} by Nabu Casa; https://esphome.github.io/esp-web-tools/`
+);
 
 const ERROR_ICON = "⚠️";
 const OK_ICON = "🎉";
