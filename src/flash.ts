@@ -38,12 +38,7 @@ export const flash = async (
     });
 
   const transport = new Transport(port);
-  const esploader = new ESPLoader(
-    transport,
-    115200,
-    // Wrong type, fixed in https://github.com/espressif/esptool-js/pull/75/files
-    undefined as any
-  );
+  const esploader = new ESPLoader(transport, 115200, undefined);
 
   // For debugging
   (window as any).esploader = esploader;
