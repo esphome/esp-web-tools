@@ -1,14 +1,13 @@
 {
   "name": "esp-web-tools",
-  "version": "9.2.0",
+  "version": "9.2.1",
   "description": "Web tools for ESP devices",
   "main": "dist/install-button.js",
   "repository": "https://github.com/esphome/esp-web-tools",
   "author": "ESPHome maintainers",
   "license": "Apache-2.0",
   "scripts": {
-    "prepublishOnly": "script/build",
-    "postinstall": "patch -Ntu node_modules/esptool-js/lib/esploader.js -i patches/0001-not-change-baud.patch || true"
+    "prepublishOnly": "script/build"
   },
   "devDependencies": {
     "@babel/plugin-proposal-class-properties": "^7.18.6",
@@ -31,7 +30,7 @@
     "@material/mwc-formfield": "^0.27.0",
     "@material/mwc-icon-button": "^0.27.0",
     "@material/mwc-textfield": "^0.27.0",
-    "esptool-js": "^0.2.0",
+    "esptool-js": "^0.2.1",
     "improv-wifi-serial-sdk": "^2.4.0",
     "lit": "^2.5.0",
     "pako": "^2.1.0",
