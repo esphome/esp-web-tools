@@ -736,7 +736,7 @@ export class EwtInstallDialog extends LitElement {
     }
   }
 
-  private async _updateSsids() {
+  private async _updateSsids(tries = 0) {
     const oldSsids = this._ssids;
     this._ssids = undefined;
     this._busy = true;
@@ -746,12 +746,19 @@ export class EwtInstallDialog extends LitElement {
     try {
       ssids = await this._client!.scan();
     } catch (err) {
-      // When we fail on first load, pick "Join other"
+      // When we fail while loading, pick "Join other"
       if (this._ssids === undefined) {
         this._ssids = null;
         this._selectedSsid = null;
       }
       this._busy = false;
+      return;
+    }
+
+    // We will retry a few times if we don't get any results
+    if (ssids.length === 0 && tries < 3) {
+      console.log("SCHEDULE RETRY", tries);
+      setTimeout(() => this._updateSsids(tries + 1), 1000);
       return;
     }
 
