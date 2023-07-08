@@ -38,7 +38,11 @@ export const flash = async (
     });
 
   const transport = new Transport(port);
-  const esploader = new ESPLoader(transport, 115200, undefined);
+  const esploader = new ESPLoader({
+    transport,
+    baudrate: 115200,
+    romBaudrate: 115200,
+  });
 
   // For debugging
   (window as any).esploader = esploader;
@@ -181,15 +185,15 @@ export const flash = async (
   let totalWritten = 0;
 
   try {
-    await esploader.write_flash(
+    await esploader.write_flash({
       fileArray,
-      "keep",
-      "keep",
-      "keep",
-      false,
-      true,
+      flashSize: "keep",
+      flashMode: "keep",
+      flashFreq: "keep",
+      eraseAll: false,
+      compress: true,
       // report progress
-      (fileIndex: number, written: number, total: number) => {
+      reportProgress: (fileIndex: number, written: number, total: number) => {
         const uncompressedWritten =
           (written / total) * fileArray[fileIndex].data.length;
 
@@ -212,8 +216,8 @@ export const flash = async (
             percentage: newPct,
           },
         });
-      }
-    );
+      },
+    });
   } catch (err: any) {
     fireStateEvent({
       state: FlashStateType.ERROR,
