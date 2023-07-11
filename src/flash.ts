@@ -24,7 +24,7 @@ export const flash = async (
   port: SerialPort,
   manifestPath: string,
   manifest: Manifest,
-  eraseFirst: boolean
+  eraseFirst: boolean,
 ) => {
   let build: Build | undefined;
   let chipFamily: Build["chipFamily"];
@@ -116,7 +116,7 @@ export const flash = async (
     const resp = await fetch(url);
     if (!resp.ok) {
       throw new Error(
-        `Downlading firmware ${part.path} failed: ${resp.status}`
+        `Downlading firmware ${part.path} failed: ${resp.status}`,
       );
     }
 
@@ -198,7 +198,7 @@ export const flash = async (
           (written / total) * fileArray[fileIndex].data.length;
 
         const newPct = Math.floor(
-          ((totalWritten + uncompressedWritten) / totalSize) * 100
+          ((totalWritten + uncompressedWritten) / totalSize) * 100,
         );
 
         // we're done with this file

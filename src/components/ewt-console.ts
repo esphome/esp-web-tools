@@ -100,7 +100,7 @@ export class EwtConsole extends HTMLElement {
             write: (chunk) => {
               this._console!.addLine(chunk.replace("\r", ""));
             },
-          })
+          }),
         );
       if (!abortSignal.aborted) {
         this._console!.addLine("");
