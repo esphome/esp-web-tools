@@ -7,7 +7,7 @@ export const fireEvent = <Event extends keyof HTMLElementEventMap>(
     bubbles?: boolean;
     cancelable?: boolean;
     composed?: boolean;
-  }
+  },
 ): void => {
   options = options || {};
   const event = new CustomEvent(type, {

@@ -34,7 +34,7 @@ import { dialogStyles } from "./styles";
 import { version } from "./version";
 
 console.log(
-  `ESP Web Tools ${version} by Nabu Casa; https://esphome.github.io/esp-web-tools/`
+  `ESP Web Tools ${version} by Nabu Casa; https://esphome.github.io/esp-web-tools/`,
 );
 
 const ERROR_ICON = "⚠️";
@@ -50,7 +50,7 @@ export class EwtInstallDialog extends LitElement {
   public overrides?: {
     checkSameFirmware?: (
       manifest: Manifest,
-      deviceImprov: ImprovSerial["info"]
+      deviceImprov: ImprovSerial["info"],
     ) => boolean;
   };
 
@@ -340,7 +340,7 @@ export class EwtInstallDialog extends LitElement {
         this._renderProgress(
           this._ssids === undefined
             ? "Scanning for networks"
-            : "Trying to connect"
+            : "Trying to connect",
         ),
         true,
       ];
@@ -439,7 +439,7 @@ export class EwtInstallDialog extends LitElement {
           error = `Unknown error (${this._client!.error})`;
       }
       const selectedSsid = this._ssids?.find(
-        (info) => info.name === this._selectedSsid
+        (info) => info.name === this._selectedSsid,
       );
       content = html`
         <div>
@@ -470,7 +470,7 @@ export class EwtInstallDialog extends LitElement {
                     >
                       ${info.name}
                     </ewt-list-item>
-                  `
+                  `,
                 )}
                 <ewt-list-item .selected=${!selectedSsid} value="-1">
                   Join other…
@@ -633,7 +633,7 @@ export class EwtInstallDialog extends LitElement {
             : "2 minutes"}.<br />
           Keep this page visible to prevent slow down
         `,
-        percentage
+        percentage,
       );
       hideActions = true;
     } else if (this._installState.state === FlashStateType.FINISHED) {
@@ -695,7 +695,7 @@ export class EwtInstallDialog extends LitElement {
         @click=${() => {
           textDownload(
             this.shadowRoot!.querySelector("ewt-console")!.logs(),
-            `esp-web-tools-logs.txt`
+            `esp-web-tools-logs.txt`,
           );
 
           this.shadowRoot!.querySelector("ewt-console")!.reset();
@@ -805,7 +805,7 @@ export class EwtInstallDialog extends LitElement {
 
   private _focusFormElement(selector = "ewt-textfield, ewt-select") {
     const formEl = this.shadowRoot!.querySelector(
-      selector
+      selector,
     ) as LitElement | null;
     if (formEl) {
       formEl.updateComplete.then(() => setTimeout(() => formEl.focus(), 100));
@@ -898,7 +898,7 @@ export class EwtInstallDialog extends LitElement {
       this.port,
       this.manifestPath,
       this._manifest,
-      this._installErase
+      this._installErase,
     );
     // YOLO2
   }
@@ -911,14 +911,14 @@ export class EwtInstallDialog extends LitElement {
       this._selectedSsid === null
         ? (
             this.shadowRoot!.querySelector(
-              "ewt-textfield[name=ssid]"
+              "ewt-textfield[name=ssid]",
             ) as EwtTextfield
           ).value
         : this._selectedSsid;
     const password =
       (
         this.shadowRoot!.querySelector(
-          "ewt-textfield[name=password]"
+          "ewt-textfield[name=password]",
         ) as EwtTextfield | null
       )?.value || "";
     try {
