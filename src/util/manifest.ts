@@ -7,7 +7,7 @@ export const downloadManifest = async (manifestPath: string) => {
 
   if ("new_install_skip_erase" in manifest) {
     console.warn(
-      'Manifest option "new_install_skip_erase" is deprecated. Use "new_install_prompt_erase" instead.'
+      'Manifest option "new_install_skip_erase" is deprecated. Use "new_install_prompt_erase" instead.',
     );
     if (manifest.new_install_skip_erase) {
       manifest.new_install_prompt_erase = true;

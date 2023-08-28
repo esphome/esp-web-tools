@@ -1,7 +1,7 @@
-import { nodeResolve } from "@rollup/plugin-node-resolve";
+import nodeResolve from "@rollup/plugin-node-resolve";
 import json from "@rollup/plugin-json";
-import { terser } from "rollup-plugin-terser";
-import { babel } from "@rollup/plugin-babel";
+import terser from "@rollup/plugin-terser";
+import babel from "@rollup/plugin-babel";
 
 const config = {
   input: "dist/install-button.js",
@@ -26,7 +26,7 @@ if (process.env.NODE_ENV === "production") {
     terser({
       ecma: 2019,
       toplevel: true,
-      output: {
+      format: {
         comments: false,
       },
     })

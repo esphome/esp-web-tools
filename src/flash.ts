@@ -1,7 +1,4 @@
-// @ts-ignore-next-line
-import { Transport } from "esptool-js/webserial.js";
-// @ts-ignore-next-line
-import { ESPLoader } from "esptool-js/ESPLoader.js";
+import { Transport, ESPLoader } from "esptool-js";
 import {
   Build,
   FlashError,
@@ -27,7 +24,7 @@ export const flash = async (
   port: SerialPort,
   manifestPath: string,
   manifest: Manifest,
-  eraseFirst: boolean
+  eraseFirst: boolean,
 ) => {
   let build: Build | undefined;
   let chipFamily: Build["chipFamily"];
@@ -41,7 +38,11 @@ export const flash = async (
     });
 
   const transport = new Transport(port);
-  const esploader = new ESPLoader(transport, 115200);
+  const esploader = new ESPLoader({
+    transport,
+    baudrate: 115200,
+    romBaudrate: 115200,
+  });
 
   // For debugging
   (window as any).esploader = esploader;
@@ -68,7 +69,7 @@ export const flash = async (
     return;
   }
 
-  chipFamily = await esploader.chip.CHIP_NAME;
+  chipFamily = esploader.chip.CHIP_NAME as any;
 
   if (!esploader.chip.ROM_TEXT) {
     fireStateEvent({
@@ -115,7 +116,7 @@ export const flash = async (
     const resp = await fetch(url);
     if (!resp.ok) {
       throw new Error(
-        `Downlading firmware ${part.path} failed: ${resp.status}`
+        `Downlading firmware ${part.path} failed: ${resp.status}`,
       );
     }
 
@@ -186,12 +187,18 @@ export const flash = async (
   try {
     await esploader.write_flash({
       fileArray,
-      reportProgress(fileIndex: number, written: number, total: number) {
+      flashSize: "keep",
+      flashMode: "keep",
+      flashFreq: "keep",
+      eraseAll: false,
+      compress: true,
+      // report progress
+      reportProgress: (fileIndex: number, written: number, total: number) => {
         const uncompressedWritten =
           (written / total) * fileArray[fileIndex].data.length;
 
         const newPct = Math.floor(
-          ((totalWritten + uncompressedWritten) / totalSize) * 100
+          ((totalWritten + uncompressedWritten) / totalSize) * 100,
         );
 
         // we're done with this file
