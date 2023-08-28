@@ -144,43 +144,31 @@
   </head>
   <body>
     <div class="content">
-      <h1>ESP Web Tools</h1>
-      <p>
-        User friendly tools to manage ESP8266 and ESP32 devices in the browser:
-      </p>
-      <ul>
-        <li>Install &amp; update firmware</li>
-        <li>Connect device to the Wi-Fi network</li>
-        <li>Visit the device's hosted web interface</li>
-        <li>Access logs and send terminal commands</li>
-        <li>
-          Add devices to
-          <a href="https://www.home-assistant.io">Home Assistant</a>
-        </li>
-      </ul>
-      <div class="videoWrapper">
-        <lite-youtube
-          videoid="E8bdATqXM8c"
-          videotitle="ESP Web Tools in action"
-        ></lite-youtube>
-      </div>
+      <h1>Smart pillow web configurator</h1>
 
-      <h2 id="demo">Try a live demo</h2>
+      <!-- <h2 id="demo">Try a live demo</h2> -->
       <p>
-        This demo will install
-        <a href="https://esphome.io">ESPHome</a>. To get started, connect an ESP
-        device to your computer and hit the button:
+        This webpage is for installing Smart Pillow gateway to ESP32 device, as well as debugging and configuration via serial (USB).
       </p>
-      <esp-web-install-button
-        manifest="https://firmware.esphome.io/esphome-web/manifest.json"
-      >
+
+      <p>
+      <label for="pillow_no">Select pillow gateway no.</label>
+      <select name="pillow_no" onclick="setManifest(this);" onkeypress="setManifest(this);" onchange="setManifest(this);">
+      <!-- <select name="pillow_no" onchange="if (this.selectedIndex) setManifest(this);"> -->
+      <option value="static/firmware_build_smart_pilow/manifest1.json">1</option> 
+        <option value="static/firmware_build_smart_pilow/manifest2.json">2</option>
+        <option value="static/firmware_build_smart_pilow/manifest3.json">3</option>
+        <option value="static/firmware_build_smart_pilow/manifest4.json">4</option>
+      </select>
+    </p>
+
+      <esp-web-install-button id="install_button" manifest="static/firmware_build_smart_pilow/manifest1.json">
         <i slot="unsupported">
-          The demo is not available because your browser does not support Web
+          Feature is not available because your browser does not support Web
           Serial. Open this page in Google Chrome or Microsoft Edge instead<span
             class="not-supported-i hidden"
           >
-            (but not on your iOS device)</span
-          >.
+            (but not on your iOS device)</span>
         </i>
       </esp-web-install-button>
 
@@ -225,19 +213,6 @@
           <div class="name">ESPHome</div>
         </a>
         <a
-          href="https://sle118.github.io/squeezelite-esp32-installer/"
-          target="_blank"
-          class="project"
-        >
-          <div class="logo">
-            <img
-              src="static/logos/squeezelite-esp32.png"
-              alt="Squeezelite-ESP32 logo"
-            />
-          </div>
-          <div class="name">Squeezelite-ESP32</div>
-        </a>
-        <a
           href="https://2smart.com/docs-resources/platform-updates/platform-updates-13-07-2022"
           target="_blank"
           class="project"
@@ -247,37 +222,13 @@
           </div>
           <div class="name">2Smart</div>
         </a>
-        <a href="https://clockwise.page" target="_blank" class="project">
-          <div class="logo">
-            <img src="static/logos/clockwise.png" alt="Clockwise logo" />
-          </div>
-          <div class="name">Clockwise</div>
-        </a>
-        <a
-          href="https://sblantipodi.github.io/glow_worm_luciferin"
-          target="_blank"
-          class="project"
-        >
-          <div class="logo">
-            <img
-              src="static/logos/luciferin_logo.png"
-              alt="Firefly Luciferin logo"
-            />
-          </div>
-          <div class="name">Luciferin</div>
-        </a>
-        <a href="https://install.openepaperlink.de" target="_blank" class="project">
-          <div class="logo">
-            <img src="static/logos/openepaperlink.png" alt="OpenEpaperLink logo" />
-          </div>
-          <div class="name">OpenEpaperLink</div>
-        </a>
       </div>
 
       <h2>How it works</h2>
       <p>
         ESP Web Tools works by combining
-        <a href="https://developer.mozilla.org/docs/Web/API/Web_Serial_API"
+        <a
+          href="https://developer.mozilla.org/en-US/docs/Web/API/Web_Serial_API"
           >Web Serial</a
         >, <a href="https://www.improv-wifi.com/">Improv Wi-Fi</a> (optional),
         and a manifest which describes the firmware. ESP Web Tools detects the
@@ -350,7 +301,7 @@
       <pre>
 &lt;script
   type="module"
-  src="https://unpkg.com/esp-web-tools@9/dist/web/install-button.js?module"
+  src="https://unpkg.com/esp-web-tools@9.0.3/dist/web/install-button.js?module"
 >&lt;/script></pre
       >
       <p>
@@ -366,7 +317,7 @@
       </p>
       <pre>
 &lt;esp-web-install-button
-  manifest="https://firmware.esphome.io/esphome-web/manifest.json"
+  manifest="/static/firmware_build_smart_pilow/manifest.json"
 >&lt;/esp-web-install-button></pre
       >
       <p>
@@ -377,7 +328,7 @@
       <p>
         If your manifest or the firmware files are hosted on another server,
         make sure you configure
-        <a href="https://developer.mozilla.org/docs/Web/HTTP/CORS"
+        <a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS"
           >the CORS-headers</a
         >
         such that your website is allowed to fetch those files by adding the
@@ -390,42 +341,6 @@
       <p>
         ESP Web Tools can also be integrated in your projects by installing it
         <a href="https://www.npmjs.com/package/esp-web-tools">via NPM</a>.
-      </p>
-      <h3 id="preparing-firmware">Preparing your firmware</h3>
-      <p>
-        If you have ESP32 firmware and are using ESP-IDF framework v4 or later,
-        you will need to create a merged version of your firmware before being
-        able to use it with ESP Web Tools. If you use ESP8266 or ESP32 with
-        ESP-IDF v3 or earlier, you can skip this section.
-      </p>
-      <p>
-        ESP32 firmware is split into 4 different files. When these files are
-        installed using the command-line tool <code>esptool</code>, it will
-        patch flash frequency, flash size and flash mode to match the target
-        device. ESP Web Tools is not able to do this on the fly, so you will
-        need to use <code>esptool</code> to create the single binary file and
-        use that with ESP Web Tools.
-      </p>
-      <p>
-        Create a single binary using <code>esptool</code> with the following
-        command:
-      </p>
-      <pre>
-esptool --chip esp32 merge_bin \
-  -o merged-firmware.bin \
-  --flash_mode dio \
-  --flash_freq 40m \
-  --flash_size 4MB \
-  0x1000 bootloader.bin \
-  0x8000 partitions.bin \
-  0xe000 boot.bin \
-  0x10000 your_app.bin</pre
-      >
-      <p>
-        If your memory type is <code>opi_opi</code> or <code>opi_qspi</code>,
-        set your flash mode to be <code>dout</code>. Else, if your flash mode is
-        <code>qio</code> or <code>qout</code>, override your flash mode to be
-        <code>dio</code>.
       </p>
       <h3 id="manifest">Creating your manifest</h3>
       <p>
@@ -447,7 +362,10 @@ esptool --chip esp32 merge_bin \
     {
       "chipFamily": "ESP32",
       "parts": [
-        { "path": "merged-firmware.bin", "offset": 0 },
+        { "path": "bootloader.bin", "offset": 4096 },
+        { "path": "partitions.bin", "offset": 32768 },
+        { "path": "ota.bin", "offset": 57344 },
+        { "path": "firmware.bin", "offset": 65536 }
       ]
     },
     {
@@ -549,7 +467,7 @@ button.overrides = {
       </p>
       <pre>
 &lt;esp-web-install-button
-  manifest="https://firmware.esphome.io/esphome-web/manifest.json"
+  manifest="/static/firmware_build_smart_pilow/manifest.json"
 >
   &lt;button slot="activate">Custom install button&lt;/button>
   &lt;span slot="unsupported">Ah snap, your browser doesn't work!&lt;/span>
@@ -569,8 +487,8 @@ button.overrides = {
 
       <div class="footer">
         <div class="initiative">
-          ESP Web Tools is a project by
-          <a href="https://esphome.io">ESPHome</a>.<br />
+          Smart Pillow installation is powered by 
+          <a href="https://esphome.io">ESP Web Tools</a>.<br />
           Development is funded by
           <a href="https://www.nabucasa.com">Nabu Casa</a>.
         </div>
@@ -584,6 +502,23 @@ button.overrides = {
       if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
         document.querySelector(".not-supported-i").classList.remove("hidden");
       }
+
+
+      const button = document.querySelector('esp-web-install-button');
+    button.overrides = {
+      checkSameFirmware(manifest, improvInfo) {
+        const manifestFirmware = manifest.name.toLowerCase();
+        const deviceFirmware = improvInfo.firmware.toLowerCase();
+        console.log("overide btn "+ manifestFirmware + " " + deviceFirmware );
+        return manifestFirmware.includes(deviceFirmware);
+      }
+    };
+
+    function setManifest(obj){
+      // document.getElementById('install_button').manifest = obj.value;
+      document.getElementById('install_button').setAttribute("manifest", obj.value);
+    }
+
     </script>
   </body>
 </html>
