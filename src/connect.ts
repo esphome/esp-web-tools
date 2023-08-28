@@ -1,14 +1,14 @@
 import type { InstallButton } from "./install-button.js";
-import "./install-dialog.js";
 
 export const connect = async (button: InstallButton) => {
+  import("./install-dialog.js");
   let port: SerialPort | undefined;
   try {
     port = await navigator.serial.requestPort();
   } catch (err: any) {
     if ((err as DOMException).name === "NotFoundError") {
       import("./no-port-picked/index").then((mod) =>
-        mod.openNoPortPickedDialog(() => connect(button))
+        mod.openNoPortPickedDialog(() => connect(button)),
       );
       return;
     }
@@ -36,7 +36,7 @@ export const connect = async (button: InstallButton) => {
     () => {
       port!.close();
     },
-    { once: true }
+    { once: true },
   );
   document.body.appendChild(el);
 };

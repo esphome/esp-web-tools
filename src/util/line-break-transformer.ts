@@ -3,7 +3,7 @@ export class LineBreakTransformer implements Transformer<string, string> {
 
   transform(
     chunk: string,
-    controller: TransformStreamDefaultController<string>
+    controller: TransformStreamDefaultController<string>,
   ) {
     // Append new chunks to existing chunks.
     this.chunks += chunk;
