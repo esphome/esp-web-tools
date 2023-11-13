@@ -844,8 +844,8 @@ export class EwtInstallDialog extends LitElement {
       const timeout = !justInstalled
         ? 1000
         : this._manifest.new_install_improv_wait_time !== undefined
-        ? this._manifest.new_install_improv_wait_time * 1000
-        : 10000;
+          ? this._manifest.new_install_improv_wait_time * 1000
+          : 10000;
       this._info = await client.initialize(timeout);
       this._client = client;
       client.addEventListener("disconnect", this._handleDisconnect);
@@ -951,8 +951,8 @@ export class EwtInstallDialog extends LitElement {
     return !this._info
       ? false
       : this.overrides?.checkSameFirmware
-      ? this.overrides.checkSameFirmware(this._manifest, this._info)
-      : this._info.firmware === this._manifest.name;
+        ? this.overrides.checkSameFirmware(this._manifest, this._info)
+        : this._info.firmware === this._manifest.name;
   }
 
   /**
