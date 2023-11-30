@@ -13,6 +13,7 @@ const resetTransport = async (transport: Transport) => {
     dataTerminalReady: false,
     requestToSend: true,
   });
+  await sleep(100);
   await transport.device.setSignals({
     dataTerminalReady: false,
     requestToSend: false,
