@@ -13,11 +13,12 @@ const resetTransport = async (transport: Transport) => {
     dataTerminalReady: false,
     requestToSend: true,
   });
-  await sleep(100);
+  await sleep(250);
   await transport.device.setSignals({
     dataTerminalReady: false,
     requestToSend: false,
   });
+  await sleep(250);
 };
 
 export const flash = async (
