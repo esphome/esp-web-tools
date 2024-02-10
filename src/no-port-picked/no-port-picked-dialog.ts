@@ -3,6 +3,7 @@ import { customElement } from "lit/decorators.js";
 import "../components/ewt-dialog";
 import "../components/ewt-button";
 import { dialogStyles } from "../styles";
+import { getOperatingSystem } from "../util/get-operating-system";
 
 const cloudDownload = svg`
   <svg
@@ -30,6 +31,8 @@ class EwtNoPortPickedDialog extends LitElement {
   public doTryAgain?: () => void;
 
   public render() {
+    const OS = getOperatingSystem();
+
     return html`
       <ewt-dialog
         open
@@ -54,6 +57,20 @@ class EwtNoPortPickedDialog extends LitElement {
             Make sure that the USB cable you use can be used for data and is not
             a power-only cable.
           </li>
+          ${OS === "Linux"
+            ? html`
+                <li>
+                  If you are using a Linux flavor, make sure that your user is
+                  part of the <code>dialout</code> group so it has permission to
+                  access the device.
+                  <code class="block"
+                    >sudo usermod -a -G dialout YourUserName</code
+                  >
+                  You may need to log out & back in or reboot to activate the
+                  new group access.
+                </li>
+              `
+            : ""}
           <li>
             Make sure you have the right drivers installed. Below are the
             drivers for common chips used in ESP devices:
@@ -146,6 +163,10 @@ class EwtNoPortPickedDialog extends LitElement {
       ol {
         margin-bottom: 0;
         padding-left: 1.5em;
+      }
+      li code.block {
+        display: block;
+        margin: 0.5em 0;
       }
     `,
   ];
