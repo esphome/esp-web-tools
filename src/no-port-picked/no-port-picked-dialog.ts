@@ -57,7 +57,7 @@ class EwtNoPortPickedDialog extends LitElement {
             Make sure that the USB cable you use can be used for data and is not
             a power-only cable.
           </li>
-          ${OS === "Linux" || true
+          ${OS === "Linux"
             ? html`
                 <li>
                   If you are using a Linux flavor, make sure that your user is
