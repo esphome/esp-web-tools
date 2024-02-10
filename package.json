@@ -30,7 +30,7 @@
     "@material/mwc-formfield": "^0.27.0",
     "@material/mwc-icon-button": "^0.27.0",
     "@material/mwc-textfield": "^0.27.0",
-    "esptool-js": "^0.3.2",
+    "esptool-js": "^0.4.1",
     "improv-wifi-serial-sdk": "^2.5.0",
     "lit": "^2.8.0",
     "pako": "^2.1.0",
