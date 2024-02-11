@@ -8,7 +8,7 @@ import "./components/ewt-console";
 import "./components/ewt-dialog";
 import "./components/ew-icon-button";
 import "./components/ew-filled-text-field";
-import type { EwTextfield } from "./components/ew-filled-text-field";
+import type { EwFilledTextField } from "./components/ew-filled-text-field";
 import "./components/ew-filled-select";
 import "./components/ew-select-option";
 import "./pages/ewt-page-progress";
@@ -486,17 +486,20 @@ export class EwtInstallDialog extends LitElement {
           // Show input box if command not supported or "Join Other" selected
           !selectedSsid
             ? html`
-                <ew-textfield label="Network Name" name="ssid"></ew-textfield>
+                <ew-filled-text-field
+                  label="Network Name"
+                  name="ssid"
+                ></ew-filled-text-field>
               `
             : ""
         }
         ${!selectedSsid || selectedSsid.secured
           ? html`
-              <ew-textfield
+              <ew-filled-text-field
                 label="Password"
                 name="password"
                 type="password"
-              ></ew-textfield>
+              ></ew-filled-text-field>
             `
           : ""}
         <ew-text-button slot="primaryAction" @click=${this._doProvision}>
@@ -803,14 +806,16 @@ export class EwtInstallDialog extends LitElement {
 
     if (changedProps.has("_selectedSsid") && this._selectedSsid === null) {
       // If we pick "Join other", select SSID input.
-      this._focusFormElement("ew-textfield[name=ssid]");
+      this._focusFormElement("ew-filled-text-field[name=ssid]");
     } else if (changedProps.has("_ssids")) {
       // Form is shown when SSIDs are loaded/marked not supported
       this._focusFormElement();
     }
   }
 
-  private _focusFormElement(selector = "ew-textfield, ew-filled-select") {
+  private _focusFormElement(
+    selector = "ew-filled-text-field, ew-filled-select",
+  ) {
     const formEl = this.shadowRoot!.querySelector(
       selector,
     ) as LitElement | null;
@@ -918,15 +923,15 @@ export class EwtInstallDialog extends LitElement {
       this._selectedSsid === null
         ? (
             this.shadowRoot!.querySelector(
-              "ew-textfield[name=ssid]",
-            ) as EwTextfield
+              "ew-filled-text-field[name=ssid]",
+            ) as EwFilledTextField
           ).value
         : this._selectedSsid;
     const password =
       (
         this.shadowRoot!.querySelector(
-          "ew-textfield[name=password]",
-        ) as EwTextfield | null
+          "ew-filled-text-field[name=password]",
+        ) as EwFilledTextField | null
       )?.value || "";
     try {
       await this._client!.provision(ssid, password, 30000);
@@ -987,6 +992,9 @@ export class EwtInstallDialog extends LitElement {
         right: 4px;
         top: 10px;
       }
+      ew-icon-button svg {
+        color: var(--text-color);
+      }
       .table-row {
         display: flex;
       }
@@ -997,7 +1005,7 @@ export class EwtInstallDialog extends LitElement {
         width: 20px;
         margin-right: 8px;
       }
-      ew-textfield,
+      ew-filled-text-field,
       ew-filled-select {
         display: block;
         margin-top: 16px;
