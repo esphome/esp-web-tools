@@ -5,7 +5,7 @@ import "./components/ewt-checkbox";
 import "./components/ewt-console";
 import "./components/ewt-dialog";
 import "./components/ewt-formfield";
-import "./components/ewt-icon-button";
+import "./components/ew-icon-button";
 import "./components/ewt-textfield";
 import type { EwtTextfield } from "./components/ewt-textfield";
 import "./components/ewt-select";
@@ -134,9 +134,9 @@ export class EwtInstallDialog extends LitElement {
       >
         ${heading && allowClosing
           ? html`
-              <ewt-icon-button dialogAction="close">
+              <ew-icon-button dialogAction="close">
                 ${closeIcon}
-              </ewt-icon-button>
+              </ew-icon-button>
             `
           : ""}
         ${content!}
@@ -476,9 +476,9 @@ export class EwtInstallDialog extends LitElement {
                   Join other…
                 </ewt-list-item>
               </ewt-select>
-              <ewt-icon-button @click=${this._updateSsids}>
+              <ew-icon-button @click=${this._updateSsids}>
                 ${refreshIcon}
-              </ewt-icon-button>
+              </ew-icon-button>
             `
           : ""}
         ${
@@ -975,7 +975,7 @@ export class EwtInstallDialog extends LitElement {
       :host {
         --mdc-dialog-max-width: 390px;
       }
-      ewt-icon-button {
+      ew-icon-button {
         position: absolute;
         right: 4px;
         top: 10px;
