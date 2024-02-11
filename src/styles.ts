@@ -15,30 +15,17 @@ export const dialogStyles = css`
     --md-ref-typeface-brand: var(--roboto-font);
     --md-ref-typeface-plain: var(--roboto-font);
 
+    --md-sys-color-surface: #fff;
+    --md-sys-color-surface-container: #fff;
+    --md-sys-color-surface-container-high: #fff;
+    --md-sys-color-surface-container-highest: #f5f5f5;
+    --md-sys-color-secondary-container: #e0e0e0;
+
     --md-sys-typescale-headline-font: var(--roboto-font);
     --md-sys-typescale-title-font: var(--roboto-font);
-
-    --mdc-theme-primary: var(--md-sys-color-primary);
-    --mdc-theme-on-primary: var(--md-sys-color-on-primary);
-    --mdc-theme-text-primary-on-background: var(--text-color);
-    --mdc-dialog-content-ink-color: var(--text-color);
-    text-align: left;
-    font-size: 16px;
-    --mdc-typography-headline6-font-size: 1.25em;
-    --mdc-typography-headline6-line-height: 2em;
-    --mdc-typography-body1-font-size: 1em;
-    --mdc-typography-body1-line-height: 1.5em;
-    --mdc-typography-button-font-size: 0.875em;
-    --mdc-typography-button-line-height: 2.25em;
-    --mdc-typography-subtitle1-font-size: 1em;
-    --mdc-typography-subtitle1-line-height: 1.75em;
   }
 
   a {
-    color: var(--md-sys-color-primary, #03a9f4);
-  }
-
-  a.button {
-    text-decoration: none;
+    color: var(--md-sys-color-primary);
   }
 `;
