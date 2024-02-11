@@ -1006,11 +1006,11 @@ export class EwtInstallDialog extends LitElement {
         text-decoration: none;
       }
       .error {
-        color: var(--improv-danger-color);
+        color: var(--danger-color);
       }
       .danger {
-        --mdc-theme-primary: var(--improv-danger-color);
-        --mdc-theme-secondary: var(--improv-danger-color);
+        --mdc-theme-primary: var(--danger-color);
+        --mdc-theme-secondary: var(--danger-color);
       }
       button.link {
         background: none;

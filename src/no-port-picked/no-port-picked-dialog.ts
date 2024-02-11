@@ -1,7 +1,9 @@
 import { LitElement, html, css, svg } from "lit";
 import { customElement } from "lit/decorators.js";
-import "../components/ewt-dialog";
-import "../components/ewt-button";
+
+import "@material/web/dialog/dialog.js";
+import "@material/web/button/text-button.js";
+
 import { dialogStyles } from "../styles";
 import { getOperatingSystem } from "../util/get-operating-system";
 
@@ -34,118 +36,114 @@ class EwtNoPortPickedDialog extends LitElement {
     const OS = getOperatingSystem();
 
     return html`
-      <ewt-dialog
-        open
-        heading="No port selected"
-        scrimClickAction
-        @closed=${this._handleClose}
-      >
-        <div>
-          If you didn't select a port because you didn't see your device listed,
-          try the following steps:
-        </div>
-        <ol>
-          <li>
-            Make sure that the device is connected to this computer (the one
-            that runs the browser that shows this website)
-          </li>
-          <li>
-            Most devices have a tiny light when it is powered on. If yours has
-            one, make sure it is on.
-          </li>
-          <li>
-            Make sure that the USB cable you use can be used for data and is not
-            a power-only cable.
-          </li>
-          ${OS === "Linux"
-            ? html`
+      <md-dialog open @closed=${this._handleClose}>
+        <div slot="headline">No port selected</div>
+        <div slot="content">
+          <div>
+            If you didn't select a port because you didn't see your device
+            listed, try the following steps:
+          </div>
+          <ol>
+            <li>
+              Make sure that the device is connected to this computer (the one
+              that runs the browser that shows this website)
+            </li>
+            <li>
+              Most devices have a tiny light when it is powered on. If yours has
+              one, make sure it is on.
+            </li>
+            <li>
+              Make sure that the USB cable you use can be used for data and is
+              not a power-only cable.
+            </li>
+            ${OS === "Linux"
+              ? html`
+                  <li>
+                    If you are using a Linux flavor, make sure that your user is
+                    part of the <code>dialout</code> group so it has permission
+                    to access the device.
+                    <code class="block"
+                      >sudo usermod -a -G dialout YourUserName</code
+                    >
+                    You may need to log out & back in or reboot to activate the
+                    new group access.
+                  </li>
+                `
+              : ""}
+            <li>
+              Make sure you have the right drivers installed. Below are the
+              drivers for common chips used in ESP devices:
+              <ul>
                 <li>
-                  If you are using a Linux flavor, make sure that your user is
-                  part of the <code>dialout</code> group so it has permission to
-                  access the device.
-                  <code class="block"
-                    >sudo usermod -a -G dialout YourUserName</code
+                  CP2102 drivers:
+                  <a
+                    href="https://www.silabs.com/developers/usb-to-uart-bridge-vcp-drivers"
+                    target="_blank"
+                    rel="noopener"
+                    >Windows & Mac</a
                   >
-                  You may need to log out & back in or reboot to activate the
-                  new group access.
                 </li>
+                <li>
+                  CH342, CH343, CH9102 drivers:
+                  <a
+                    href="https://www.wch.cn/downloads/CH343SER_ZIP.html"
+                    target="_blank"
+                    rel="noopener"
+                    >Windows</a
+                  >,
+                  <a
+                    href="https://www.wch.cn/downloads/CH34XSER_MAC_ZIP.html"
+                    target="_blank"
+                    rel="noopener"
+                    >Mac</a
+                  >
+                  <br />
+                  (download via blue button with ${cloudDownload} icon)
+                </li>
+                <li>
+                  CH340, CH341 drivers:
+                  <a
+                    href="https://www.wch.cn/downloads/CH341SER_ZIP.html"
+                    target="_blank"
+                    rel="noopener"
+                    >Windows</a
+                  >,
+                  <a
+                    href="https://www.wch.cn/downloads/CH341SER_MAC_ZIP.html"
+                    target="_blank"
+                    rel="noopener"
+                    >Mac</a
+                  >
+                  <br />
+                  (download via blue button with ${cloudDownload} icon)
+                </li>
+              </ul>
+            </li>
+          </ol>
+        </div>
+        <div slot="actions">
+          ${this.doTryAgain
+            ? html`
+                <md-text-button @click=${this.close}>Cancel</md-text-button>
+                <md-text-button @click=${this.tryAgain}>
+                  Try Again
+                </md-text-button>
               `
-            : ""}
-          <li>
-            Make sure you have the right drivers installed. Below are the
-            drivers for common chips used in ESP devices:
-            <ul>
-              <li>
-                CP2102 drivers:
-                <a
-                  href="https://www.silabs.com/developers/usb-to-uart-bridge-vcp-drivers"
-                  target="_blank"
-                  rel="noopener"
-                  >Windows & Mac</a
-                >
-              </li>
-              <li>
-                CH342, CH343, CH9102 drivers:
-                <a
-                  href="https://www.wch.cn/downloads/CH343SER_ZIP.html"
-                  target="_blank"
-                  rel="noopener"
-                  >Windows</a
-                >,
-                <a
-                  href="https://www.wch.cn/downloads/CH34XSER_MAC_ZIP.html"
-                  target="_blank"
-                  rel="noopener"
-                  >Mac</a
-                >
-                <br />
-                (download via blue button with ${cloudDownload} icon)
-              </li>
-              <li>
-                CH340, CH341 drivers:
-                <a
-                  href="https://www.wch.cn/downloads/CH341SER_ZIP.html"
-                  target="_blank"
-                  rel="noopener"
-                  >Windows</a
-                >,
-                <a
-                  href="https://www.wch.cn/downloads/CH341SER_MAC_ZIP.html"
-                  target="_blank"
-                  rel="noopener"
-                  >Mac</a
-                >
-                <br />
-                (download via blue button with ${cloudDownload} icon)
-              </li>
-            </ul>
-          </li>
-        </ol>
-        ${this.doTryAgain
-          ? html`
-              <ewt-button
-                slot="primaryAction"
-                dialogAction="close"
-                label="Try Again"
-                @click=${this.doTryAgain}
-              ></ewt-button>
-
-              <ewt-button
-                no-attention
-                slot="secondaryAction"
-                dialogAction="close"
-                label="Cancel"
-              ></ewt-button>
-            `
-          : html`
-              <ewt-button
-                slot="primaryAction"
-                dialogAction="close"
-                label="Close"
-              ></ewt-button>
-            `}
-      </ewt-dialog>
+            : html`
+                <md-text-button @click=${this.close}>Close</md-text-button>
+              `}
+        </div>
+      </md-dialog>
     `;
+  }
+
+  private tryAgain() {
+    this.close();
+    this.doTryAgain?.();
+  }
+
+  private close() {
+    this.shadowRoot!.querySelector("md-dialog")!.close();
   }
 
   private async _handleClose() {

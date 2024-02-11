@@ -6,12 +6,22 @@ import { css } from "lit";
 
 export const dialogStyles = css`
   :host {
-    --mdc-theme-primary: var(--improv-primary-color, #03a9f4);
-    --mdc-theme-on-primary: var(--improv-on-primary-color, #fff);
-    --improv-danger-color: #db4437;
-    --improv-text-color: rgba(0, 0, 0, 0.6);
-    --mdc-theme-text-primary-on-background: var(--improv-text-color);
-    --mdc-dialog-content-ink-color: var(--improv-text-color);
+    --roboto-font: Roboto, system-ui;
+    --text-color: rgba(0, 0, 0, 0.6);
+    --danger-color: #db4437;
+
+    --md-sys-color-primary: #03a9f4;
+    --md-sys-color-on-primary: #fff;
+    --md-ref-typeface-brand: var(--roboto-font);
+    --md-ref-typeface-plain: var(--roboto-font);
+
+    --md-sys-typescale-headline-font: var(--roboto-font);
+    --md-sys-typescale-title-font: var(--roboto-font);
+
+    --mdc-theme-primary: var(--md-sys-color-primary);
+    --mdc-theme-on-primary: var(--md-sys-color-on-primary);
+    --mdc-theme-text-primary-on-background: var(--text-color);
+    --mdc-dialog-content-ink-color: var(--text-color);
     text-align: left;
     font-size: 16px;
     --mdc-typography-headline6-font-size: 1.25em;
@@ -25,7 +35,7 @@ export const dialogStyles = css`
   }
 
   a {
-    color: var(--improv-primary-color, #03a9f4);
+    color: var(--md-sys-color-primary, #03a9f4);
   }
 
   a.button {

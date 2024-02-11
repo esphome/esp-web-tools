@@ -51,10 +51,6 @@ export class InstallButton extends HTMLElement {
     cursor: unset;
     pointer-events: none;
   }
-  improv-wifi-launch-button {
-    display: block;
-    margin-top: 16px;
-  }
   .hidden {
     display: none;
   }`;
