@@ -157,11 +157,7 @@ export class EwtInstallDialog extends LitElement {
     const heading = "Error";
     const content = html`
       <ewt-page-message .icon=${ERROR_ICON} .label=${label}></ewt-page-message>
-      <ewt-button
-        slot="primaryAction"
-        dialogAction="ok"
-        label="Close"
-      ></ewt-button>
+      <ewt-button slot="primaryAction" dialogAction="ok">Close</ewt-button>
     `;
     const hideActions = false;
     return [heading, content, hideActions];
@@ -187,10 +183,6 @@ export class EwtInstallDialog extends LitElement {
           ? html`
               <div>
                 <ewt-button
-                  text-left
-                  .label=${!this._isSameFirmware
-                    ? `Install ${this._manifest.name}`
-                    : `Update ${this._manifest.name}`}
                   @click=${() => {
                     if (this._isSameFirmware) {
                       this._startInstall(false);
@@ -200,7 +192,11 @@ export class EwtInstallDialog extends LitElement {
                       this._startInstall(true);
                     }
                   }}
-                ></ewt-button>
+                >
+                  ${!this._isSameFirmware
+                    ? `Install ${this._manifest.name}`
+                    : `Update ${this._manifest.name}`}
+                </ewt-button>
               </div>
             `
           : ""}
@@ -213,7 +209,7 @@ export class EwtInstallDialog extends LitElement {
                   class="has-button"
                   target="_blank"
                 >
-                  <ewt-button label="Visit Device"></ewt-button>
+                  <ewt-button>Visit Device</ewt-button>
                 </a>
               </div>
             `}
@@ -227,15 +223,12 @@ export class EwtInstallDialog extends LitElement {
                   class="has-button"
                   target="_blank"
                 >
-                  <ewt-button label="Add to Home Assistant"></ewt-button>
+                  <ewt-button>Add to Home Assistant</ewt-button>
                 </a>
               </div>
             `}
         <div>
           <ewt-button
-            .label=${this._client!.state === ImprovSerialCurrentState.READY
-              ? "Connect to Wi-Fi"
-              : "Change Wi-Fi"}
             @click=${() => {
               this._state = "PROVISION";
               if (
@@ -244,11 +237,14 @@ export class EwtInstallDialog extends LitElement {
                 this._provisionForce = true;
               }
             }}
-          ></ewt-button>
+          >
+            ${this._client!.state === ImprovSerialCurrentState.READY
+              ? "Connect to Wi-Fi"
+              : "Change Wi-Fi"}
+          </ewt-button>
         </div>
         <div>
           <ewt-button
-            label="Logs & Console"
             @click=${async () => {
               const client = this._client;
               if (client) {
@@ -259,7 +255,9 @@ export class EwtInstallDialog extends LitElement {
               this._client = undefined;
               this._state = "LOGS";
             }}
-          ></ewt-button>
+          >
+            Logs & Console
+          </ewt-button>
         </div>
         ${this._isSameFirmware && this._manifest.funding_url
           ? html`
@@ -269,7 +267,7 @@ export class EwtInstallDialog extends LitElement {
                   href=${this._manifest.funding_url}
                   target="_blank"
                 >
-                  <ewt-button label="Fund Development"></ewt-button>
+                  <ewt-button>Fund Development</ewt-button>
                 </a>
               </div>
             `
@@ -279,9 +277,10 @@ export class EwtInstallDialog extends LitElement {
               <div>
                 <ewt-button
                   class="danger"
-                  label="Erase User Data"
                   @click=${() => this._startInstall(true)}
-                ></ewt-button>
+                >
+                  Erase User Data
+                </ewt-button>
               </div>
             `
           : ""}
@@ -300,8 +299,6 @@ export class EwtInstallDialog extends LitElement {
       <div class="dashboard-buttons">
         <div>
           <ewt-button
-            text-left
-            .label=${`Install ${this._manifest.name}`}
             @click=${() => {
               if (this._manifest.new_install_prompt_erase) {
                 this._state = "ASK_ERASE";
@@ -310,18 +307,21 @@ export class EwtInstallDialog extends LitElement {
                 this._startInstall(true);
               }
             }}
-          ></ewt-button>
+          >
+            ${`Install ${this._manifest.name}`}
+          </ewt-button>
         </div>
 
         <div>
           <ewt-button
-            label="Logs & Console"
             @click=${async () => {
               // Also set `null` back to undefined.
               this._client = undefined;
               this._state = "LOGS";
             }}
-          ></ewt-button>
+          >
+            Logs & Console
+          </ewt-button>
         </div>
       </div>
     `;
@@ -376,7 +376,7 @@ export class EwtInstallDialog extends LitElement {
                             this._state = "DASHBOARD";
                           }}
                         >
-                          <ewt-button label="Visit Device"></ewt-button>
+                          <ewt-button>Visit Device</ewt-button>
                         </a>
                       </div>
                     `}
@@ -392,30 +392,30 @@ export class EwtInstallDialog extends LitElement {
                             this._state = "DASHBOARD";
                           }}
                         >
-                          <ewt-button
-                            label="Add to Home Assistant"
-                          ></ewt-button>
+                          <ewt-button>Add to Home Assistant</ewt-button>
                         </a>
                       </div>
                     `}
                 <div>
                   <ewt-button
-                    label="Skip"
                     @click=${() => {
                       this._state = "DASHBOARD";
                     }}
-                  ></ewt-button>
+                  >
+                    Skip
+                  </ewt-button>
                 </div>
               </div>
             `
           : html`
               <ewt-button
                 slot="primaryAction"
-                label="Continue"
                 @click=${() => {
                   this._state = "DASHBOARD";
                 }}
-              ></ewt-button>
+              >
+                Continue
+              </ewt-button>
             `}
       `;
     } else {
@@ -498,18 +498,17 @@ export class EwtInstallDialog extends LitElement {
               ></ewt-textfield>
             `
           : ""}
-        <ewt-button
-          slot="primaryAction"
-          label="Connect"
-          @click=${this._doProvision}
-        ></ewt-button>
+        <ewt-button slot="primaryAction" @click=${this._doProvision}>
+          Connect
+        </ewt-button>
         <ewt-button
           slot="secondaryAction"
-          .label=${this._installState && this._installErase ? "Skip" : "Back"}
           @click=${() => {
             this._state = "DASHBOARD";
           }}
-        ></ewt-button>
+        >
+          ${this._installState && this._installErase ? "Skip" : "Back"}
+        </ewt-button>
       `;
     }
     return [heading, content, hideActions];
@@ -527,19 +526,21 @@ export class EwtInstallDialog extends LitElement {
       </ewt-formfield>
       <ewt-button
         slot="primaryAction"
-        label="Next"
         @click=${() => {
           const checkbox = this.shadowRoot!.querySelector("ewt-checkbox")!;
           this._startInstall(checkbox.checked);
         }}
-      ></ewt-button>
+      >
+        Next
+      </ewt-button>
       <ewt-button
         slot="secondaryAction"
-        label="Back"
         @click=${() => {
           this._state = "DASHBOARD";
         }}
-      ></ewt-button>
+      >
+        Back
+      </ewt-button>
     `;
 
     return [heading, content];
@@ -561,9 +562,10 @@ export class EwtInstallDialog extends LitElement {
         <ewt-button
           class="danger"
           slot="primaryAction"
-          label="Erase User Data"
           @click=${this._confirmInstall}
-        ></ewt-button>
+        >
+          Erase User Data
+        </ewt-button>
       `;
     } else if (!this._installConfirmed) {
       heading = "Confirm Installation";
@@ -578,18 +580,17 @@ export class EwtInstallDialog extends LitElement {
         ${this._installErase
           ? html`<br /><br />All data on the device will be erased.`
           : ""}
-        <ewt-button
-          slot="primaryAction"
-          label="Install"
-          @click=${this._confirmInstall}
-        ></ewt-button>
+        <ewt-button slot="primaryAction" @click=${this._confirmInstall}>
+          Install
+        </ewt-button>
         <ewt-button
           slot="secondaryAction"
-          label="Back"
           @click=${() => {
             this._state = "DASHBOARD";
           }}
-        ></ewt-button>
+        >
+          Back
+        </ewt-button>
       `;
     } else if (
       !this._installState ||
