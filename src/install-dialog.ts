@@ -3,13 +3,12 @@ import { state } from "lit/decorators.js";
 import "./components/ew-text-button";
 import "./components/ew-list";
 import "./components/ew-list-item";
-import "./components/ewt-checkbox";
+import "./components/ew-checkbox";
 import "./components/ewt-console";
 import "./components/ewt-dialog";
-import "./components/ewt-formfield";
 import "./components/ew-icon-button";
-import "./components/ew-textfield";
-import type { EwTextfield } from "./components/ew-textfield";
+import "./components/ew-filled-text-field";
+import type { EwTextfield } from "./components/ew-filled-text-field";
 import "./components/ew-filled-select";
 import "./components/ew-select-option";
 import "./pages/ewt-page-progress";
@@ -523,13 +522,14 @@ export class EwtInstallDialog extends LitElement {
         Do you want to erase the device before installing
         ${this._manifest.name}? All data on the device will be lost.
       </div>
-      <ewt-formfield label="Erase device" class="danger">
-        <ewt-checkbox></ewt-checkbox>
-      </ewt-formfield>
+      <label class="formfield">
+        <ew-checkbox touch-target="wrapper" class="danger"></ew-checkbox>
+        Erase device
+      </label>
       <ew-text-button
         slot="primaryAction"
         @click=${() => {
-          const checkbox = this.shadowRoot!.querySelector("ewt-checkbox")!;
+          const checkbox = this.shadowRoot!.querySelector("ew-checkbox")!;
           this._startInstall(checkbox.checked);
         }}
       >
@@ -1001,6 +1001,11 @@ export class EwtInstallDialog extends LitElement {
       ew-filled-select {
         display: block;
         margin-top: 16px;
+      }
+      label.formfield {
+        display: inline-flex;
+        align-items: center;
+        padding-right: 8px;
       }
       .dashboard-buttons {
         margin: 0 0 -16px -8px;
