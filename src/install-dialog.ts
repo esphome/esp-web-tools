@@ -248,6 +248,8 @@ export class EwtInstallDialog extends LitElement {
           </div>
         </ew-list-item>
         <ew-list-item
+          interactive
+          type="button"
           @click=${async () => {
             const client = this._client;
             if (client) {
