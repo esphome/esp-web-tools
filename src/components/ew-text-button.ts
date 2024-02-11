@@ -4,12 +4,12 @@ import { styles as textStyles } from "@material/web/button/internal/text-styles.
 
 declare global {
   interface HTMLElementTagNameMap {
-    "ew-text-button": EwtTextButton;
+    "ew-text-button": EwTextButton;
   }
 }
 
-export class EwtTextButton extends TextButton {
+export class EwTextButton extends TextButton {
   static override styles = [sharedStyles, textStyles];
 }
 
-customElements.define("ew-text-button", EwtTextButton);
+customElements.define("ew-text-button", EwTextButton);
