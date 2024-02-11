@@ -3,6 +3,7 @@ import { state } from "lit/decorators.js";
 import "./components/ew-text-button";
 import "./components/ew-list";
 import "./components/ew-list-item";
+import "./components/ew-divider";
 import "./components/ew-checkbox";
 import "./components/ewt-console";
 import "./components/ewt-dialog";
@@ -17,6 +18,11 @@ import {
   chipIcon,
   closeIcon,
   firmwareIcon,
+  listItemConsole,
+  listItemHomeAssistant,
+  listItemInstallIcon,
+  listItemVisitDevice,
+  listItemWifi,
   refreshIcon,
 } from "./components/svg";
 import { Logger, Manifest, FlashStateType, FlashState } from "./const.js";
@@ -198,6 +204,7 @@ export class EwtInstallDialog extends LitElement {
                   }
                 }}
               >
+                ${listItemInstallIcon}
                 <div slot="headline">
                   ${!this._isSameFirmware
                     ? `Install ${this._manifest.name}`
@@ -215,6 +222,7 @@ export class EwtInstallDialog extends LitElement {
                 href=${this._client!.nextUrl}
                 target="_blank"
               >
+                ${listItemVisitDevice}
                 <div slot="headline">Visit Device</div>
               </ew-list-item>
             `}
@@ -228,6 +236,7 @@ export class EwtInstallDialog extends LitElement {
                 href=${`https://my.home-assistant.io/redirect/config_flow_start/?domain=${this._manifest.home_assistant_domain}`}
                 target="_blank"
               >
+                ${listItemHomeAssistant}
                 <div slot="headline">Add to Home Assistant</div>
               </ew-list-item>
             `}
@@ -241,6 +250,7 @@ export class EwtInstallDialog extends LitElement {
             }
           }}
         >
+          ${listItemWifi}
           <div slot="headline">
             ${this._client!.state === ImprovSerialCurrentState.READY
               ? "Connect to Wi-Fi"
@@ -261,6 +271,7 @@ export class EwtInstallDialog extends LitElement {
             this._state = "LOGS";
           }}
         >
+          ${listItemConsole}
           <div slot="headline">Logs & Console</div>
         </ew-list-item>
         ${this._isSameFirmware && this._manifest.funding_url
@@ -312,6 +323,7 @@ export class EwtInstallDialog extends LitElement {
             }
           }}
         >
+          ${listItemInstallIcon}
           <div slot="headline">${`Install ${this._manifest.name}`}</div>
         </ew-list-item>
         <ew-list-item
@@ -323,6 +335,7 @@ export class EwtInstallDialog extends LitElement {
             this._state = "LOGS";
           }}
         >
+          ${listItemConsole}
           <div slot="headline">Logs & Console</div>
         </ew-list-item>
       </ew-list>
@@ -473,7 +486,8 @@ export class EwtInstallDialog extends LitElement {
                     </ew-select-option>
                   `,
                 )}
-                <ew-select-option .selected=${!selectedSsid} value="-1">
+                <ew-divider></ew-divider>
+                <ew-select-option .selected=${!selectedSsid}>
                   Join other…
                 </ew-select-option>
               </ew-filled-select>
@@ -1015,15 +1029,11 @@ export class EwtInstallDialog extends LitElement {
         align-items: center;
         padding-right: 8px;
       }
-      .dashboard-buttons {
-        margin: 0 0 -16px -8px;
+      ew-list {
+        margin: 0 -24px;
       }
-      .dashboard-buttons div {
-        display: block;
-        margin: 4px 0;
-      }
-      a.has-button {
-        text-decoration: none;
+      ew-list-item svg {
+        height: 24px;
       }
       .error {
         color: var(--danger-color);
@@ -1050,9 +1060,6 @@ export class EwtInstallDialog extends LitElement {
       ewt-console {
         width: calc(80vw - 48px);
         height: 80vh;
-      }
-      ew-select-option[value="-1"] {
-        border-top: 1px solid #ccc;
       }
     `,
   ];
