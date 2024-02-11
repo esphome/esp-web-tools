@@ -15,9 +15,7 @@ import "./components/ew-select-option";
 import "./pages/ewt-page-progress";
 import "./pages/ewt-page-message";
 import {
-  chipIcon,
   closeIcon,
-  firmwareIcon,
   listItemConsole,
   listItemHomeAssistant,
   listItemInstallIcon,
@@ -1017,6 +1015,9 @@ export class EwtInstallDialog extends LitElement {
         position: absolute;
         right: 4px;
         top: 10px;
+      }
+      ew-icon-button[slot="headline"] svg {
+        padding: 8px;
       }
       .dialog-nav svg {
         color: var(--text-color);
