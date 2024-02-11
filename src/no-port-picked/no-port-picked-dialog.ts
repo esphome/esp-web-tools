@@ -1,8 +1,7 @@
 import { LitElement, html, css, svg } from "lit";
 import { customElement } from "lit/decorators.js";
-
-import "@material/web/dialog/dialog.js";
-import "@material/web/button/text-button.js";
+import "../components/ew-dialog";
+import "../components/ew-text-button";
 
 import { dialogStyles } from "../styles";
 import { getOperatingSystem } from "../util/get-operating-system";
@@ -36,7 +35,7 @@ class EwtNoPortPickedDialog extends LitElement {
     const OS = getOperatingSystem();
 
     return html`
-      <md-dialog open @closed=${this._handleClose}>
+      <ew-dialog open @closed=${this._handleClose}>
         <div slot="headline">No port selected</div>
         <div slot="content">
           <div>
@@ -124,16 +123,16 @@ class EwtNoPortPickedDialog extends LitElement {
         <div slot="actions">
           ${this.doTryAgain
             ? html`
-                <md-text-button @click=${this.close}>Cancel</md-text-button>
-                <md-text-button @click=${this.tryAgain}>
+                <ew-text-button @click=${this.close}>Cancel</ew-text-button>
+                <ew-text-button @click=${this.tryAgain}>
                   Try Again
-                </md-text-button>
+                </ew-text-button>
               `
             : html`
-                <md-text-button @click=${this.close}>Close</md-text-button>
+                <ew-text-button @click=${this.close}>Close</ew-text-button>
               `}
         </div>
-      </md-dialog>
+      </ew-dialog>
     `;
   }
 
@@ -143,7 +142,7 @@ class EwtNoPortPickedDialog extends LitElement {
   }
 
   private close() {
-    this.shadowRoot!.querySelector("md-dialog")!.close();
+    this.shadowRoot!.querySelector("ew-dialog")!.close();
   }
 
   private async _handleClose() {
