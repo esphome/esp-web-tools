@@ -10,8 +10,8 @@ import "./components/ewt-formfield";
 import "./components/ew-icon-button";
 import "./components/ewt-textfield";
 import type { EwtTextfield } from "./components/ewt-textfield";
-import "./components/ewt-select";
-import "./components/ewt-list-item";
+import "./components/ew-filled-select";
+import "./components/ew-select-option";
 import "./pages/ewt-page-progress";
 import "./pages/ewt-page-message";
 import {
@@ -34,9 +34,10 @@ import { sleep } from "./util/sleep";
 import { downloadManifest } from "./util/manifest";
 import { dialogStyles } from "./styles";
 import { version } from "./version";
+import type { EwFilledSelect } from "./components/ew-filled-select";
 
 console.log(
-  `ESP Web Tools ${version} by Nabu Casa; https://esphome.github.io/esp-web-tools/`
+  `ESP Web Tools ${version} by Nabu Casa; https://esphome.github.io/esp-web-tools/`,
 );
 
 const ERROR_ICON = "⚠️";
@@ -52,7 +53,7 @@ export class EwtInstallDialog extends LitElement {
   public overrides?: {
     checkSameFirmware?: (
       manifest: Manifest,
-      deviceImprov: ImprovSerial["info"]
+      deviceImprov: ImprovSerial["info"],
     ) => boolean;
   };
 
@@ -342,7 +343,7 @@ export class EwtInstallDialog extends LitElement {
         this._renderProgress(
           this._ssids === undefined
             ? "Scanning for networks"
-            : "Trying to connect"
+            : "Trying to connect",
         ),
         true,
       ];
@@ -441,7 +442,7 @@ export class EwtInstallDialog extends LitElement {
           error = `Unknown error (${this._client!.error})`;
       }
       const selectedSsid = this._ssids?.find(
-        (info) => info.name === this._selectedSsid
+        (info) => info.name === this._selectedSsid,
       );
       content = html`
         <div>
@@ -451,33 +452,32 @@ export class EwtInstallDialog extends LitElement {
         ${error ? html`<p class="error">${error}</p>` : ""}
         ${this._ssids !== null
           ? html`
-              <ewt-select
-                fixedMenuPosition
+              <ew-filled-select
+                menu-positioning="fixed"
                 label="Network"
-                @selected=${(ev: { detail: { index: number } }) => {
-                  const index = ev.detail.index;
+                @change=${(ev: { target: EwFilledSelect }) => {
+                  const index = ev.target.selectedIndex;
                   // The "Join Other" item is always the last item.
                   this._selectedSsid =
                     index === this._ssids!.length
                       ? null
                       : this._ssids![index].name;
                 }}
-                @closed=${(ev: Event) => ev.stopPropagation()}
               >
                 ${this._ssids!.map(
                   (info) => html`
-                    <ewt-list-item
+                    <ew-select-option
                       .selected=${selectedSsid === info}
                       .value=${info.name}
                     >
                       ${info.name}
-                    </ewt-list-item>
-                  `
+                    </ew-select-option>
+                  `,
                 )}
-                <ewt-list-item .selected=${!selectedSsid} value="-1">
+                <ew-select-option .selected=${!selectedSsid} value="-1">
                   Join other…
-                </ewt-list-item>
-              </ewt-select>
+                </ew-select-option>
+              </ew-filled-select>
               <ew-icon-button @click=${this._updateSsids}>
                 ${refreshIcon}
               </ew-icon-button>
@@ -636,7 +636,7 @@ export class EwtInstallDialog extends LitElement {
             : "2 minutes"}.<br />
           Keep this page visible to prevent slow down
         `,
-        percentage
+        percentage,
       );
       hideActions = true;
     } else if (this._installState.state === FlashStateType.FINISHED) {
@@ -701,7 +701,7 @@ export class EwtInstallDialog extends LitElement {
         @click=${() => {
           textDownload(
             this.shadowRoot!.querySelector("ewt-console")!.logs(),
-            `esp-web-tools-logs.txt`
+            `esp-web-tools-logs.txt`,
           );
 
           this.shadowRoot!.querySelector("ewt-console")!.reset();
@@ -810,9 +810,9 @@ export class EwtInstallDialog extends LitElement {
     }
   }
 
-  private _focusFormElement(selector = "ewt-textfield, ewt-select") {
+  private _focusFormElement(selector = "ewt-textfield, ew-filled-select") {
     const formEl = this.shadowRoot!.querySelector(
-      selector
+      selector,
     ) as LitElement | null;
     if (formEl) {
       formEl.updateComplete.then(() => setTimeout(() => formEl.focus(), 100));
@@ -905,7 +905,7 @@ export class EwtInstallDialog extends LitElement {
       this.port,
       this.manifestPath,
       this._manifest,
-      this._installErase
+      this._installErase,
     );
     // YOLO2
   }
@@ -918,14 +918,14 @@ export class EwtInstallDialog extends LitElement {
       this._selectedSsid === null
         ? (
             this.shadowRoot!.querySelector(
-              "ewt-textfield[name=ssid]"
+              "ewt-textfield[name=ssid]",
             ) as EwtTextfield
           ).value
         : this._selectedSsid;
     const password =
       (
         this.shadowRoot!.querySelector(
-          "ewt-textfield[name=password]"
+          "ewt-textfield[name=password]",
         ) as EwtTextfield | null
       )?.value || "";
     try {
@@ -998,7 +998,7 @@ export class EwtInstallDialog extends LitElement {
         margin-right: 8px;
       }
       ewt-textfield,
-      ewt-select {
+      ew-filled-select {
         display: block;
         margin-top: 16px;
       }
@@ -1038,7 +1038,7 @@ export class EwtInstallDialog extends LitElement {
         width: calc(80vw - 48px);
         height: 80vh;
       }
-      ewt-list-item[value="-1"] {
+      ew-select-option[value="-1"] {
         border-top: 1px solid #ccc;
       }
     `,
