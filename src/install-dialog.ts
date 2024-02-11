@@ -925,7 +925,6 @@ export class EwtInstallDialog extends LitElement {
       this._manifest,
       this._installErase,
     );
-    // YOLO2
   }
 
   private async _doProvision() {
