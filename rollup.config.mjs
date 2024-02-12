@@ -20,7 +20,10 @@ const config = {
     }),
     babel({
       babelHelpers: "bundled",
-      plugins: ["@babel/plugin-proposal-class-properties"],
+      plugins: [
+        "@babel/plugin-proposal-class-properties",
+        "@babel/plugin-transform-logical-assignment-operators",
+      ],
     }),
     json(),
   ],
