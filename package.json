@@ -12,6 +12,7 @@
   "devDependencies": {
     "@babel/plugin-proposal-class-properties": "^7.18.6",
     "@rollup/plugin-babel": "^6.0.4",
+    "@rollup/plugin-commonjs": "^25.0.7",
     "@rollup/plugin-json": "^6.1.0",
     "@rollup/plugin-node-resolve": "^15.2.3",
     "@rollup/plugin-terser": "^0.4.4",
@@ -24,7 +25,7 @@
   },
   "dependencies": {
     "@material/web": "^1.2.0",
-    "esptool-js": "^0.3.2",
+    "esptool-js": "^0.4.1",
     "improv-wifi-serial-sdk": "^2.5.0",
     "lit": "^3.1.2",
     "pako": "^2.1.0",
