@@ -93,6 +93,8 @@ export class EwtInstallDialog extends LitElement {
   // Name of Ssid. Null = other
   @state() private _selectedSsid: string | null = null;
 
+  private _bodyOverflow: string | null = null;
+
   protected render() {
     if (!this.port) {
       return html``;
@@ -803,6 +805,8 @@ export class EwtInstallDialog extends LitElement {
 
   protected override firstUpdated(changedProps: PropertyValues) {
     super.firstUpdated(changedProps);
+    this._bodyOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
     this._initialize();
   }
 
@@ -969,6 +973,7 @@ export class EwtInstallDialog extends LitElement {
       await this._closeClientWithoutEvents(this._client);
     }
     fireEvent(this, "closed" as any);
+    document.body.style.overflow = this._bodyOverflow!;
     this.parentNode!.removeChild(this);
   }
 
