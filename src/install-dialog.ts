@@ -1017,6 +1017,7 @@ export class EwtInstallDialog extends LitElement {
       }
       ew-icon-button[slot="headline"] svg {
         padding: 8px;
+        color: var(--text-color);
       }
       .dialog-nav svg {
         color: var(--text-color);
