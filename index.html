@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
   <head>
     <meta charset="utf-8" />
@@ -79,8 +79,10 @@
       }
       .screenshot img {
         max-width: 100%;
-        box-shadow: rgb(0 0 0 / 20%) 0px 2px 1px -1px,
-          rgb(0 0 0 / 14%) 0px 1px 1px 0px, rgb(0 0 0 / 12%) 0px 1px 3px 0px;
+        box-shadow:
+          rgb(0 0 0 / 20%) 0px 2px 1px -1px,
+          rgb(0 0 0 / 14%) 0px 1px 1px 0px,
+          rgb(0 0 0 / 12%) 0px 1px 3px 0px;
         border-radius: 4px;
       }
       .screenshot i {
@@ -266,9 +268,16 @@
           </div>
           <div class="name">Luciferin</div>
         </a>
-        <a href="https://install.openepaperlink.de" target="_blank" class="project">
+        <a
+          href="https://install.openepaperlink.de"
+          target="_blank"
+          class="project"
+        >
           <div class="logo">
-            <img src="static/logos/openepaperlink.png" alt="OpenEpaperLink logo" />
+            <img
+              src="static/logos/openepaperlink.png"
+              alt="OpenEpaperLink logo"
+            />
           </div>
           <div class="name">OpenEpaperLink</div>
         </a>
@@ -432,7 +441,8 @@ esptool --chip esp32 merge_bin \
         Manifests describe the firmware that you want to offer the user to
         install. It allows specifying different builds for the different types
         of ESP devices. Current supported chip families are
-        <code>ESP8266</code>, <code>ESP32</code>, <code>ESP32-C3</code>,
+        <code>ESP8266</code>, <code>ESP32</code>, <code>ESP32-C2</code>,
+        <code>ESP32-C3</code>, <code>ESP32-C6</code>, <code>ESP32-H2</code>,
         <code>ESP32-S2</code> and <code>ESP32-S3</code>. The correct build will
         be automatically selected based on the type of the connected ESP device.
       </p>
