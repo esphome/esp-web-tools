@@ -6,29 +6,26 @@ import { css } from "lit";
 
 export const dialogStyles = css`
   :host {
-    --mdc-theme-primary: var(--improv-primary-color, #03a9f4);
-    --mdc-theme-on-primary: var(--improv-on-primary-color, #fff);
-    --improv-danger-color: #db4437;
-    --improv-text-color: rgba(0, 0, 0, 0.6);
-    --mdc-theme-text-primary-on-background: var(--improv-text-color);
-    --mdc-dialog-content-ink-color: var(--improv-text-color);
-    text-align: left;
-    font-size: 16px;
-    --mdc-typography-headline6-font-size: 1.25em;
-    --mdc-typography-headline6-line-height: 2em;
-    --mdc-typography-body1-font-size: 1em;
-    --mdc-typography-body1-line-height: 1.5em;
-    --mdc-typography-button-font-size: 0.875em;
-    --mdc-typography-button-line-height: 2.25em;
-    --mdc-typography-subtitle1-font-size: 1em;
-    --mdc-typography-subtitle1-line-height: 1.75em;
+    --roboto-font: Roboto, system-ui;
+    --text-color: rgba(0, 0, 0, 0.6);
+    --danger-color: #db4437;
+
+    --md-sys-color-primary: #03a9f4;
+    --md-sys-color-on-primary: #fff;
+    --md-ref-typeface-brand: var(--roboto-font);
+    --md-ref-typeface-plain: var(--roboto-font);
+
+    --md-sys-color-surface: #fff;
+    --md-sys-color-surface-container: #fff;
+    --md-sys-color-surface-container-high: #fff;
+    --md-sys-color-surface-container-highest: #f5f5f5;
+    --md-sys-color-secondary-container: #e0e0e0;
+
+    --md-sys-typescale-headline-font: var(--roboto-font);
+    --md-sys-typescale-title-font: var(--roboto-font);
   }
 
   a {
-    color: var(--improv-primary-color, #03a9f4);
-  }
-
-  a.button {
-    text-decoration: none;
+    color: var(--md-sys-color-primary);
   }
 `;
