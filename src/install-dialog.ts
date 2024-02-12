@@ -531,29 +531,33 @@ export class EwtInstallDialog extends LitElement {
   _renderAskErase(): [string | undefined, TemplateResult] {
     const heading = "Erase device";
     const content = html`
-      <div>
-        Do you want to erase the device before installing
-        ${this._manifest.name}? All data on the device will be lost.
+      <div slot="content">
+        <div>
+          Do you want to erase the device before installing
+          ${this._manifest.name}? All data on the device will be lost.
+        </div>
+        <label class="formfield">
+          <ew-checkbox touch-target="wrapper" class="danger"></ew-checkbox>
+          Erase device
+        </label>
       </div>
-      <label class="formfield">
-        <ew-checkbox touch-target="wrapper" class="danger"></ew-checkbox>
-        Erase device
-      </label>
-      <ew-text-button
-        @click=${() => {
-          const checkbox = this.shadowRoot!.querySelector("ew-checkbox")!;
-          this._startInstall(checkbox.checked);
-        }}
-      >
-        Next
-      </ew-text-button>
-      <ew-text-button
-        @click=${() => {
-          this._state = "DASHBOARD";
-        }}
-      >
-        Back
-      </ew-text-button>
+      <div slot="actions">
+        <ew-text-button
+          @click=${() => {
+            this._state = "DASHBOARD";
+          }}
+        >
+          Back
+        </ew-text-button>
+        <ew-text-button
+          @click=${() => {
+            const checkbox = this.shadowRoot!.querySelector("ew-checkbox")!;
+            this._startInstall(checkbox.checked);
+          }}
+        >
+          Next
+        </ew-text-button>
+      </div>
     `;
 
     return [heading, content];
