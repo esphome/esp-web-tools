@@ -1013,7 +1013,7 @@ export class EwtInstallDialog extends LitElement {
       ew-icon-button[slot="headline"] {
         position: absolute;
         right: 4px;
-        top: 10px;
+        top: 8px;
       }
       ew-icon-button[slot="headline"] svg {
         padding: 8px;
