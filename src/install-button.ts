@@ -17,7 +17,7 @@ export class InstallButton extends HTMLElement {
     color: var(--esp-tools-button-text-color, #fff);
     background-color: var(--esp-tools-button-color, #03a9f4);
     border: none;
-    border-radius: var(--esp-tools-border-radius, 9999px);
+    border-radius: var(--esp-tools-button-border-radius, 9999px);
   }
   button::before {
     content: " ";
@@ -27,10 +27,7 @@ export class InstallButton extends HTMLElement {
     left: 0;
     right: 0;
     opacity: 0.2;
-    border-radius: var(--esp-tools-border-radius, 9999px);
-  }
-  button:hover {
-    box-shadow: 0 4px 8px 0 rgba(0,0,0,.14), 0 1px 7px 0 rgba(0,0,0,.12), 0 3px 1px -1px rgba(0,0,0,.2);
+    border-radius: var(--esp-tools-button-border-radius, 9999px);
   }
   button:hover::before {
     background-color: rgba(255,255,255,.8);
