@@ -20,9 +20,16 @@ const config = {
     }),
     babel({
       babelHelpers: "bundled",
-      plugins: [
-        "@babel/plugin-proposal-class-properties",
-        "@babel/plugin-transform-logical-assignment-operators",
+      presets: [
+        [
+          "@babel/preset-env",
+          {
+            targets: {
+              // We use unpkg as CDN and it doesn't bundle modern syntax
+              chrome: "84",
+            },
+          },
+        ],
       ],
     }),
     json(),
