@@ -18,6 +18,7 @@
     "@rollup/plugin-terser": "^0.4.4",
     "@rollup/plugin-typescript": "^11.1.6",
     "@types/w3c-web-serial": "^1.0.6",
+    "@types/w3c-web-usb": "^1.0.10",
     "prettier": "^3.2.5",
     "rollup": "^4.10.0",
     "serve": "^14.2.1",
@@ -29,6 +30,7 @@
     "improv-wifi-serial-sdk": "^2.5.0",
     "lit": "^3.1.2",
     "pako": "^2.1.0",
-    "tslib": "^2.6.2"
+    "tslib": "^2.6.2",
+    "web-serial-polyfill": "^1.0.15"
   }
 }

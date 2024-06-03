@@ -112,4 +112,20 @@ export class InstallButton extends HTMLElement {
   }
 }
 
-customElements.define("esp-web-install-button", InstallButton);
+function defineInstallButton() {
+  customElements.define("esp-tools-install-button", InstallButton);
+}
+
+async function polyfillWebSerial() {
+  const { serial } = await import("web-serial-polyfill");
+  // @ts-ignore-next-line
+  navigator.serial = serial;
+  InstallButton.isSupported = true;
+  defineInstallButton();
+}
+
+if (!navigator.serial && navigator.usb) {
+  polyfillWebSerial();
+} else {
+  defineInstallButton();
+}
