@@ -113,7 +113,7 @@ export class InstallButton extends HTMLElement {
 }
 
 function defineInstallButton() {
-  customElements.define("esp-tools-install-button", InstallButton);
+  customElements.define("esp-web-install-button", InstallButton);
 }
 
 async function polyfillWebSerial() {
