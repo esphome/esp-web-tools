@@ -24,7 +24,7 @@
     "typescript": "^5.3.3"
   },
   "dependencies": {
-    "@material/web": "^1.2.0",
+    "@material/web": "^2.2.0",
     "esptool-js": "^0.4.1",
     "improv-wifi-serial-sdk": "^2.5.0",
     "lit": "^3.1.2",
