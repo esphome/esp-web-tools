@@ -25,7 +25,7 @@
   },
   "dependencies": {
     "@material/web": "^1.2.0",
-    "esptool-js": "^0.4.1",
+    "esptool-js": "^0.5.2",
     "improv-wifi-serial-sdk": "^2.5.0",
     "lit": "^3.1.2",
     "pako": "^2.1.0",
