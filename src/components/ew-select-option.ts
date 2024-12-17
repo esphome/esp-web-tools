@@ -1,4 +1,4 @@
-import { styles } from "@material/web/menu/internal/menuitem/menu-item-styles.css.js";
+import { styles } from "@material/web/menu/internal/menuitem/menu-item-styles.js";
 import { SelectOptionEl } from "@material/web/select/internal/selectoption/select-option.js";
 
 declare global {

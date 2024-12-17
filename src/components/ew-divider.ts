@@ -1,5 +1,5 @@
 import { Divider } from "@material/web/divider/internal/divider.js";
-import { styles } from "@material/web/divider/internal/divider-styles.css.js";
+import { styles } from "@material/web/divider/internal/divider-styles.js";
 
 declare global {
   interface HTMLElementTagNameMap {
