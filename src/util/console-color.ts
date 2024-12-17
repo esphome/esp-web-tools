@@ -28,6 +28,7 @@ export class ColoredConsole {
   }
 
   addLine(line: string) {
+    // @ts-expect-error
     const re = /(?:\033|\\033)(?:\[(.*?)[@-~]|\].*?(?:\007|\033\\))/g;
     let i = 0;
 

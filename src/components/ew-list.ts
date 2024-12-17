@@ -1,5 +1,5 @@
 import { List } from "@material/web/list/internal/list.js";
-import { styles } from "@material/web/list/internal/list-styles.css.js";
+import { styles } from "@material/web/list/internal/list-styles.js";
 
 declare global {
   interface HTMLElementTagNameMap {

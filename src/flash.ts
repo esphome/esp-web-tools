@@ -74,20 +74,6 @@ export const flash = async (
 
   chipFamily = esploader.chip.CHIP_NAME as any;
 
-  if (!esploader.chip.ROM_TEXT) {
-    fireStateEvent({
-      state: FlashStateType.ERROR,
-      message: `Chip ${chipFamily} is not supported`,
-      details: {
-        error: FlashError.NOT_SUPPORTED,
-        details: `Chip ${chipFamily} is not supported`,
-      },
-    });
-    await resetTransport(transport);
-    await transport.disconnect();
-    return;
-  }
-
   fireStateEvent({
     state: FlashStateType.INITIALIZING,
     message: `Initialized. Found ${chipFamily}`,
