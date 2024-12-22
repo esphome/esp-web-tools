@@ -40,7 +40,7 @@ import { version } from "./version";
 import type { EwFilledSelect } from "./components/ew-filled-select";
 
 console.log(
-  `ESP Web Tools ${version} by Nabu Casa; https://esphome.github.io/esp-web-tools/`,
+  `ESP Web Tools ${version} by Open Home Foundation; https://esphome.github.io/esp-web-tools/`,
 );
 
 const ERROR_ICON = "⚠️";
