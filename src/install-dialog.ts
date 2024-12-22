@@ -17,6 +17,8 @@ import "./pages/ewt-page-message";
 import {
   closeIcon,
   listItemConsole,
+  listItemEraseUserData,
+  listItemFundDevelopment,
   listItemHomeAssistant,
   listItemInstallIcon,
   listItemVisitDevice,
@@ -279,6 +281,7 @@ export class EwtInstallDialog extends LitElement {
                   href=${this._manifest.funding_url}
                   target="_blank"
                 >
+                  ${listItemFundDevelopment}
                   <div slot="headline">Fund Development</div>
                 </ew-list-item>
               `
@@ -290,6 +293,7 @@ export class EwtInstallDialog extends LitElement {
                   class="danger"
                   @click=${() => this._startInstall(true)}
                 >
+                  ${listItemEraseUserData}
                   <div slot="headline">Erase User Data</div>
                 </ew-list-item>
               `
