@@ -6,20 +6,6 @@ import {
   Manifest,
   FlashStateType,
 } from "./const";
-import { sleep } from "./util/sleep";
-
-const resetTransport = async (transport: Transport) => {
-  await transport.device.setSignals({
-    dataTerminalReady: false,
-    requestToSend: true,
-  });
-  await sleep(250);
-  await transport.device.setSignals({
-    dataTerminalReady: false,
-    requestToSend: false,
-  });
-  await sleep(250);
-};
 
 export const flash = async (
   onEvent: (state: FlashState) => void,
@@ -67,7 +53,7 @@ export const flash = async (
         "Failed to initialize. Try resetting your device or holding the BOOT button while clicking INSTALL.",
       details: { error: FlashError.FAILED_INITIALIZING, details: err },
     });
-    await resetTransport(transport);
+    await esploader.hardReset();
     await transport.disconnect();
     return;
   }
@@ -88,7 +74,7 @@ export const flash = async (
       message: `Your ${chipFamily} board is not supported.`,
       details: { error: FlashError.NOT_SUPPORTED, details: chipFamily },
     });
-    await resetTransport(transport);
+    await esploader.hardReset();
     await transport.disconnect();
     return;
   }
@@ -135,7 +121,7 @@ export const flash = async (
           details: err.message,
         },
       });
-      await resetTransport(transport);
+      await esploader.hardReset();
       await transport.disconnect();
       return;
     }
@@ -213,7 +199,7 @@ export const flash = async (
       message: err.message,
       details: { error: FlashError.WRITE_FAILED, details: err },
     });
-    await resetTransport(transport);
+    await esploader.hardReset();
     await transport.disconnect();
     return;
   }
@@ -228,9 +214,8 @@ export const flash = async (
     },
   });
 
-  await sleep(100);
-  console.log("HARD RESET");
-  await resetTransport(transport);
+  await esploader.hardReset();
+
   console.log("DISCONNECT");
   await transport.disconnect();
 
