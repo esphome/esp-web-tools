@@ -6,6 +6,7 @@ import {
   Manifest,
   FlashStateType,
 } from "./const";
+import { hardReset } from "./util/reset";
 
 export const flash = async (
   onEvent: (state: FlashState) => void,
@@ -53,7 +54,8 @@ export const flash = async (
         "Failed to initialize. Try resetting your device or holding the BOOT button while clicking INSTALL.",
       details: { error: FlashError.FAILED_INITIALIZING, details: err },
     });
-    await esploader.hardReset();
+
+    await hardReset(transport);
     await transport.disconnect();
     return;
   }
@@ -74,7 +76,7 @@ export const flash = async (
       message: `Your ${chipFamily} board is not supported.`,
       details: { error: FlashError.NOT_SUPPORTED, details: chipFamily },
     });
-    await esploader.hardReset();
+    await hardReset(transport);
     await transport.disconnect();
     return;
   }
@@ -121,7 +123,7 @@ export const flash = async (
           details: err.message,
         },
       });
-      await esploader.hardReset();
+      await hardReset(transport);
       await transport.disconnect();
       return;
     }
@@ -199,7 +201,7 @@ export const flash = async (
       message: err.message,
       details: { error: FlashError.WRITE_FAILED, details: err },
     });
-    await esploader.hardReset();
+    await hardReset(transport);
     await transport.disconnect();
     return;
   }
@@ -214,7 +216,7 @@ export const flash = async (
     },
   });
 
-  await esploader.hardReset();
+  await hardReset(transport);
 
   console.log("DISCONNECT");
   await transport.disconnect();
