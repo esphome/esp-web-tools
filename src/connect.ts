@@ -21,7 +21,7 @@ export const connect = async (button: InstallButton) => {
   }
 
   try {
-    await port.open({ baudRate: 115200 });
+    await port.open({ baudRate: 115200, bufferSize: 8192 });
   } catch (err: any) {
     alert(err.message);
     return;

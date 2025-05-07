@@ -8,7 +8,7 @@ export class LineBreakTransformer implements Transformer<string, string> {
     // Append new chunks to existing chunks.
     this.chunks += chunk;
     // For each line breaks in chunks, send the parsed lines out.
-    const lines = this.chunks.split("\r\n");
+    const lines = this.chunks.split(/\r?\n/);
     this.chunks = lines.pop()!;
     lines.forEach((line) => controller.enqueue(line + "\r\n"));
   }
