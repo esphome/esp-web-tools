@@ -923,13 +923,13 @@ export class EwtInstallDialog extends LitElement {
         if (state.state === FlashStateType.FINISHED) {
           sleep(100)
             // Flashing closes the port
-            .then(() => this.port.open({ baudRate: 115200 }))
+            .then(() => this.port.open({ baudRate: 115200, bufferSize: 8192 }))
             .then(() => this._initialize(true))
             .then(() => this.requestUpdate());
         } else if (state.state === FlashStateType.ERROR) {
           sleep(100)
             // Flashing closes the port
-            .then(() => this.port.open({ baudRate: 115200 }));
+            .then(() => this.port.open({ baudRate: 115200, bufferSize: 8192 }));
         }
       },
       this.port,
