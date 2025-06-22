@@ -552,6 +552,35 @@ button.overrides = {
 };</pre
       >
 
+      <h4>Generating a manifest dynamically &amp; version management</h4>
+      <p>
+        Alternatively to a static manifest JSON file, you can generate a Blob URL of a JSON object using <a href="https://developer.mozilla.org/en-US/docs/Web/API/URL/createObjectURL_static"><code>URL.createObjectURL</code></a> to use as the manifest url. This can be useful in situations where you have many firmware bin files, e.g. previous software versions, where you don't want to have a different static manifest json file for each bin. If you are hosting on github.io, this can be paired nicely with <a href="https://docs.github.com/en/rest/repos/contents?apiVersion=2022-11-28#get-contents">github's REST API</a> to view all the bin files inside a folder.
+      </p>
+      <pre>
+const manifest = {
+    "name": name,
+    "version": version,
+    "funding_url": funding_url,
+    "new_install_prompt_erase": true,
+    "builds": [
+        {
+            "chipFamily": "ESP32",
+            "improv": false,
+            "parts": [
+                { "path": dependenciesDir+"bootloader.bin", "offset": 4096 },
+                { "path": dependenciesDir+"partitions.bin", "offset": 32768 },
+                { "path": dependenciesDir+"boot_app0.bin", "offset": 57344 },
+                { "path": firmwareFile, "offset": 65536 }
+            ]
+        }
+    ]
+}
+
+const json = JSON.stringify(manifest);
+const blob = new Blob([json], {type: "application/json"});
+document.querySelector("esp-web-install-button").manifest = URL.createObjectURL(blob);
+      </pre>
+
       <h3 id="customize">Customizing the look and feel</h3>
       <p>
         You can change the colors of the default UI elements with CSS custom
