@@ -37,8 +37,9 @@
     <meta name="color-scheme" content="dark light" />
     <style>
       body {
-        font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI",
-          Roboto, Ubuntu, sans-serif;
+        font-family:
+          -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Ubuntu, sans-serif;
         padding: 0;
         margin: 0;
         line-height: 1.4;
@@ -295,11 +296,18 @@
         </a>
         <a href="https://nspanelmanager.com" target="_blank" class="project">
           <div class="logo">
-            <img src="static/logos/nspanelmanager.svg" alt="NSPanelManager logo" />
+            <img
+              src="static/logos/nspanelmanager.svg"
+              alt="NSPanelManager logo"
+            />
           </div>
           <div class="name">NSPanel Manager</div>
         </a>
-        <a href="https://github.com/blak3r/treadspan" target="_blank" class="project">
+        <a
+          href="https://github.com/blak3r/treadspan"
+          target="_blank"
+          class="project"
+        >
           <div class="logo">
             <img src="static/logos/treadspan.png" alt="Treadspan logo" />
           </div>
@@ -554,7 +562,21 @@ button.overrides = {
 
       <h4>Generating a manifest dynamically &amp; version management</h4>
       <p>
-        Alternatively to a static manifest JSON file, you can generate a Blob URL of a JSON object using <a href="https://developer.mozilla.org/en-US/docs/Web/API/URL/createObjectURL_static"><code>URL.createObjectURL</code></a> to use as the manifest url. This can be useful in situations where you have many firmware bin files, e.g. previous software versions, where you don't want to have a different static manifest json file for each bin. If you are hosting on github.io, this can be paired nicely with <a href="https://docs.github.com/en/rest/repos/contents?apiVersion=2022-11-28#get-contents">github's REST API</a> to view all the bin files inside a folder.
+        Alternatively to a static manifest JSON file, you can generate a Blob
+        URL of a JSON object using
+        <a
+          href="https://developer.mozilla.org/en-US/docs/Web/API/URL/createObjectURL_static"
+          ><code>URL.createObjectURL</code></a
+        >
+        to use as the manifest url. This can be useful in situations where you
+        have many firmware bin files, e.g. previous software versions, where you
+        don't want to have a different static manifest json file for each bin.
+        If you are hosting on github.io, this can be paired nicely with
+        <a
+          href="https://docs.github.com/en/rest/repos/contents?apiVersion=2022-11-28#get-contents"
+          >github's REST API</a
+        >
+        to view all the bin files inside a folder.
       </p>
       <pre>
 const manifest = {
@@ -647,8 +669,16 @@ document.querySelector("esp-web-install-button").manifest = URL.createObjectURL(
       </div>
     </div>
     <script>
-      if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
-        document.querySelector(".not-supported-i").classList.remove("hidden");
+      {
+        if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
+          document.querySelector(".not-supported-i").classList.remove("hidden");
+        }
+
+        const search = new URLSearchParams(window.location.search);
+        if (search.has("manifest")) {
+          const button = document.querySelector("esp-web-install-button");
+          button.manifest = search.get("manifest");
+        }
       }
     </script>
   </body>
