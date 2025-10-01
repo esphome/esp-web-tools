@@ -14,10 +14,7 @@ export interface Build {
     | "ESP32-S2"
     | "ESP32-S3"
     | "ESP8266";
-  parts: {
-    path: string;
-    offset: number;
-  }[];
+  parts: { path: string; offset: number }[];
 }
 
 export interface Manifest {
@@ -39,6 +36,8 @@ export interface BaseFlashState {
   manifest?: Manifest;
   build?: Build;
   chipFamily?: Build["chipFamily"] | "Unknown Chip";
+  port: SerialPort;
+  runCode: (promise: Promise<any>) => void;
 }
 
 export interface InitializingState extends BaseFlashState {

@@ -26,6 +26,7 @@ import {
   refreshIcon,
 } from "./components/svg";
 import { Logger, Manifest, FlashStateType, FlashState } from "./const.js";
+import type { InstallButton } from "./install-button";
 import { ImprovSerial, Ssid } from "improv-wifi-serial-sdk/dist/serial";
 import {
   ImprovSerialCurrentState,
@@ -52,6 +53,8 @@ export class EwtInstallDialog extends LitElement {
   public port!: SerialPort;
 
   public manifestPath!: string;
+
+  public button!: InstallButton;
 
   public logger: Logger = console;
 
@@ -916,9 +919,18 @@ export class EwtInstallDialog extends LitElement {
 
     // Close port. ESPLoader likes opening it.
     await this.port.close();
+
     flash(
       (state) => {
         this._installState = state;
+
+        this.button.dispatchEvent(
+          new CustomEvent(state.state, {
+            detail: state,
+            bubbles: true,
+            composed: true,
+          }),
+        );
 
         if (state.state === FlashStateType.FINISHED) {
           sleep(100)
