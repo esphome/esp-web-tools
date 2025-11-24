@@ -11,7 +11,7 @@ jobs:
   publish-npm:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Install jq tool
         run: |
           sudo apt-get update
