@@ -6,6 +6,18 @@ import {
   Manifest,
   FlashStateType,
 } from "./const";
+import { sleep } from "./util/sleep";
+
+/**
+ * Perform a hard reset using esploader's chip-specific reset logic.
+ * First asserts RTS to enter reset, then calls esploader.after() which
+ * uses the chip-specific reset procedure to release.
+ */
+const hardResetDevice = async (transport: Transport, esploader: ESPLoader) => {
+  await transport.setRTS(true);
+  await sleep(100);
+  await esploader.after();
+};
 
 export const flash = async (
   onEvent: (state: FlashState) => void,
@@ -54,7 +66,7 @@ export const flash = async (
       details: { error: FlashError.FAILED_INITIALIZING, details: err },
     });
 
-    await esploader.after();
+    await hardResetDevice(transport, esploader);
     await transport.disconnect();
     return;
   }
@@ -75,7 +87,7 @@ export const flash = async (
       message: `Your ${chipFamily} board is not supported.`,
       details: { error: FlashError.NOT_SUPPORTED, details: chipFamily },
     });
-    await esploader.after();
+    await hardResetDevice(transport, esploader);
     await transport.disconnect();
     return;
   }
@@ -122,7 +134,7 @@ export const flash = async (
           details: err.message,
         },
       });
-      await esploader.after();
+      await hardResetDevice(transport, esploader);
       await transport.disconnect();
       return;
     }
@@ -200,7 +212,7 @@ export const flash = async (
       message: err.message,
       details: { error: FlashError.WRITE_FAILED, details: err },
     });
-    await esploader.after();
+    await hardResetDevice(transport, esploader);
     await transport.disconnect();
     return;
   }
@@ -215,7 +227,7 @@ export const flash = async (
     },
   });
 
-  await esploader.after();
+  await hardResetDevice(transport, esploader);
 
   console.log("DISCONNECT");
   await transport.disconnect();
