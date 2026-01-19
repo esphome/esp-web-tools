@@ -3,6 +3,7 @@ import { sleep } from "../util/sleep";
 import { LineBreakTransformer } from "../util/line-break-transformer";
 import { TimestampTransformer } from "../util/timestamp-transformer";
 import { Logger } from "../const";
+import { Transport, HardReset } from "esptool-js";
 
 export class EwtConsole extends HTMLElement {
   public port!: SerialPort;
@@ -144,17 +145,13 @@ export class EwtConsole extends HTMLElement {
 
   public async reset() {
     this.logger.debug("Triggering reset");
-    await this.port.setSignals({
-      dataTerminalReady: false,
-      requestToSend: true,
-    });
-    await sleep(250);
-    await this.port.setSignals({
-      dataTerminalReady: false,
-      requestToSend: false,
-    });
-    await sleep(250);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    const transport = new Transport(this.port);
+    // First assert RTS to enter reset state
+    await transport.setRTS(true);
+    await sleep(100);
+    // Use HardReset to release (same as esploader.after())
+    const resetStrategy = new HardReset(transport);
+    await resetStrategy.reset();
   }
 }
 
