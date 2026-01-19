@@ -92,9 +92,12 @@ export class EwtConsole extends HTMLElement {
     this.logger.debug("Starting console read loop");
     try {
       await this.port
-        .readable!.pipeThrough(new TextDecoderStream(), {
-          signal: abortSignal,
-        })
+        .readable!.pipeThrough(
+          new TextDecoderStream() as ReadableWritablePair<string, Uint8Array>,
+          {
+            signal: abortSignal,
+          },
+        )
         .pipeThrough(new TransformStream(new LineBreakTransformer()))
         .pipeThrough(new TransformStream(new TimestampTransformer()))
         .pipeTo(
