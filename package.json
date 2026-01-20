@@ -3,7 +3,10 @@
   "version": "0.0.0",
   "description": "Web tools for ESP devices",
   "main": "dist/install-button.js",
-  "repository": "https://github.com/esphome/esp-web-tools",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/esphome/esp-web-tools"
+  },
   "author": "ESPHome maintainers",
   "license": "Apache-2.0",
   "scripts": {
