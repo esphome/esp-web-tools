@@ -20,6 +20,8 @@ jobs:
         with:
           node-version: 20
           registry-url: https://registry.npmjs.org/
+      - name: Update npm to latest
+        run: npm install -g npm@latest
       - run: npm ci
       - name: Set version from release tag
         run: |
@@ -27,3 +29,4 @@ jobs:
           VERSION="${VERSION#v}"
           jq --arg v "$VERSION" '.version = $v' package.json > package.json.tmp && mv package.json.tmp package.json
       - run: npm publish --provenance
+      
