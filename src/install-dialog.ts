@@ -791,7 +791,7 @@ export class EwtInstallDialog extends LitElement {
     // We will retry a few times if we don't get any results
     if (ssids.length === 0 && tries < 3) {
       console.log("SCHEDULE RETRY", tries);
-      setTimeout(() => this._updateSsids(tries + 1), 1000);
+      setTimeout(() => this._updateSsids(tries + 1), 2000);
       return;
     }
 
