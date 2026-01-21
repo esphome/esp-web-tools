@@ -654,6 +654,192 @@ document.querySelector("esp-web-install-button").manifest = URL.createObjectURL(
     </pre
       >
 
+      <h2 id="events">Events</h2>
+      <p>
+        ESP Web Tools dispatches several events during the flashing process that
+        allow you to monitor progress, handle errors, and inject custom logic.
+        All events are dispatched on the
+        <code>&lt;esp-web-install-button&gt;</code> element with
+        <code>bubbles: true</code> and <code>composed: true</code>, so they can
+        be captured on parent elements.
+      </p>
+
+      <h3 id="event-types">Available Events</h3>
+      <p>The following events are dispatched during the flashing process:</p>
+
+      <table>
+        <tr>
+          <td><code>initializing</code></td>
+          <td>
+            Fired when the device initialization begins and completes. Supports
+            custom code injection via <code>runCode()</code>.
+          </td>
+        </tr>
+        <tr>
+          <td><code>preparing</code></td>
+          <td>
+            Fired when firmware files are being downloaded and prepared for
+            installation.
+          </td>
+        </tr>
+        <tr>
+          <td><code>erasing</code></td>
+          <td>
+            Fired when the device flash memory is being erased (only if erase
+            was requested).
+          </td>
+        </tr>
+        <tr>
+          <td><code>writing</code></td>
+          <td>
+            Fired repeatedly during firmware writing with progress updates.
+          </td>
+        </tr>
+        <tr>
+          <td><code>finished</code></td>
+          <td>Fired when the flashing process completes successfully.</td>
+        </tr>
+        <tr>
+          <td><code>error</code></td>
+          <td>
+            Fired when an error occurs during any phase of the flashing process.
+          </td>
+        </tr>
+      </table>
+
+      <h3 id="event-detail">Event Detail Structure</h3>
+      <p>
+        All events contain a <code>detail</code> object with the following
+        common properties:
+      </p>
+      <ul>
+        <li>
+          <code>state</code> - The current state type (matches the event name)
+        </li>
+        <li>
+          <code>message</code> - A human-readable message describing the current
+          state
+        </li>
+        <li>
+          <code>manifest</code> - The manifest object being used for
+          installation
+        </li>
+        <li><code>build</code> - The selected build for the detected chip</li>
+        <li>
+          <code>chipFamily</code> - The detected ESP chip family (e.g., "ESP32",
+          "ESP8266")
+        </li>
+        <li><code>port</code> - The SerialPort object being used</li>
+        <li>
+          <code>runCode(promise)</code> - Function to inject custom async code
+          (see examples below)
+        </li>
+        <li><code>details</code> - Event-specific additional details</li>
+      </ul>
+
+      <h4>Event-Specific Details</h4>
+      <p><b>initializing</b></p>
+      <ul>
+        <li>
+          <code>details.done</code> - Boolean indicating if initialization is
+          complete
+        </li>
+      </ul>
+
+      <p><b>preparing</b></p>
+      <ul>
+        <li>
+          <code>details.done</code> - Boolean indicating if preparation is
+          complete
+        </li>
+      </ul>
+
+      <p><b>erasing</b></p>
+      <ul>
+        <li>
+          <code>details.done</code> - Boolean indicating if erasing is complete
+        </li>
+      </ul>
+
+      <p><b>writing</b></p>
+      <ul>
+        <li><code>details.bytesTotal</code> - Total bytes to write</li>
+        <li><code>details.bytesWritten</code> - Bytes written so far</li>
+        <li><code>details.percentage</code> - Percentage complete (0-100)</li>
+      </ul>
+
+      <p><b>error</b></p>
+      <ul>
+        <li><code>details.error</code> - Error type code</li>
+        <li><code>details.details</code> - Detailed error information</li>
+      </ul>
+
+      <h3 id="event-examples">Event Handling Examples</h3>
+
+      <h4>Basic Event Monitoring</h4>
+      <pre>
+const button = document.querySelector('esp-web-install-button');
+
+// Monitor all events
+['initializing', 'preparing', 'erasing', 'writing', 'finished', 'error'].forEach(eventName => {
+  button.addEventListener(eventName, (ev) => {
+    console.log(`Event: ${eventName}`, ev.detail);
+  });
+});
+
+// Track progress
+button.addEventListener('writing', (ev) => {
+  const { percentage, bytesWritten, bytesTotal } = ev.detail.details;
+  console.log(`Progress: ${percentage}% (${bytesWritten}/${bytesTotal} bytes)`);
+});</pre
+      >
+
+      <h4>Using the initializing Event to Inject Custom Logic</h4>
+      <p>
+        The <code>initializing</code> event is special because it allows you to
+        inject custom code using the <code>runCode()</code> function. This is
+        useful for devices that require special sequences to enter bootloader
+        mode, like the Home Assistant Connect ZWA-2 with ESP bridge firmware.
+      </p>
+      <pre>
+const button = document.querySelector("esp-web-install-button");
+
+button.addEventListener("initializing", (ev) => {
+  const { state, port, details, runCode } = ev.detail;
+
+  // Only inject code at the start of initialization, not when it's done
+  if (details.done) {
+    console.log("Initialization complete:", state, details);
+    return;
+  }
+
+  // Check if this is a device that needs special handling
+  const portInfo = port.getInfo();
+  if (portInfo.usbVendorId !== 12346 || portInfo.usbProductId !== 16385) {
+    // Not our special device, skip custom logic
+    console.log("Standard device detected, using normal initialization");
+    return;
+  }
+
+  console.log("Special device detected! Injecting custom bootloader entry sequence...");
+
+  // Inject custom async code to run before initialization continues
+  runCode(
+    (async () => {
+      // Open the serial port at a specific baud rate
+      await port.open({ baudRate: 115200 });
+
+      // Send custom commands or sequences
+      await enterCustomBootloaderMode(port);
+
+      // Close the port so ESPLoader can take over
+      await port.close();
+    })()
+  );
+});
+</pre
+      >
+
       <h2>Why we created ESP Web Tools</h2>
       <div class="videoWrapper">
         <lite-youtube

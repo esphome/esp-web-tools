@@ -29,13 +29,29 @@ export const flash = async (
   let build: Build | undefined;
   let chipFamily: Build["chipFamily"];
 
-  const fireStateEvent = (stateUpdate: FlashState) =>
-    onEvent({
+  const promises: Promise<any>[] = [];
+  const fireStateEvent = async (stateUpdate: {
+    state: FlashStateType;
+    message: string;
+    details?: any;
+  }) => {
+    const eventData: FlashState = {
       ...stateUpdate,
       manifest,
       build,
       chipFamily,
-    });
+      port,
+      runCode: (promise: Promise<any>) => {
+        promises.push(promise);
+      },
+    } as FlashState;
+    onEvent(eventData);
+    // Wait for all promises added by event listeners
+    if (promises.length > 0) {
+      await Promise.all(promises);
+      promises.length = 0; // Clear the array
+    }
+  };
 
   const transport = new Transport(port);
   const esploader = new ESPLoader({
@@ -48,7 +64,7 @@ export const flash = async (
   // For debugging
   (window as any).esploader = esploader;
 
-  fireStateEvent({
+  await fireStateEvent({
     state: FlashStateType.INITIALIZING,
     message: "Initializing...",
     details: { done: false },
@@ -59,7 +75,7 @@ export const flash = async (
     await esploader.flashId();
   } catch (err: any) {
     console.error(err);
-    fireStateEvent({
+    await fireStateEvent({
       state: FlashStateType.ERROR,
       message:
         "Failed to initialize. Try resetting your device or holding the BOOT button while clicking INSTALL.",
@@ -73,7 +89,7 @@ export const flash = async (
 
   chipFamily = esploader.chip.CHIP_NAME as any;
 
-  fireStateEvent({
+  await fireStateEvent({
     state: FlashStateType.INITIALIZING,
     message: `Initialized. Found ${chipFamily}`,
     details: { done: true },
@@ -82,7 +98,7 @@ export const flash = async (
   build = manifest.builds.find((b) => b.chipFamily === chipFamily);
 
   if (!build) {
-    fireStateEvent({
+    await fireStateEvent({
       state: FlashStateType.ERROR,
       message: `Your ${chipFamily} board is not supported.`,
       details: { error: FlashError.NOT_SUPPORTED, details: chipFamily },
@@ -92,7 +108,7 @@ export const flash = async (
     return;
   }
 
-  fireStateEvent({
+  await fireStateEvent({
     state: FlashStateType.PREPARING,
     message: "Preparing installation...",
     details: { done: false },
@@ -126,7 +142,7 @@ export const flash = async (
       fileArray.push({ data, address: build.parts[part].offset });
       totalSize += data.length;
     } catch (err: any) {
-      fireStateEvent({
+      await fireStateEvent({
         state: FlashStateType.ERROR,
         message: err.message,
         details: {
@@ -140,34 +156,30 @@ export const flash = async (
     }
   }
 
-  fireStateEvent({
+  await fireStateEvent({
     state: FlashStateType.PREPARING,
     message: "Installation prepared",
     details: { done: true },
   });
 
   if (eraseFirst) {
-    fireStateEvent({
+    await fireStateEvent({
       state: FlashStateType.ERASING,
       message: "Erasing device...",
       details: { done: false },
     });
     await esploader.eraseFlash();
-    fireStateEvent({
+    await fireStateEvent({
       state: FlashStateType.ERASING,
       message: "Device erased",
       details: { done: true },
     });
   }
 
-  fireStateEvent({
+  await fireStateEvent({
     state: FlashStateType.WRITING,
     message: `Writing progress: 0%`,
-    details: {
-      bytesTotal: totalSize,
-      bytesWritten: 0,
-      percentage: 0,
-    },
+    details: { bytesTotal: totalSize, bytesWritten: 0, percentage: 0 },
   });
 
   let totalWritten = 0;
@@ -181,7 +193,11 @@ export const flash = async (
       eraseAll: false,
       compress: true,
       // report progress
-      reportProgress: (fileIndex: number, written: number, total: number) => {
+      reportProgress: async (
+        fileIndex: number,
+        written: number,
+        total: number,
+      ) => {
         const uncompressedWritten =
           (written / total) * fileArray[fileIndex].data.length;
 
@@ -195,7 +211,7 @@ export const flash = async (
           return;
         }
 
-        fireStateEvent({
+        await fireStateEvent({
           state: FlashStateType.WRITING,
           message: `Writing progress: ${newPct}%`,
           details: {
@@ -207,7 +223,7 @@ export const flash = async (
       },
     });
   } catch (err: any) {
-    fireStateEvent({
+    await fireStateEvent({
       state: FlashStateType.ERROR,
       message: err.message,
       details: { error: FlashError.WRITE_FAILED, details: err },
@@ -217,7 +233,7 @@ export const flash = async (
     return;
   }
 
-  fireStateEvent({
+  await fireStateEvent({
     state: FlashStateType.WRITING,
     message: "Writing complete",
     details: {
@@ -232,7 +248,7 @@ export const flash = async (
   console.log("DISCONNECT");
   await transport.disconnect();
 
-  fireStateEvent({
+  await fireStateEvent({
     state: FlashStateType.FINISHED,
     message: "All done!",
   });
