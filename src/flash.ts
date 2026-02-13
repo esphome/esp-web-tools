@@ -104,7 +104,7 @@ export const flash = async (
     const resp = await fetch(url);
     if (!resp.ok) {
       throw new Error(
-        `Downlading firmware ${part.path} failed: ${resp.status}`,
+        `Downloading firmware ${part.path} failed: ${resp.status}`,
       );
     }
 
