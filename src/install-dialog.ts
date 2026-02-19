@@ -628,7 +628,6 @@ export class EwtInstallDialog extends LitElement {
   }
 
   _renderInstall(): [string | undefined, TemplateResult, boolean] {
-
     let heading: string | undefined;
     let content: TemplateResult;
     const allowClosing = false;
@@ -1015,13 +1014,9 @@ export class EwtInstallDialog extends LitElement {
 
     this._configurationValues = values;
     
-    // Continue with install flow
-    if (this._manifest.new_install_prompt_erase && this._installErase === undefined) {
-      this._state = "ASK_ERASE";
-    } else {
-      this._state = "INSTALL";
-      this._installConfirmed = false;
-    }
+    // Continue with install flow - erase decision was already made in _startInstall
+    this._state = "INSTALL";
+    this._installConfirmed = false;
   }
 
   private async _confirmInstall() {

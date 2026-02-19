@@ -87,11 +87,12 @@ function buildNVSEntry(
   // CRC32 of entry excluding this field (4 bytes) - will be filled later
   view.setUint32(4, 0xffffffff, true);
   
-  // Key (16 bytes, null-terminated)
+  // Key (16 bytes, null-terminated, max 15 chars)
   const keyBytes = new TextEncoder().encode(key);
-  entry.set(keyBytes.slice(0, 15), 8);
-  // Ensure null termination
-  for (let i = keyBytes.length; i < 16; i++) {
+  const keyLength = Math.min(keyBytes.length, 15);
+  entry.set(keyBytes.slice(0, keyLength), 8);
+  // Ensure null termination and fill rest with zeros
+  for (let i = keyLength; i < 16; i++) {
     entry[8 + i] = 0;
   }
   
