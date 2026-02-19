@@ -10,14 +10,17 @@ This implementation adds the ability for ESP Web Tools to collect user configura
 - **Format**: Implements ESP-IDF NVS partition format specification
 - **Features**:
   - CRC32 checksum calculation for data integrity
-  - Support for multiple data types (u8, u16, u32, string)
+  - Support for multiple data types (u8, u16, u32, string, blob)
   - Page-aligned output (4096-byte pages)
   - Namespace support for organizing entries
   - Multi-page support for larger datasets
+  - **Struct packing for ESPHome compatibility**
+  - Numeric key support (ESPHome preferences API)
 
 **Key Functions**:
 - `buildNVSPartition(entries, size)` - Main builder function
-- `buildESPHomeWiFiNVS(ssid, password)` - Convenience function for ESPHome WiFi credentials
+- `buildESPHomeWiFiNVS(ssid, password, hash)` - ESPHome WiFi credentials with correct struct format
+- `packStruct(fields)` - Pack multiple values into binary struct (C struct layout)
 
 ### 2. Manifest Extensions (`src/const.ts`)
 New TypeScript interfaces added:
@@ -36,13 +39,27 @@ interface NVSPartitionConfig {
   offset: number;         // Flash address for partition
   size?: number;          // Partition size (default: 12288)
   namespace: string;      // NVS namespace
-  fields: Array<{
+  
+  // Option 1: Struct-based storage (ESPHome compatible)
+  struct?: {
+    key: number;          // Numeric key (hash)
+    fields: Array<{
+      name: string;       // Form field name
+      type: "u8" | "u16" | "u32" | "string";
+      maxLength?: number; // For string: fixed buffer size
+    }>;
+  };
+  
+  // Option 2: Individual field storage
+  fields?: Array<{
     name: string;         // Form field name to map
     key: string;          // NVS key name
     type: "u8" | "u16" | "u32" | "string";
   }>;
 }
 ```
+
+**Important**: ESPHome uses `struct` mode with numeric keys, not `fields` mode.
 
 ### 3. Configuration UI (`src/install-dialog.ts`)
 - **New State**: `CONFIGURATION` - Shows configuration form
@@ -89,10 +106,10 @@ interface NVSPartitionConfig {
 
 ## Usage Example
 
-### Manifest Configuration
+### Manifest Configuration (ESPHome WiFi)
 ```json
 {
-  "name": "My Device",
+  "name": "ESPHome Device",
   "version": "1.0.0",
   "customFields": [
     {
@@ -111,10 +128,13 @@ interface NVSPartitionConfig {
   "nvsPartition": {
     "offset": 36864,
     "namespace": "esphome",
-    "fields": [
-      { "name": "wifi_ssid", "key": "ssid", "type": "string" },
-      { "name": "wifi_password", "key": "password", "type": "string" }
-    ]
+    "struct": {
+      "key": 88491487,
+      "fields": [
+        { "name": "wifi_ssid", "type": "string", "maxLength": 33 },
+        { "name": "wifi_password", "type": "string", "maxLength": 65 }
+      ]
+    }
   },
   "builds": [...]
 }
@@ -122,22 +142,48 @@ interface NVSPartitionConfig {
 
 ### Firmware Integration (ESPHome Example)
 ```cpp
-// Firmware reads from NVS:
+// Firmware reads from NVS using ESPHome preferences API:
 #include "esphome/core/preferences.h"
 
+struct SavedWifiSettings {
+  char ssid[33];
+  char password[65];
+} PACKED;
+
+uint32_t hash = App.get_config_version_hash(); // or use 88491487
+auto pref = global_preferences->make_preference<SavedWifiSettings>(hash, true);
+
 SavedWifiSettings settings;
-if (global_preferences->make_preference<SavedWifiSettings>(hash, true).load(&settings)) {
+if (pref.load(&settings)) {
   // Use settings.ssid and settings.password
+  ESP_LOGD(TAG, "Loaded WiFi settings: %s", settings.ssid);
 }
 ```
+
+### Alternative: Individual Field Storage
+```json
+{
+  "nvsPartition": {
+    "offset": 36864,
+    "namespace": "config",
+    "fields": [
+      { "name": "wifi_ssid", "key": "ssid", "type": "string" },
+      { "name": "wifi_password", "key": "password", "type": "string" }
+    ]
+  }
+}
+```
+
+This mode stores each field separately (not ESPHome compatible).
 
 ## Testing
 
 ### Unit Tests (test-nvs.html)
 - Test 1: Simple NVS partition with basic types
-- Test 2: ESPHome WiFi credentials
+- Test 2: ESPHome WiFi credentials (legacy individual fields)
 - Test 3: Multi-field configuration
-- Test 4: Interactive form with manifest
+- Test 4: ESPHome WiFi struct (correct format with numeric key)
+- Test 5: Binary struct packing
 
 ### Integration Testing
 Requires physical ESP32 device:
@@ -178,18 +224,34 @@ Page 0:
 
 1. **Partition Offset**: Must not overlap with firmware
 2. **Size Limits**: String values should be reasonable (<1KB)
-3. **Key Names**: Max 15 characters
+3. **Key Names**: Max 15 characters (or numeric for ESPHome)
 4. **Namespace**: Single namespace per partition
-5. **Firmware Compatibility**: Firmware must expect data at configured namespace/keys
+5. **Firmware Compatibility**: Firmware must expect data at configured namespace/keys/hash
+6. **ESPHome Hash**: The numeric key must match App.get_config_version_hash()
+7. **Struct Layout**: Field order and sizes must match C struct exactly
+
+## Key Updates
+
+### Version 2: Struct Support (Current)
+- ✅ Added blob type support
+- ✅ Implemented packStruct() for binary struct packing
+- ✅ Support for numeric keys (ESPHome preferences API)
+- ✅ Both struct and individual field storage modes
+- ✅ ESPHome WiFi credentials now work correctly
+
+### Version 1: Initial Implementation
+- ✅ Individual field storage with string keys
+- ✅ Basic data types (u8, u16, u32, string)
+- ❌ Did not work with ESPHome (fixed in v2)
 
 ## Future Enhancements (Not Implemented)
 
-- [ ] Support for blob data type
 - [ ] Multiple namespace support
 - [ ] Partition encryption
 - [ ] Import/export configuration
 - [ ] Template-based manifests
 - [ ] Advanced validation (regex, ranges)
+- [ ] Auto-calculate hash for ESPHome
 
 ## Files Modified
 
