@@ -13,15 +13,29 @@ export interface CustomFormField {
   placeholder?: string;
 }
 
+export interface NVSFieldMapping {
+  name: string;
+  key: string;
+  type: "u8" | "u16" | "u32" | "string";
+}
+
+export interface NVSStructField {
+  name: string;
+  type: "u8" | "u16" | "u32" | "string";
+  maxLength?: number; // For string types, defines the fixed buffer size
+}
+
 export interface NVSPartitionConfig {
   offset: number;
   size?: number;
   namespace: string;
-  fields: {
-    name: string;
-    key: string;
-    type: "u8" | "u16" | "u32" | "string";
-  }[];
+  // Individual fields with separate keys
+  fields?: NVSFieldMapping[];
+  // Struct-based storage (ESPHome style) - multiple form fields packed into one binary blob
+  struct?: {
+    key: number; // Numeric key (hash) used by ESPHome preferences
+    fields: NVSStructField[];
+  };
 }
 
 export interface Build {

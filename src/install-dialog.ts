@@ -33,7 +33,7 @@ import {
   PortNotReady,
 } from "improv-wifi-serial-sdk/dist/const";
 import { flash } from "./flash";
-import { buildNVSPartition } from "./nvs-partition-builder";
+import { buildNVSPartition, packStruct } from "./nvs-partition-builder";
 import type { NVSEntry } from "./nvs-partition-builder";
 import { textDownload } from "./util/file-download";
 import { fireEvent } from "./util/fire-event";
@@ -1038,24 +1038,59 @@ export class EwtInstallDialog extends LitElement {
         const entries: NVSEntry[] = [];
         const namespace = this._manifest.nvsPartition.namespace;
         
-        // Map form values to NVS entries based on nvsPartition configuration
-        for (const fieldConfig of this._manifest.nvsPartition.fields) {
-          const value = this._configurationValues[fieldConfig.name];
+        // Check if using struct-based storage (ESPHome style)
+        if (this._manifest.nvsPartition.struct) {
+          const structConfig = this._manifest.nvsPartition.struct;
           
-          if (value !== undefined) {
-            entries.push({
-              namespace,
-              key: fieldConfig.key,
-              type: fieldConfig.type,
+          // Pack form values into a binary struct
+          const structFields = structConfig.fields.map(field => {
+            let value = this._configurationValues[field.name];
+            
+            // Convert boolean to number for numeric types
+            if (typeof value === 'boolean' && field.type !== 'string') {
+              value = value ? 1 : 0;
+            }
+            
+            return {
+              type: field.type,
               value: value as string | number,
-            });
+              maxLength: field.maxLength,
+            };
+          });
+          
+          const structData = packStruct(structFields);
+          
+          entries.push({
+            namespace,
+            key: structConfig.key,
+            type: 'blob',
+            value: structData,
+          });
+          
+          this.logger.log(`Built NVS struct with key ${structConfig.key}, size ${structData.length} bytes`);
+        } 
+        // Individual field storage
+        else if (this._manifest.nvsPartition.fields) {
+          for (const fieldConfig of this._manifest.nvsPartition.fields) {
+            const value = this._configurationValues[fieldConfig.name];
+            
+            if (value !== undefined) {
+              entries.push({
+                namespace,
+                key: fieldConfig.key,
+                type: fieldConfig.type,
+                value: value as string | number,
+              });
+            }
           }
+          
+          this.logger.log(`Built NVS partition with ${entries.length} individual fields`);
         }
         
         const partitionSize = this._manifest.nvsPartition.size || 12288; // 3 pages default
         nvsData = buildNVSPartition(entries, partitionSize);
         
-        this.logger.log('Built NVS partition with configuration data');
+        this.logger.log('NVS partition generated successfully');
       } catch (err: any) {
         this.logger.error('Failed to build NVS partition:', err);
         this._error = `Failed to build configuration: ${err.message}`;

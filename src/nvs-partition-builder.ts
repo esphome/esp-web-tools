@@ -37,9 +37,9 @@ enum NVSPageState {
 
 export interface NVSEntry {
   namespace: string;
-  key: string;
-  type: 'u8' | 'u16' | 'u32' | 'string';
-  value: number | string;
+  key: string | number; // Can be string key or numeric key (for ESPHome preferences)
+  type: 'u8' | 'u16' | 'u32' | 'string' | 'blob';
+  value: number | string | Uint8Array;
 }
 
 /**
@@ -66,7 +66,7 @@ function buildNVSEntry(
   namespace: number,
   type: NVSEntryType,
   span: number,
-  key: string,
+  key: string | number,
   value: number | string | Uint8Array
 ): Uint8Array {
   const entry = new Uint8Array(NVS_ENTRY_SIZE);
@@ -88,7 +88,9 @@ function buildNVSEntry(
   view.setUint32(4, 0xffffffff, true);
   
   // Key (16 bytes, null-terminated, max 15 chars)
-  const keyBytes = new TextEncoder().encode(key);
+  // ESPHome uses numeric keys converted to strings
+  const keyString = typeof key === 'number' ? key.toString() : key;
+  const keyBytes = new TextEncoder().encode(keyString);
   const keyLength = Math.min(keyBytes.length, 15);
   entry.set(keyBytes.slice(0, keyLength), 8);
   // Ensure null termination and fill rest with zeros
@@ -153,6 +155,79 @@ function buildStringData(value: string): Uint8Array[] {
   }
   
   return entries;
+}
+
+/**
+ * Build blob data entries
+ */
+function buildBlobData(value: Uint8Array): Uint8Array[] {
+  const entries: Uint8Array[] = [];
+  
+  // Each entry can hold 32 bytes
+  for (let i = 0; i < value.length; i += NVS_ENTRY_SIZE) {
+    const entry = new Uint8Array(NVS_ENTRY_SIZE);
+    entry.fill(0xff);
+    const chunk = value.slice(i, Math.min(i + NVS_ENTRY_SIZE, value.length));
+    entry.set(chunk, 0);
+    entries.push(entry);
+  }
+  
+  return entries;
+}
+
+/**
+ * Pack multiple values into a binary struct (ESPHome style)
+ * This mimics C struct layout with proper padding
+ */
+export function packStruct(fields: Array<{
+  type: 'u8' | 'u16' | 'u32' | 'string';
+  value: number | string;
+  maxLength?: number; // For string types, defines fixed buffer size
+}>): Uint8Array {
+  // Calculate total size
+  let totalSize = 0;
+  for (const field of fields) {
+    if (field.type === 'string') {
+      totalSize += field.maxLength || 0;
+    } else if (field.type === 'u8') {
+      totalSize += 1;
+    } else if (field.type === 'u16') {
+      totalSize += 2;
+    } else if (field.type === 'u32') {
+      totalSize += 4;
+    }
+  }
+  
+  const buffer = new Uint8Array(totalSize);
+  const view = new DataView(buffer.buffer);
+  let offset = 0;
+  
+  for (const field of fields) {
+    if (field.type === 'string') {
+      const maxLen = field.maxLength || 0;
+      const strValue = field.value as string;
+      const strBytes = new TextEncoder().encode(strValue);
+      // Copy string bytes (up to maxLength - 1 to leave room for null terminator)
+      const copyLen = Math.min(strBytes.length, maxLen - 1);
+      buffer.set(strBytes.slice(0, copyLen), offset);
+      // Null terminate and fill rest with zeros
+      for (let i = copyLen; i < maxLen; i++) {
+        buffer[offset + i] = 0;
+      }
+      offset += maxLen;
+    } else if (field.type === 'u8') {
+      view.setUint8(offset, field.value as number);
+      offset += 1;
+    } else if (field.type === 'u16') {
+      view.setUint16(offset, field.value as number, true); // little-endian
+      offset += 2;
+    } else if (field.type === 'u32') {
+      view.setUint32(offset, field.value as number, true); // little-endian
+      offset += 4;
+    }
+  }
+  
+  return buffer;
 }
 
 /**
@@ -241,6 +316,11 @@ export function buildNVSPartition(entries: NVSEntry[], partitionSize: number = N
       const strValue = entry.value as string;
       // Calculate span needed for string data
       span = 1 + Math.ceil((strValue.length + 1) / NVS_ENTRY_SIZE);
+    } else if (entry.type === 'blob') {
+      entryType = NVSEntryType.BLOB;
+      const blobValue = entry.value as Uint8Array;
+      // Calculate span needed for blob data
+      span = 1 + Math.ceil(blobValue.length / NVS_ENTRY_SIZE);
     } else {
       throw new Error(`Unsupported type: ${entry.type}`);
     }
@@ -282,6 +362,12 @@ export function buildNVSPartition(entries: NVSEntry[], partitionSize: number = N
         partition.set(dataEntry, pageOffset + entryOffset);
         entryOffset += NVS_ENTRY_SIZE;
       }
+    } else if (entry.type === 'blob') {
+      const dataEntries = buildBlobData(entry.value as Uint8Array);
+      for (const dataEntry of dataEntries) {
+        partition.set(dataEntry, pageOffset + entryOffset);
+        entryOffset += NVS_ENTRY_SIZE;
+      }
     }
   }
   
@@ -289,9 +375,41 @@ export function buildNVSPartition(entries: NVSEntry[], partitionSize: number = N
 }
 
 /**
- * Build NVS partition for ESPHome WiFi credentials
+ * Build NVS partition for ESPHome WiFi credentials using struct format
+ * This matches ESPHome's actual storage mechanism with a numeric key
  */
-export function buildESPHomeWiFiNVS(ssid: string, password: string): Uint8Array {
+export function buildESPHomeWiFiNVS(ssid: string, password: string, hash?: number): Uint8Array {
+  // Default hash used by ESPHome for WiFi settings
+  // This is calculated by ESPHome based on the app config version
+  const preferenceHash = hash || 88491487;
+  
+  // Pack the struct matching ESPHome's SavedWifiSettings
+  // struct SavedWifiSettings {
+  //   char ssid[33];
+  //   char password[65];
+  // } PACKED;
+  const structData = packStruct([
+    { type: 'string', value: ssid, maxLength: 33 },
+    { type: 'string', value: password, maxLength: 65 },
+  ]);
+  
+  const entries: NVSEntry[] = [
+    {
+      namespace: 'esphome',
+      key: preferenceHash,
+      type: 'blob',
+      value: structData,
+    },
+  ];
+  
+  return buildNVSPartition(entries);
+}
+
+/**
+ * Build NVS partition for ESPHome WiFi credentials (legacy - individual keys)
+ * @deprecated Use buildESPHomeWiFiNVS which uses the correct struct format
+ */
+export function buildESPHomeWiFiNVSLegacy(ssid: string, password: string): Uint8Array {
   const entries: NVSEntry[] = [
     {
       namespace: 'esphome',

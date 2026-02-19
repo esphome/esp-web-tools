@@ -61,7 +61,49 @@ Define form fields in your manifest using the `customFields` array:
 
 ### NVS Partition Configuration
 
-Define how form values map to NVS entries using the `nvsPartition` object:
+There are two ways to store configuration in NVS:
+
+#### 1. Struct-Based Storage (ESPHome Compatible)
+
+For compatibility with ESPHome's preferences system, use struct-based storage with a numeric key:
+
+```json
+{
+  "nvsPartition": {
+    "offset": 36864,
+    "size": 16384,
+    "namespace": "esphome",
+    "struct": {
+      "key": 88491487,
+      "fields": [
+        {
+          "name": "wifi_ssid",
+          "type": "string",
+          "maxLength": 33
+        },
+        {
+          "name": "wifi_password",
+          "type": "string",
+          "maxLength": 65
+        }
+      ]
+    }
+  }
+}
+```
+
+This packs multiple form fields into a single binary blob stored under a numeric key, matching how ESPHome's `global_preferences->make_preference<T>(hash)` works.
+
+**Struct Properties:**
+- `key` (required): Numeric key (hash) - ESPHome uses App.get_config_version_hash()
+- `fields` (required): Array of fields to pack into the struct
+  - `name` (required): Form field name to include
+  - `type` (required): Data type - "u8", "u16", "u32", or "string"
+  - `maxLength` (required for strings): Fixed buffer size in bytes
+
+#### 2. Individual Field Storage
+
+For individual key-value pairs, use the `fields` array:
 
 ```json
 {
@@ -130,17 +172,22 @@ For ESP32 with standard partition table:
 
 ## ESPHome WiFi Integration
 
-This feature is designed to work with ESPHome's WiFi component which stores credentials in NVS:
+ESPHome stores preferences using a numeric hash key and packs data into binary structs. The WiFi component stores credentials like this:
 
 ```cpp
-// ESPHome stores WiFi credentials like this:
+// ESPHome WiFi credentials storage
 struct SavedWifiSettings {
   char ssid[33];
   char password[65];
 } PACKED;
+
+// Stored in NVS as:
+// namespace: "esphome"
+// key: hash (numeric, e.g., 88491487)
+// value: binary blob of SavedWifiSettings struct
 ```
 
-Example manifest for ESPHome WiFi:
+**Correct manifest for ESPHome WiFi:**
 
 ```json
 {
@@ -161,6 +208,48 @@ Example manifest for ESPHome WiFi:
   "nvsPartition": {
     "offset": 36864,
     "namespace": "esphome",
+    "struct": {
+      "key": 88491487,
+      "fields": [
+        {
+          "name": "wifi_ssid",
+          "type": "string",
+          "maxLength": 33
+        },
+        {
+          "name": "wifi_password",
+          "type": "string",
+          "maxLength": 65
+        }
+      ]
+    }
+  }
+}
+```
+
+**Key Details:**
+- Use `struct` instead of `fields` for ESPHome compatibility
+- The numeric `key` (88491487) is the default hash ESPHome uses for WiFi settings
+- `maxLength` must match the C struct field sizes exactly (33 for SSID, 65 for password)
+- Fields are packed in order with no padding
+
+### Finding the Correct Hash
+
+The hash value is calculated by ESPHome based on `App.get_config_version_hash()`. For WiFi credentials:
+- Default hash when `has_sta()` is true: `App.get_config_version_hash()`
+- Default hash when no STA configured: `88491487`
+
+You can find the hash in your ESPHome firmware logs or source code where `make_preference` is called.
+
+### Legacy Individual Field Storage (Not ESPHome Compatible)
+
+The following approach does NOT work with ESPHome's actual implementation:
+
+```json
+{
+  "nvsPartition": {
+    "offset": 36864,
+    "namespace": "esphome",
     "fields": [
       {
         "name": "wifi_ssid",
@@ -168,14 +257,14 @@ Example manifest for ESPHome WiFi:
         "type": "string"
       },
       {
-        "name": "wifi_password",
-        "key": "password",
         "type": "string"
       }
     ]
   }
 }
 ```
+
+This stores SSID and password as separate NVS entries, which is simpler but does NOT match ESPHome's actual implementation.
 
 ## User Flow
 
