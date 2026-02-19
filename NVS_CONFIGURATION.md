@@ -257,6 +257,8 @@ The following approach does NOT work with ESPHome's actual implementation:
         "type": "string"
       },
       {
+        "name": "wifi_password",
+        "key": "password",
         "type": "string"
       }
     ]

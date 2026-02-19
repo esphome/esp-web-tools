@@ -1047,7 +1047,8 @@ export class EwtInstallDialog extends LitElement {
             let value = this._configurationValues[field.name];
             
             // Convert boolean to number for numeric types
-            if (typeof value === 'boolean' && field.type !== 'string') {
+            if (typeof value === 'boolean' && 
+                (field.type === 'u8' || field.type === 'u16' || field.type === 'u32')) {
               value = value ? 1 : 0;
             }
             

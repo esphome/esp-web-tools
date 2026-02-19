@@ -63,8 +63,31 @@
   </div>
 
   <div class="test-section">
+    <h3>Test 4: Build ESPHome WiFi Struct (Correct Format)</h3>
+    <button onclick="testESPHomeWiFiStruct()">Run Test</button>
+    <div id="test4-result"></div>
+  </div>
+
+  <div class="test-section">
+    <h3>Test 5: Pack Binary Struct</h3>
+    <button onclick="testStructPacking()">Run Test</button>
+    <div id="test5-result"></div>
+  </div>
+
+  <div class="test-section">
+    <h3>Interactive Test: ESPHome WiFi Configuration</h3>
+    <p>Try the configuration form with ESPHome WiFi struct format:</p>
+    <esp-web-install-button manifest="./static/example-esphome-wifi.json">
+      Test ESPHome WiFi Form
+    </esp-web-install-button>
+    <p style="margin-top: 10px; font-size: 14px; color: #666;">
+      This uses the correct ESPHome struct format with numeric key.
+    </p>
+  </div>
+
+  <div class="test-section">
     <h3>Interactive Test: Custom Configuration</h3>
-    <p>Try the configuration form with a real manifest:</p>
+    <p>Try the configuration form with individual field storage:</p>
     <esp-web-install-button manifest="./static/example-manifest-with-config.json">
       Test Configuration Form
     </esp-web-install-button>
@@ -76,10 +99,11 @@
   </div>
 
   <script type="module">
-    import { buildNVSPartition, buildESPHomeWiFiNVS } from './dist/nvs-partition-builder.js';
+    import { buildNVSPartition, buildESPHomeWiFiNVS, packStruct } from './dist/nvs-partition-builder.js';
 
     window.buildNVSPartition = buildNVSPartition;
     window.buildESPHomeWiFiNVS = buildESPHomeWiFiNVS;
+    window.packStruct = packStruct;
 
     window.testSimplePartition = function() {
       const resultDiv = document.getElementById('test1-result');
@@ -153,6 +177,62 @@
             <details>
               <summary>View partition header (click to expand)</summary>
               <pre>${formatBytes(partition.slice(0, 256))}</pre>
+            </details>
+          </div>
+        `;
+      } catch (error) {
+        resultDiv.innerHTML = `
+          <div class="error">
+            <strong>✗ Test Failed</strong><br>
+            ${error.message}
+          </div>
+        `;
+      }
+    };
+
+    window.testESPHomeWiFiStruct = function() {
+      const resultDiv = document.getElementById('test4-result');
+      try {
+        // Test the new struct-based format that ESPHome actually uses
+        const partition = buildESPHomeWiFiNVS('MyNetwork', 'MyPassword123');
+        
+        resultDiv.innerHTML = `
+          <div class="success">
+            <strong>✓ Test Passed</strong><br>
+            Generated ESPHome WiFi struct partition: ${partition.length} bytes<br>
+            Uses numeric key (88491487) and binary struct format<br>
+            Struct size: 98 bytes (33 + 65)<br>
+            <pre>${formatBytes(partition.slice(0, 192))}</pre>
+          </div>
+        `;
+      } catch (error) {
+        resultDiv.innerHTML = `
+          <div class="error">
+            <strong>✗ Test Failed</strong><br>
+            ${error.message}
+          </div>
+        `;
+      }
+    };
+
+    window.testStructPacking = function() {
+      const resultDiv = document.getElementById('test5-result');
+      try {
+        // Test struct packing directly
+        const structData = packStruct([
+          { type: 'string', value: 'TestSSID', maxLength: 33 },
+          { type: 'string', value: 'TestPassword', maxLength: 65 },
+        ]);
+        
+        resultDiv.innerHTML = `
+          <div class="success">
+            <strong>✓ Test Passed</strong><br>
+            Packed struct size: ${structData.length} bytes<br>
+            Expected: 98 bytes (33 + 65)<br>
+            Match: ${structData.length === 98 ? '✓' : '✗'}<br>
+            <details>
+              <summary>View struct data (click to expand)</summary>
+              <pre>${formatBytes(structData)}</pre>
             </details>
           </div>
         `;
