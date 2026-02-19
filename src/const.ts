@@ -4,6 +4,26 @@ export interface Logger {
   debug(msg: string, ...args: any[]): void;
 }
 
+export interface CustomFormField {
+  name: string;
+  label: string;
+  type: "text" | "password" | "number" | "checkbox";
+  required?: boolean;
+  defaultValue?: string | number | boolean;
+  placeholder?: string;
+}
+
+export interface NVSPartitionConfig {
+  offset: number;
+  size?: number;
+  namespace: string;
+  fields: {
+    name: string;
+    key: string;
+    type: "u8" | "u16" | "u32" | "string";
+  }[];
+}
+
 export interface Build {
   chipFamily:
     | "ESP32"
@@ -34,6 +54,10 @@ export interface Manifest {
   /* Time to wait to detect Improv Wi-Fi. Set to 0 to disable. */
   new_install_improv_wait_time?: number;
   builds: Build[];
+  /* Custom form fields to collect user input for NVS partition */
+  customFields?: CustomFormField[];
+  /* NVS partition configuration */
+  nvsPartition?: NVSPartitionConfig;
 }
 
 export interface BaseFlashState {
