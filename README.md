@@ -63,6 +63,18 @@ Example manifest:
 }
 ```
 
+## NVS Configuration Feature
+
+ESP Web Tools now supports collecting user configuration (like WiFi credentials) via a form and building an NVS partition that is flashed alongside your firmware. This allows firmware to read user-provided configuration from NVS storage.
+
+**Key features:**
+- Define custom form fields in your manifest
+- Build ESP32 NVS partitions entirely in the browser
+- Flash configuration data securely without sending to any server
+- Compatible with ESPHome's WiFi credential storage
+
+See [NVS_CONFIGURATION.md](NVS_CONFIGURATION.md) for detailed documentation and examples.
+
 ## Development
 
 Run `script/develop`. This starts a server. Open it on http://localhost:5001.
