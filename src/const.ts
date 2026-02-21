@@ -21,6 +21,16 @@ export interface Build {
     path: string;
     offset: number;
   }[];
+  /**
+   * Optional serial transport type for this build variant.
+   * - `"cdc"`: Native USB CDC (e.g. ESP32-S2/S3/C3 built-in USB)
+   * - `"uart"`: External USB-to-UART bridge (e.g. CP2102, CH340)
+   * - absent: No transport preference; matches any connection as a fallback.
+   *
+   * Build selection tries an exact `serialType` match first, then falls back to a build
+   * with no `serialType`. If neither is found, installation is refused.
+   */
+  serialType?: "cdc" | "uart";
 }
 
 export interface Manifest {

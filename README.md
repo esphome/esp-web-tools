@@ -10,6 +10,8 @@ Allow flashing ESPHome or other ESP-based firmwares via the browser. Will automa
 
 Example manifest:
 
+The optional `serialType` field (`"cdc"` or `"uart"`) lets you ship separate firmware variants for chips that support both native USB CDC (built-in USB) and external USB-to-UART bridges. The correct variant is selected automatically based on the detected connection. Builds without a `serialType` are used as a fallback for any connection type.
+
 ```json
 {
   "name": "ESPHome",
@@ -46,11 +48,22 @@ Example manifest:
     },
     {
       "chipFamily": "ESP32-S3",
+      "serialType": "uart",
       "parts": [
         { "path": "bootloader_dout_40m.bin", "offset": 4096 },
         { "path": "partitions.bin", "offset": 32768 },
         { "path": "boot_app0.bin", "offset": 57344 },
         { "path": "esp32-s3.bin", "offset": 65536 }
+      ]
+    },
+    {
+      "chipFamily": "ESP32-S3",
+      "serialType": "cdc",
+      "parts": [
+        { "path": "bootloader_dout_40m.bin", "offset": 4096 },
+        { "path": "partitions.bin", "offset": 32768 },
+        { "path": "boot_app0.bin", "offset": 57344 },
+        { "path": "esp32-s3-cdc.bin", "offset": 65536 }
       ]
     },
     {
