@@ -96,8 +96,12 @@ export const flash = async (
   // error fires below.
   const detectedSerialType = isCdcUsbPort ? "cdc" : "uart";
   build =
-    manifest.builds.find((b) => b.chipFamily === chipFamily && b.serialType === detectedSerialType) ||
-    manifest.builds.find((b) => b.chipFamily === chipFamily && b.serialType === undefined);
+    manifest.builds.find(
+      (b) => b.chipFamily === chipFamily && b.serialType === detectedSerialType,
+    ) ||
+    manifest.builds.find(
+      (b) => b.chipFamily === chipFamily && b.serialType === undefined,
+    );
 
   if (!build) {
     fireStateEvent({
