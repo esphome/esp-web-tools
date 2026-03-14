@@ -17,6 +17,8 @@ export interface Build {
     | "ESP32-S2"
     | "ESP32-S3"
     | "ESP8266";
+  flashSizeMB?: number;
+  psramSizeMB?: number;
   parts: {
     path: string;
     offset: number;
