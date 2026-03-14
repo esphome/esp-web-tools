@@ -161,6 +161,7 @@
         <li>Connect device to the Wi-Fi network</li>
         <li>Visit the device's hosted web interface</li>
         <li>Access logs and send terminal commands</li>
+        <li>Read device hardware information (chip, flash, PSRAM)</li>
         <li>
           Add devices to
           <a href="https://www.home-assistant.io">Home Assistant</a>
@@ -347,8 +348,9 @@
           >Web Serial</a
         >, <a href="https://www.improv-wifi.com/">Improv Wi-Fi</a> (optional),
         and a manifest which describes the firmware. ESP Web Tools detects the
-        chipset of the connected ESP device and automatically selects the right
-        firmware variant from the manifest.
+        chipset, flash size, and PSRAM of the connected ESP device and
+        automatically selects the best matching firmware variant from the
+        manifest.
       </p>
       <p>
         Web Serial is available in Google Chrome and Microsoft Edge
@@ -532,6 +534,53 @@ esptool --chip esp32 merge_bin \
         where it should be installed. Part paths are resolved relative to the
         path of the manifest, but can also be URLs to other hosts.
       </p>
+
+      <h4>Hardware qualifiers</h4>
+      <p>
+        Builds can optionally include <code>flashSizeMB</code> and
+        <code>psramSizeMB</code> to target specific hardware variants within the
+        same chip family. ESP Web Tools detects the connected device's flash size
+        and PSRAM size and selects the most specific matching build.
+      </p>
+      <pre>
+{
+  "name": "My Firmware",
+  "version": "1.0.0",
+  "builds": [
+    {
+      "chipFamily": "ESP32-S3",
+      "flashSizeMB": 16,
+      "psramSizeMB": 8,
+      "parts": [{ "path": "s3-16mb-8psram.bin", "offset": 0 }]
+    },
+    {
+      "chipFamily": "ESP32-S3",
+      "flashSizeMB": 4,
+      "parts": [{ "path": "s3-4mb.bin", "offset": 0 }]
+    },
+    {
+      "chipFamily": "ESP32-S3",
+      "parts": [{ "path": "s3-generic.bin", "offset": 0 }]
+    }
+  ]
+}</pre
+      >
+      <p>
+        The matching algorithm uses a most-specific-match-wins approach:
+      </p>
+      <ul>
+        <li>
+          A build whose qualifier does <em>not</em> match the device is excluded
+          (e.g. a build requiring 16 MB flash won't match a 4 MB device).
+        </li>
+        <li>
+          Among remaining builds, the one with the most matching qualifiers wins.
+        </li>
+        <li>Ties are broken by manifest order (first wins).</li>
+        <li>
+          A build with no qualifiers acts as a fallback for that chip family.
+        </li>
+      </ul>
       <p>
         If your firmware is supported by Home Assistant, you can add the
         optional key <code>home_assistant_domain</code>. If present, ESP Web
@@ -668,6 +717,35 @@ document.querySelector("esp-web-install-button").manifest = URL.createObjectURL(
 &lt;/esp-web-install-button>
     </pre
       >
+
+      <h3 id="diagnostics">Diagnostics button</h3>
+      <p>
+        ESP Web Tools also includes a diagnostics button that reads hardware
+        information from a connected ESP device without installing any firmware.
+        It displays the chip description, features, crystal frequency, MAC
+        address, flash size, and PSRAM size.
+      </p>
+      <p>
+        Load the diagnostics button JavaScript on your website:
+      </p>
+      <pre>
+&lt;script
+  type="module"
+  src="https://unpkg.com/esp-web-tools@10/dist/web/diagnostics-button.js?module"
+>&lt;/script></pre
+      >
+      <p>Then add the button element:</p>
+      <pre>
+&lt;esp-web-diagnostics-button>&lt;/esp-web-diagnostics-button></pre
+      >
+      <p>
+        Like the install button, you can customize it using the
+        <code>activate</code>, <code>unsupported</code>, and
+        <code>not-allowed</code> slots, and the same CSS custom properties
+        (<code>--esp-tools-button-color</code>,
+        <code>--esp-tools-button-text-color</code>,
+        <code>--esp-tools-button-border-radius</code>).
+      </p>
 
       <h2>Why we created ESP Web Tools</h2>
       <div class="videoWrapper">
