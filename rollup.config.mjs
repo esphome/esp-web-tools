@@ -5,7 +5,7 @@ import babel from "@rollup/plugin-babel";
 import commonjs from "@rollup/plugin-commonjs";
 
 const config = {
-  input: "dist/install-button.js",
+  input: ["dist/install-button.js", "dist/diagnostics-button.js"],
   output: {
     dir: "dist/web",
     format: "module",

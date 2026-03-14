@@ -143,6 +143,11 @@
           ? "/dist/web/install-button.js"
           : "https://unpkg.com/esp-web-tools/dist/web/install-button.js?module"
       );
+      import(
+        window.location.hostname === "localhost"
+          ? "/dist/web/diagnostics-button.js"
+          : "https://unpkg.com/esp-web-tools/dist/web/diagnostics-button.js?module"
+      );
     </script>
   </head>
   <body>
@@ -186,6 +191,16 @@
           >.
         </i>
       </esp-web-install-button>
+      <p>
+        You can also read hardware information from a connected ESP device
+        without installing any firmware:
+      </p>
+      <esp-web-diagnostics-button>
+        <i slot="unsupported">
+          Diagnostics are not available because your browser does not support
+          Web Serial. Open this page in Google Chrome or Microsoft Edge instead.
+        </i>
+      </esp-web-diagnostics-button>
 
       <h2 id="used-by">Products using ESP Web Tools</h2>
       <div class="projects">
