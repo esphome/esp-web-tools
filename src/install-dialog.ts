@@ -253,9 +253,9 @@ export class EwtInstallDialog extends LitElement {
           >
             ${listItemWifi}
             <div slot="headline">
-              ${this._client!.state === ImprovSerialCurrentState.READY
-                ? "Connect to Wi-Fi"
-                : "Change Wi-Fi"}
+              ${this._client!.state === ImprovSerialCurrentState.PROVISIONED
+                ? "Change Wi-Fi"
+                : "Connect to Wi-Fi"}
             </div>
           </ew-list-item>
           <ew-list-item
@@ -359,7 +359,28 @@ export class EwtInstallDialog extends LitElement {
       ];
     }
 
-    if (
+    if (this._client!.state === ImprovSerialCurrentState.STOPPED) {
+      heading = undefined;
+      content = html`
+        <div slot="content">
+          <ewt-page-message
+            .icon=${ERROR_ICON}
+            .label=${html`The connected device has Wi-Fi turned off, so it
+              can't be configured right now.<br />Enable the device's Wi-Fi,
+              then try again.`}
+          ></ewt-page-message>
+        </div>
+        <div slot="actions">
+          <ew-text-button
+            @click=${() => {
+              this._state = "DASHBOARD";
+            }}
+          >
+            Back
+          </ew-text-button>
+        </div>
+      `;
+    } else if (
       !this._provisionForce &&
       this._client!.state === ImprovSerialCurrentState.PROVISIONED
     ) {
@@ -755,9 +776,13 @@ export class EwtInstallDialog extends LitElement {
     if (this._state !== "ERROR") {
       this._error = undefined;
     }
-    // Scan for SSIDs on provision
+    // Scan for SSIDs on provision. Skip when Improv is stopped: provisioning is
+    // unavailable, so a scan would only return an empty list and retry, and the
+    // "scanning" spinner would hide the stopped message.
     if (this._state === "PROVISION") {
-      this._updateSsids();
+      if (this._client?.state !== ImprovSerialCurrentState.STOPPED) {
+        this._updateSsids();
+      }
     } else {
       // Reset this value if we leave provisioning.
       this._provisionForce = false;
