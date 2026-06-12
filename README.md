@@ -63,6 +63,42 @@ Example manifest:
 }
 ```
 
+Builds can optionally include `flashSizeMB` and `psramSizeMB` to target specific hardware variants. When multiple builds share the same `chipFamily`, the most specific match wins:
+
+```json
+{
+  "builds": [
+    {
+      "chipFamily": "ESP32-S3",
+      "flashSizeMB": 16,
+      "psramSizeMB": 8,
+      "parts": [{ "path": "s3-16mb-8psram.bin", "offset": 0 }]
+    },
+    {
+      "chipFamily": "ESP32-S3",
+      "flashSizeMB": 4,
+      "parts": [{ "path": "s3-4mb.bin", "offset": 0 }]
+    },
+    {
+      "chipFamily": "ESP32-S3",
+      "parts": [{ "path": "s3-generic.bin", "offset": 0 }]
+    }
+  ]
+}
+```
+
+A build with no qualifiers acts as a fallback for that chip family.
+
+## Diagnostics
+
+ESP Web Tools includes a diagnostics button that reads hardware information from a connected ESP device without installing any firmware:
+
+```html
+<esp-web-diagnostics-button></esp-web-diagnostics-button>
+```
+
+This displays the chip description, features, crystal frequency, MAC address, flash size, and PSRAM size. Like the install button, it supports `activate`, `unsupported`, and `not-allowed` slots for customization, and uses the same CSS custom properties for styling.
+
 ## Development
 
 Run `script/develop`. This starts a server. Open it on http://localhost:5001.

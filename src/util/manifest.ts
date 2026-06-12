@@ -14,5 +14,26 @@ export const downloadManifest = async (manifestPath: string) => {
     }
   }
 
+  for (const build of manifest.builds) {
+    if (
+      build.flashSizeMB != null &&
+      (typeof build.flashSizeMB !== "number" || build.flashSizeMB <= 0)
+    ) {
+      console.warn(
+        `Manifest build for ${build.chipFamily} has invalid flashSizeMB: ${build.flashSizeMB}. Ignoring.`,
+      );
+      delete build.flashSizeMB;
+    }
+    if (
+      build.psramSizeMB != null &&
+      (typeof build.psramSizeMB !== "number" || build.psramSizeMB <= 0)
+    ) {
+      console.warn(
+        `Manifest build for ${build.chipFamily} has invalid psramSizeMB: ${build.psramSizeMB}. Ignoring.`,
+      );
+      delete build.psramSizeMB;
+    }
+  }
+
   return manifest;
 };

@@ -6,6 +6,11 @@ import {
   Manifest,
   FlashStateType,
 } from "./const";
+import {
+  detectHardware,
+  findBestBuild,
+  DetectedHardware,
+} from "./util/build-match";
 import { sleep } from "./util/sleep";
 
 /**
@@ -73,13 +78,32 @@ export const flash = async (
 
   chipFamily = esploader.chip.CHIP_NAME as any;
 
+  let detectedHardware: DetectedHardware = { chipFamily };
+
+  try {
+    detectedHardware = await detectHardware(esploader, chipFamily);
+  } catch (err) {
+    console.warn(
+      "Hardware detection failed, falling back to chipFamily-only match:",
+      err,
+    );
+  }
+
+  const hwParts: string[] = [chipFamily];
+  if (detectedHardware.flashSizeMB != null) {
+    hwParts.push(`${detectedHardware.flashSizeMB}MB flash`);
+  }
+  if (detectedHardware.psramSizeMB != null) {
+    hwParts.push(`${detectedHardware.psramSizeMB}MB PSRAM`);
+  }
+
   fireStateEvent({
     state: FlashStateType.INITIALIZING,
-    message: `Initialized. Found ${chipFamily}`,
+    message: `Initialized. Found ${hwParts.join(", ")}`,
     details: { done: true },
   });
 
-  build = manifest.builds.find((b) => b.chipFamily === chipFamily);
+  build = findBestBuild(manifest.builds, detectedHardware);
 
   if (!build) {
     fireStateEvent({
