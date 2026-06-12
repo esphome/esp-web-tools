@@ -365,9 +365,9 @@ export class EwtInstallDialog extends LitElement {
         <div slot="content">
           <ewt-page-message
             .icon=${ERROR_ICON}
-            .label=${html`The connected device has Wi-Fi turned off, so it
-              can't be configured right now.<br />Enable the device's Wi-Fi,
-              then try again.`}
+            .label=${html`The connected device has Wi-Fi turned off, so it can't
+              be configured right now.<br />Enable the device's Wi-Fi, then try
+              again.`}
           ></ewt-page-message>
         </div>
         <div slot="actions">
