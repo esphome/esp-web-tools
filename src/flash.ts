@@ -41,7 +41,6 @@ export const flash = async (
   const esploader = new ESPLoader({
     transport,
     baudrate: 115200,
-    romBaudrate: 115200,
     enableTracing: false,
   });
 
@@ -114,18 +113,19 @@ export const flash = async (
     const reader = new FileReader();
     const blob = await resp.blob();
 
-    return new Promise<string>((resolve) => {
-      reader.addEventListener("load", () => resolve(reader.result as string));
-      reader.readAsBinaryString(blob);
+    return new Promise<ArrayBuffer>((resolve) => {
+      reader.addEventListener("load", () => resolve(reader.result as ArrayBuffer));
+      reader.readAsArrayBuffer(blob);
     });
   });
 
-  const fileArray: Array<{ data: string; address: number }> = [];
+  const fileArray: Array<{ data: Uint8Array; address: number }> = [];
   let totalSize = 0;
 
   for (let part = 0; part < filePromises.length; part++) {
     try {
-      const data = await filePromises[part];
+      const buffer = await filePromises[part];
+      const data = new Uint8Array(buffer, 0, buffer.byteLength);
       fileArray.push({ data, address: build.parts[part].offset });
       totalSize += data.length;
     } catch (err: any) {
