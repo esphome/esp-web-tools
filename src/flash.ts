@@ -98,7 +98,13 @@ export const flash = async (
     details: { done: false },
   });
 
-  const manifestURL = new URL(manifestPath, location.toString()).toString();
+  // blob: and data: URLs (e.g. dynamically generated manifests via
+  // URL.createObjectURL) have an opaque path and can't be used as a base to
+  // resolve relative part paths, so fall back to the document location.
+  const manifestURL =
+    manifestPath.startsWith("blob:") || manifestPath.startsWith("data:")
+      ? location.toString()
+      : new URL(manifestPath, location.toString()).toString();
   const filePromises = build.parts.map(async (part) => {
     const url = new URL(part.path, manifestURL).toString();
     const resp = await fetch(url);
