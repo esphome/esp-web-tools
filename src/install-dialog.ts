@@ -1068,13 +1068,9 @@ export class EwtInstallDialog extends LitElement {
   }
 
   private async _doProvision() {
-    this._busy = true;
-    // Wait for any in-flight scan to settle before provisioning so we don't
-    // have two RPC commands in flight at once. Marking busy above already tells
-    // `_syncScanning` to stop, but the provision RPC needs it stopped *now*.
-    await this._stopScanning();
-    this._wasProvisioned =
-      this._client!.state === ImprovSerialCurrentState.PROVISIONED;
+    // Read the form before setting `_busy`: that swaps the form for a progress
+    // view, and the render happens during any await below — after which these
+    // fields no longer exist and we'd provision with an empty password.
     const ssid =
       this._selectedSsid === null
         ? (
@@ -1089,6 +1085,14 @@ export class EwtInstallDialog extends LitElement {
           "ew-filled-text-field[name=password]",
         ) as EwFilledTextField | null
       )?.value || "";
+
+    this._busy = true;
+    // Wait for any in-flight scan to settle before provisioning so we don't
+    // have two RPC commands in flight at once. Marking busy above already tells
+    // `_syncScanning` to stop, but the provision RPC needs it stopped *now*.
+    await this._stopScanning();
+    this._wasProvisioned =
+      this._client!.state === ImprovSerialCurrentState.PROVISIONED;
     try {
       // Devices try to connect for ~30s before reporting failure. Our timeout
       // must comfortably exceed that: it's only a safety net, and if it fires
