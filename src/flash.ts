@@ -39,9 +39,6 @@ export const flash = async (
 
   const transport = new Transport(port);
 
-  // Detect native USB CDC by checking Espressif's USB vendor ID (0x303a) and
-  // known CDC product IDs for chips with built-in USB (ESP32-S2, S3, C3, etc.).
-  // Devices connected via an external USB-to-UART bridge will not match.
   const portInfo = port.getInfo();
   const isCdcUsbPort =
     portInfo &&
@@ -90,10 +87,6 @@ export const flash = async (
     details: { done: true },
   });
 
-  // Select the build for this chip, preferring an exact serialType match for the
-  // detected connection (CDC for native USB, UART otherwise), then falling back to
-  // a build with no serialType specified. If neither is found, the "not supported"
-  // error fires below.
   const detectedSerialType = isCdcUsbPort ? "cdc" : "uart";
   build =
     manifest.builds.find(
