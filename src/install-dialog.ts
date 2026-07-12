@@ -890,6 +890,14 @@ export class EwtInstallDialog extends LitElement {
         return;
       }
 
+      // A scan error after we already have networks is transient, not "device
+      // can't scan" (e.g. a late failure packet from a just-failed provision
+      // rejecting our scan). Keep the list we have; scanning stops until we
+      // re-enter the form.
+      if (ssids === null && this._ssids) {
+        return;
+      }
+
       if (this._ssids === undefined) {
         // First result. Preselect the strongest network.
         this._selectedSsid = strongestSsid(ssids);
@@ -1082,7 +1090,11 @@ export class EwtInstallDialog extends LitElement {
         ) as EwFilledTextField | null
       )?.value || "";
     try {
-      await this._client!.provision(ssid, password, 30000);
+      // Devices try to connect for ~30s before reporting failure. Our timeout
+      // must comfortably exceed that: it's only a safety net, and if it fires
+      // first the device's late failure packet rejects the *next* RPC we send
+      // (the resumed network scan) instead of this one.
+      await this._client!.provision(ssid, password, 45000);
     } catch (err: any) {
       return;
     } finally {
