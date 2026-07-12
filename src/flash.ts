@@ -38,6 +38,14 @@ export const flash = async (
     });
 
   const transport = new Transport(port);
+
+  const portInfo = port.getInfo();
+  const isCdcUsbPort =
+    portInfo &&
+    portInfo.usbVendorId === 0x303a &&
+    portInfo.usbProductId !== undefined &&
+    [0x1001, 0x1002, 0x1003, 0x0002, 0x0003].includes(portInfo.usbProductId);
+
   const esploader = new ESPLoader({
     transport,
     baudrate: 115200,
@@ -79,7 +87,14 @@ export const flash = async (
     details: { done: true },
   });
 
-  build = manifest.builds.find((b) => b.chipFamily === chipFamily);
+  const detectedSerialType = isCdcUsbPort ? "cdc" : "uart";
+  build =
+    manifest.builds.find(
+      (b) => b.chipFamily === chipFamily && b.serialType === detectedSerialType,
+    ) ||
+    manifest.builds.find(
+      (b) => b.chipFamily === chipFamily && b.serialType === undefined,
+    );
 
   if (!build) {
     fireStateEvent({
