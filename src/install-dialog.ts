@@ -578,6 +578,11 @@ export class EwtInstallDialog extends LitElement {
                   label="Password"
                   name="password"
                   type="password"
+                  @keydown=${(ev: KeyboardEvent) => {
+                    if (ev.key === "Enter") {
+                      this._doProvision();
+                    }
+                  }}
                 ></ew-filled-text-field>
               `
             : ""}
