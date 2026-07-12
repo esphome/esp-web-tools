@@ -54,10 +54,10 @@ const ERROR_ICON = "⚠️";
 const OK_ICON = "🎉";
 
 // A device that just booted can come back from its first scan with no networks
-// at all. Keep looking (the SDK scans every 3s, so this covers two scans) before
-// giving up and showing the form, or we'd tell the user we found nothing while
-// the device was still warming up.
-const SCAN_GRACE_PERIOD = 3100;
+// at all. Keep looking (the SDK scans every 3s, so this covers three scans)
+// before giving up and showing the form, or we'd tell the user we found nothing
+// while the device was still warming up.
+const SCAN_GRACE_PERIOD = 6100;
 
 /** Name of the network with the strongest signal, null if there are none. */
 const strongestSsid = (ssids: Ssid[] | null): string | null =>
