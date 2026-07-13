@@ -23,7 +23,12 @@ import {
   listItemInstallIcon,
   listItemVisitDevice,
   listItemWifi,
-  refreshIcon,
+  lockIcon,
+  lockOpenIcon,
+  networkWifi1Bar,
+  networkWifi2Bar,
+  networkWifi3Bar,
+  networkWifiFull,
 } from "./components/svg";
 import { Logger, Manifest, FlashStateType, FlashState } from "./const.js";
 import { ImprovSerial, Ssid } from "improv-wifi-serial-sdk/dist/serial";
@@ -47,6 +52,27 @@ console.log(
 
 const ERROR_ICON = "⚠️";
 const OK_ICON = "🎉";
+
+// A device that just booted can come back from its first scan with no networks
+// at all. Keep looking (the SDK scans every 3s, so this covers four scans)
+// before giving up and showing the form, or we'd tell the user we found nothing
+// while the device was still warming up.
+const SCAN_GRACE_PERIOD = 9100;
+
+/** Name of the network with the strongest signal, null if there are none. */
+const strongestSsid = (ssids: Ssid[]): string | null =>
+  ssids.length
+    ? ssids.reduce((best, ssid) => (ssid.rssi > best.rssi ? ssid : best)).name
+    : null;
+
+const signalStrength = (
+  rssi: number,
+): { icon: TemplateResult; class: string } => {
+  if (rssi >= -50) return { icon: networkWifiFull, class: "signal-excellent" };
+  if (rssi >= -60) return { icon: networkWifi3Bar, class: "signal-good" };
+  if (rssi >= -70) return { icon: networkWifi2Bar, class: "signal-fair" };
+  return { icon: networkWifi1Bar, class: "signal-weak" };
+};
 
 export class EwtInstallDialog extends LitElement {
   public port!: SerialPort;
@@ -94,6 +120,14 @@ export class EwtInstallDialog extends LitElement {
 
   // Name of Ssid. Null = other
   @state() private _selectedSsid: string | null = null;
+
+  // Prefill for the "Network Name" box shown when "Join other" is selected.
+  // Only read while rendering a `_selectedSsid` change, so it needs no @state.
+  private _manualSsid = "";
+
+  private _unsubSSIDs?: () => Promise<void>;
+
+  private _scanGraceTimeout?: ReturnType<typeof setTimeout>;
 
   private _bodyOverflow: string | null = null;
 
@@ -349,14 +383,7 @@ export class EwtInstallDialog extends LitElement {
     let content: TemplateResult;
 
     if (this._busy) {
-      return [
-        heading,
-        this._renderProgress(
-          this._ssids === undefined
-            ? "Scanning for networks"
-            : "Trying to connect",
-        ),
-      ];
+      return [heading, this._renderProgress("Trying to connect")];
     }
 
     if (this._client!.state === ImprovSerialCurrentState.STOPPED) {
@@ -456,6 +483,9 @@ export class EwtInstallDialog extends LitElement {
             `
           : ""}
       `;
+    } else if (this._ssids === undefined) {
+      // Waiting for the first scan to come back.
+      content = this._renderProgress("Scanning for networks");
     } else {
       let error: string | undefined;
 
@@ -480,9 +510,6 @@ export class EwtInstallDialog extends LitElement {
         (info) => info.name === this._selectedSsid,
       );
       content = html`
-        <ew-icon-button slot="headline" @click=${this._updateSsids}>
-          ${refreshIcon}
-        </ew-icon-button>
         <div slot="content">
           <div>Connect your device to the network to start using it.</div>
           ${error ? html`<p class="error">${error}</p>` : ""}
@@ -498,18 +525,34 @@ export class EwtInstallDialog extends LitElement {
                       index === this._ssids!.length
                         ? null
                         : this._ssids![index].name;
+                    // Picking "Join other" ourselves starts from a blank name.
+                    this._manualSsid = "";
                   }}
                 >
-                  ${this._ssids!.map(
-                    (info) => html`
+                  ${this._ssids!.map((info) => {
+                    const signal = signalStrength(info.rssi);
+                    return html`
                       <ew-select-option
                         .selected=${selectedSsid === info}
                         .value=${info.name}
                       >
-                        ${info.name}
+                        <span slot="start" class=${signal.class}>
+                          ${signal.icon}
+                        </span>
+                        <span slot="headline">${info.name}</span>
+                        <span slot="end" class="network-details">
+                          <span class="signal-strength">${info.rssi}dB</span>
+                          <span
+                            class=${info.secured
+                              ? "lock-secured"
+                              : "lock-unsecured"}
+                          >
+                            ${info.secured ? lockIcon : lockOpenIcon}
+                          </span>
+                        </span>
                       </ew-select-option>
-                    `,
-                  )}
+                    `;
+                  })}
                   <ew-divider></ew-divider>
                   <ew-select-option .selected=${!selectedSsid}>
                     Join other…
@@ -524,6 +567,7 @@ export class EwtInstallDialog extends LitElement {
                   <ew-filled-text-field
                     label="Network Name"
                     name="ssid"
+                    .value=${this._manualSsid}
                   ></ew-filled-text-field>
                 `
               : ""
@@ -534,6 +578,11 @@ export class EwtInstallDialog extends LitElement {
                   label="Password"
                   name="password"
                   type="password"
+                  @keydown=${(ev: KeyboardEvent) => {
+                    if (ev.key === "Enter") {
+                      this._doProvision();
+                    }
+                  }}
                 ></ew-filled-text-field>
               `
             : ""}
@@ -776,13 +825,10 @@ export class EwtInstallDialog extends LitElement {
     if (this._state !== "ERROR") {
       this._error = undefined;
     }
-    // Scan for SSIDs on provision. Skip when Improv is stopped: provisioning is
-    // unavailable, so a scan would only return an empty list and retry, and the
-    // "scanning" spinner would hide the stopped message.
+    // Scan for networks from scratch every time we enter provisioning.
+    // `_syncScanning` picks it up from here.
     if (this._state === "PROVISION") {
-      if (this._client?.state !== ImprovSerialCurrentState.STOPPED) {
-        this._updateSsids();
-      }
+      this._ssids = undefined;
     } else {
       // Reset this value if we leave provisioning.
       this._provisionForce = false;
@@ -794,46 +840,94 @@ export class EwtInstallDialog extends LitElement {
     }
   }
 
-  private async _updateSsids(tries = 0) {
-    const oldSsids = this._ssids;
-    this._ssids = undefined;
-    this._busy = true;
+  /**
+   * Return if the provision page shows the network form (and not a message).
+   */
+  private get _showsProvisionForm() {
+    const clientState = this._client?.state;
+    return (
+      clientState !== undefined &&
+      clientState !== ImprovSerialCurrentState.STOPPED &&
+      (this._provisionForce ||
+        clientState !== ImprovSerialCurrentState.PROVISIONED)
+    );
+  }
 
-    let ssids: Ssid[];
+  // Scan while (and only while) the network form is shown. Driven from
+  // `updated()`, so entering the form starts scanning and leaving it stops.
+  private _syncScanning() {
+    const shouldScan =
+      this._state === "PROVISION" && !this._busy && this._showsProvisionForm;
 
-    try {
-      ssids = await this._client!.scan();
-    } catch (err) {
-      // When we fail while loading, pick "Join other"
+    if (shouldScan === !!this._unsubSSIDs) {
+      return;
+    }
+
+    if (!shouldScan) {
+      this._stopScanning();
+      return;
+    }
+
+    // Give a device that comes back empty-handed a little longer before we
+    // show the form and tell the user there are no networks.
+    this._scanGraceTimeout = setTimeout(() => {
+      this._scanGraceTimeout = undefined;
       if (this._ssids === undefined) {
-        this._ssids = null;
+        this._ssids = [];
         this._selectedSsid = null;
       }
-      this._busy = false;
-      return;
-    }
+    }, SCAN_GRACE_PERIOD);
 
-    // We will retry a few times if we don't get any results
-    if (ssids.length === 0 && tries < 3) {
-      console.log("SCHEDULE RETRY", tries);
-      setTimeout(() => this._updateSsids(tries + 1), 2000);
-      return;
-    }
-
-    if (oldSsids) {
-      // If we had a previous list, ensure the selection is still valid
+    // `null` means the device can't scan, and we ask for the network manually.
+    this._unsubSSIDs = this._client!.subscribeSSIDs((ssids: Ssid[] | null) => {
+      // Keep waiting while a device that hasn't found anything yet is still
+      // within its grace period.
       if (
-        this._selectedSsid &&
-        !ssids.find((s) => s.name === this._selectedSsid)
+        this._ssids === undefined &&
+        ssids?.length === 0 &&
+        this._scanGraceTimeout
       ) {
-        this._selectedSsid = ssids[0].name;
+        return;
       }
-    } else {
-      this._selectedSsid = ssids.length ? ssids[0].name : null;
-    }
 
-    this._ssids = ssids;
-    this._busy = false;
+      // A scan error after we already have networks is transient, not "device
+      // can't scan" (e.g. a late failure packet from a just-failed provision
+      // rejecting our scan). Keep the list we have; scanning stops until we
+      // re-enter the form.
+      if (ssids === null && this._ssids) {
+        return;
+      }
+
+      if (this._ssids === undefined) {
+        // First result. Preselect the strongest network, or "Join other" if
+        // the device can't scan or found nothing.
+        this._selectedSsid = ssids === null ? null : strongestSsid(ssids);
+      } else if (
+        this._selectedSsid !== null &&
+        !ssids?.some((ssid) => ssid.name === this._selectedSsid)
+      ) {
+        // The selected network dropped off the list. A subscription merges scans
+        // from scratch, so this happens when we resume scanning (ie. after a
+        // failed provision) and the first scan misses it. Fall back to "Join
+        // other" prefilled with the network they picked, so they keep the data
+        // they entered and can simply hit Connect again.
+        this._manualSsid = this._selectedSsid;
+        this._selectedSsid = null;
+      }
+      this._ssids = ssids;
+    });
+  }
+
+  private async _stopScanning() {
+    clearTimeout(this._scanGraceTimeout);
+    this._scanGraceTimeout = undefined;
+
+    const unsubscribe = this._unsubSSIDs;
+    if (!unsubscribe) {
+      return;
+    }
+    this._unsubSSIDs = undefined;
+    await unsubscribe();
   }
 
   protected override firstUpdated(changedProps: PropertyValues) {
@@ -850,6 +944,8 @@ export class EwtInstallDialog extends LitElement {
       this.setAttribute("state", this._state);
     }
 
+    this._syncScanning();
+
     if (this._state !== "PROVISION") {
       return;
     }
@@ -857,8 +953,12 @@ export class EwtInstallDialog extends LitElement {
     if (changedProps.has("_selectedSsid") && this._selectedSsid === null) {
       // If we pick "Join other", select SSID input.
       this._focusFormElement("ew-filled-text-field[name=ssid]");
-    } else if (changedProps.has("_ssids")) {
-      // Form is shown when SSIDs are loaded/marked not supported
+    } else if (
+      changedProps.has("_ssids") &&
+      changedProps.get("_ssids") === undefined
+    ) {
+      // Form is shown when SSIDs are first loaded/marked not supported. Later
+      // scans must not steal focus back from whatever the user is filling in.
       this._focusFormElement();
     }
   }
@@ -901,10 +1001,14 @@ export class EwtInstallDialog extends LitElement {
     });
     client.addEventListener("error-changed", () => this.requestUpdate());
     try {
+      // Improv re-sends the request every second until this timeout, so 1500ms
+      // gets us a single retry. That gives a device that was busy on our first
+      // try (ie. still streaming the results of a Wi-Fi scan from before a page
+      // reload) a second chance to answer us.
       // If a device was just installed, give new firmware 10 seconds (overridable) to
       // format the rest of the flash and do other stuff.
       const timeout = !justInstalled
-        ? 1000
+        ? 1500
         : this._manifest.new_install_improv_wait_time !== undefined
           ? this._manifest.new_install_improv_wait_time * 1000
           : 10000;
@@ -965,9 +1069,9 @@ export class EwtInstallDialog extends LitElement {
   }
 
   private async _doProvision() {
-    this._busy = true;
-    this._wasProvisioned =
-      this._client!.state === ImprovSerialCurrentState.PROVISIONED;
+    // Read the form before setting `_busy`: that swaps the form for a progress
+    // view, and the render happens during any await below — after which these
+    // fields no longer exist and we'd provision with an empty password.
     const ssid =
       this._selectedSsid === null
         ? (
@@ -982,11 +1086,24 @@ export class EwtInstallDialog extends LitElement {
           "ew-filled-text-field[name=password]",
         ) as EwFilledTextField | null
       )?.value || "";
+
+    this._busy = true;
+    this._wasProvisioned =
+      this._client!.state === ImprovSerialCurrentState.PROVISIONED;
+    // Wait for any in-flight scan to settle before provisioning so we don't
+    // have two RPC commands in flight at once. Marking busy above already tells
+    // `_syncScanning` to stop, but the provision RPC needs it stopped *now*.
+    await this._stopScanning();
     try {
-      await this._client!.provision(ssid, password, 30000);
+      // Devices try to connect for ~30s before reporting failure. Our timeout
+      // must comfortably exceed that: it's only a safety net, and if it fires
+      // first the device's late failure packet rejects the *next* RPC we send
+      // (the resumed network scan) instead of this one.
+      await this._client!.provision(ssid, password, 45000);
     } catch (err: any) {
       return;
     } finally {
+      // If we end up back on the network form, `_syncScanning` resumes scanning.
       this._busy = false;
       this._provisionForce = false;
     }
@@ -1031,6 +1148,8 @@ export class EwtInstallDialog extends LitElement {
   }
 
   private async _closeClientWithoutEvents(client: ImprovSerial) {
+    // Let an in-flight scan settle before we pull the port out from under it.
+    await this._stopScanning();
     client.removeEventListener("disconnect", this._handleDisconnect);
     await client.close();
   }
@@ -1074,6 +1193,33 @@ export class EwtInstallDialog extends LitElement {
       ew-filled-select {
         display: block;
         margin-top: 16px;
+      }
+      ew-select-option svg {
+        width: 24px;
+        height: 24px;
+        display: block;
+      }
+      .network-details {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-left: 16px;
+        color: var(--text-color);
+        font-size: 12px;
+      }
+      .signal-excellent,
+      .lock-secured {
+        color: #34a853;
+      }
+      .signal-good {
+        color: #4285f4;
+      }
+      .signal-fair {
+        color: #fbbc04;
+      }
+      .signal-weak,
+      .lock-unsecured {
+        color: var(--danger-color);
       }
       label.formfield {
         display: inline-flex;
