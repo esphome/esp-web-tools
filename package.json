@@ -24,7 +24,7 @@
     "prettier": "^3.4.2",
     "rollup": "^4.29.1",
     "serve": "^14.2.4",
-    "typescript": "^5.7.2"
+    "typescript": "^7.0.2"
   },
   "dependencies": {
     "@material/web": "^2.2.0",
