@@ -60,8 +60,8 @@ const OK_ICON = "🎉";
 const SCAN_GRACE_PERIOD = 9100;
 
 /** Name of the network with the strongest signal, null if there are none. */
-const strongestSsid = (ssids: Ssid[] | null): string | null =>
-  ssids?.length
+const strongestSsid = (ssids: Ssid[]): string | null =>
+  ssids.length
     ? ssids.reduce((best, ssid) => (ssid.rssi > best.rssi ? ssid : best)).name
     : null;
 
@@ -899,8 +899,9 @@ export class EwtInstallDialog extends LitElement {
       }
 
       if (this._ssids === undefined) {
-        // First result. Preselect the strongest network.
-        this._selectedSsid = strongestSsid(ssids);
+        // First result. Preselect the strongest network, or "Join other" if
+        // the device can't scan or found nothing.
+        this._selectedSsid = ssids === null ? null : strongestSsid(ssids);
       } else if (
         this._selectedSsid !== null &&
         !ssids?.some((ssid) => ssid.name === this._selectedSsid)
