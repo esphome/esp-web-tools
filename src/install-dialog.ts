@@ -53,6 +53,21 @@ console.log(
 const ERROR_ICON = "⚠️";
 const OK_ICON = "🎉";
 
+// Bound RPCs issued while (re)entering provisioning so a device that's unresponsive (e.g.
+// rebooting to switch network interface) can't hang the dialog. On expiry we fall through to
+// the normal empty-scan handling (manual SSID entry) instead of waiting forever.
+const PROVISION_RPC_TIMEOUT = 5000;
+
+// How long to wait for the device to (dis)connect after sending Wi-Fi credentials. Kept a little
+// longer than the device's own connect timeout (improv_serial: 90s) so the device's success/error
+// reaches us before we give up — switching networks on an already-connected device can exceed 30s.
+const PROVISION_CONNECT_TIMEOUT = 95000;
+
+// When Wi-Fi isn't being provisioned but the device can come online via another interface
+// (e.g. Ethernet), poll its network state this many times (×2s) waiting for it to report online
+// before giving up. Covers Ethernet link-up and any interface-switch reboot.
+const ONLINE_WAIT_MAX_TRIES = 20;
+
 // A device that just booted can come back from its first scan with no networks
 // at all. Keep looking (the SDK scans every 3s, so this covers four scans)
 // before giving up and showing the form, or we'd tell the user we found nothing
@@ -113,6 +128,10 @@ export class EwtInstallDialog extends LitElement {
   @state() private _error?: string;
 
   @state() private _busy = false;
+
+  // True while waiting (spinner) for a non-Wi-Fi device to come online (e.g. Ethernet link up),
+  // so the progress label reads "Connecting to the network" rather than "Scanning for networks".
+  @state() private _connectingToNetwork = false;
 
   // undefined = not loaded
   // null = not available
@@ -216,6 +235,21 @@ export class EwtInstallDialog extends LitElement {
     let content: TemplateResult;
     let allowClosing = true;
 
+    const net = this._client!.networkState;
+    const state = this._client!.state;
+    // Wi-Fi provisioning is only offered when the device has Wi-Fi hardware and it isn't
+    // currently disabled (STOPPED, e.g. running on Ethernet). Legacy devices that don't
+    // report network state keep the prior always-shown behavior.
+    const showWifi =
+      net === undefined
+        ? true
+        : net.supportsWifi && state !== ImprovSerialCurrentState.STOPPED;
+    // The device may be online via a non-Wi-Fi interface (Ethernet); surface its reachable
+    // URL and the "online" affordances even when the Wi-Fi state machine isn't PROVISIONED.
+    const deviceUrl = this._client!.nextUrl ?? net?.urls?.[0];
+    const isOnline =
+      state === ImprovSerialCurrentState.PROVISIONED || net?.isOnline === true;
+
     content = html`
       <div slot="content">
         <ew-list>
@@ -249,20 +283,15 @@ export class EwtInstallDialog extends LitElement {
                 </ew-list-item>
               `
             : ""}
-          ${this._client!.nextUrl === undefined
+          ${deviceUrl === undefined
             ? ""
             : html`
-                <ew-list-item
-                  type="link"
-                  href=${this._client!.nextUrl}
-                  target="_blank"
-                >
+                <ew-list-item type="link" href=${deviceUrl} target="_blank">
                   ${listItemVisitDevice}
                   <div slot="headline">Visit Device</div>
                 </ew-list-item>
               `}
-          ${!this._manifest.home_assistant_domain ||
-          this._client!.state !== ImprovSerialCurrentState.PROVISIONED
+          ${!this._manifest.home_assistant_domain || !isOnline
             ? ""
             : html`
                 <ew-list-item
@@ -274,24 +303,30 @@ export class EwtInstallDialog extends LitElement {
                   <div slot="headline">Add to Home Assistant</div>
                 </ew-list-item>
               `}
-          <ew-list-item
-            type="button"
-            @click=${() => {
-              this._state = "PROVISION";
-              if (
-                this._client!.state === ImprovSerialCurrentState.PROVISIONED
-              ) {
-                this._provisionForce = true;
-              }
-            }}
-          >
-            ${listItemWifi}
-            <div slot="headline">
-              ${this._client!.state === ImprovSerialCurrentState.PROVISIONED
-                ? "Change Wi-Fi"
-                : "Connect to Wi-Fi"}
-            </div>
-          </ew-list-item>
+          ${!showWifi
+            ? ""
+            : html`
+                <ew-list-item
+                  type="button"
+                  @click=${() => {
+                    this._state = "PROVISION";
+                    if (
+                      this._client!.state ===
+                      ImprovSerialCurrentState.PROVISIONED
+                    ) {
+                      this._provisionForce = true;
+                    }
+                  }}
+                >
+                  ${listItemWifi}
+                  <div slot="headline">
+                    ${this._client!.state ===
+                    ImprovSerialCurrentState.PROVISIONED
+                      ? "Change Wi-Fi"
+                      : "Connect to Wi-Fi"}
+                  </div>
+                </ew-list-item>
+              `}
           <ew-list-item
             type="button"
             @click=${async () => {
@@ -379,22 +414,39 @@ export class EwtInstallDialog extends LitElement {
   }
 
   _renderProvision(): [string | undefined, TemplateResult] {
-    let heading: string | undefined = "Configure Wi-Fi";
+    let heading: string | undefined = "Configure network";
     let content: TemplateResult;
 
     if (this._busy) {
-      return [heading, this._renderProgress("Trying to connect")];
+      return [
+        heading,
+        this._renderProgress(
+          this._connectingToNetwork
+            ? "Connecting to the network"
+            : "Trying to connect",
+        ),
+      ];
     }
 
-    if (this._client!.state === ImprovSerialCurrentState.STOPPED) {
+    if (
+      this._client!.state === ImprovSerialCurrentState.STOPPED &&
+      !this._connectedWithoutWifi
+    ) {
       heading = undefined;
+      // Distinguish "Wi-Fi present but disabled" (tell the user to enable it) from "no Wi-Fi at
+      // all / couldn't come online" (don't mention Wi-Fi). Legacy devices (no network state) are
+      // assumed Wi-Fi-capable, preserving the prior message.
+      const wifiSupported = this._client!.networkState?.supportsWifi ?? true;
       content = html`
         <div slot="content">
           <ewt-page-message
             .icon=${ERROR_ICON}
-            .label=${html`The connected device has Wi-Fi turned off, so it can't
-              be configured right now.<br />Enable the device's Wi-Fi, then try
-              again.`}
+            .label=${wifiSupported
+              ? html`The connected device has Wi-Fi turned off, so it can't be
+                  configured right now.<br />Enable the device's Wi-Fi, then try
+                  again.`
+              : html`The device hasn't connected to the network yet.<br />Check
+                  its network connection, then try again.`}
           ></ewt-page-message>
         </div>
         <div slot="actions">
@@ -408,14 +460,18 @@ export class EwtInstallDialog extends LitElement {
         </div>
       `;
     } else if (
-      !this._provisionForce &&
-      this._client!.state === ImprovSerialCurrentState.PROVISIONED
+      this._connectedWithoutWifi ||
+      (!this._provisionForce &&
+        this._client!.state === ImprovSerialCurrentState.PROVISIONED)
     ) {
       heading = undefined;
+      // A device online via a non-Wi-Fi interface (e.g. Ethernet) has no Wi-Fi nextUrl; fall
+      // back to the reachable URL reported in its network state.
+      const deviceUrl =
+        this._client!.nextUrl ?? this._client!.networkState?.urls?.[0];
       const showSetupLinks =
         !this._wasProvisioned &&
-        (this._client!.nextUrl !== undefined ||
-          "home_assistant_domain" in this._manifest);
+        (deviceUrl !== undefined || "home_assistant_domain" in this._manifest);
       content = html`
         <div slot="content">
           <ewt-page-message
@@ -425,12 +481,12 @@ export class EwtInstallDialog extends LitElement {
           ${showSetupLinks
             ? html`
                 <ew-list>
-                  ${this._client!.nextUrl === undefined
+                  ${deviceUrl === undefined
                     ? ""
                     : html`
                         <ew-list-item
                           type="link"
-                          href=${this._client!.nextUrl}
+                          href=${deviceUrl}
                           target="_blank"
                           @click=${() => {
                             this._state = "DASHBOARD";
@@ -723,13 +779,12 @@ export class EwtInstallDialog extends LitElement {
           ${this._installState.chipFamily === "ESP8266"
             ? "a minute"
             : "2 minutes"}.<br />
-          Keep this page visible to prevent slow down
+          Keep this page visible for fastest installation.
         `,
         percentage,
       );
     } else if (this._installState.state === FlashStateType.FINISHED) {
       heading = undefined;
-      const supportsImprov = this._client !== null;
       content = html`
         <ewt-page-message
           slot="content"
@@ -739,9 +794,25 @@ export class EwtInstallDialog extends LitElement {
 
         <div slot="actions">
           <ew-text-button
-            @click=${() => {
+            @click=${async () => {
+              // Improv detection runs once right after flashing; a slow-booting device can miss
+              // that window and get marked "not detected" (_client === null). Retry here so
+              // clicking Next gives it another chance before we decide where to go.
+              if (this._client === null) {
+                this._client = undefined; // shows the "Connecting" progress
+                this._state = "DASHBOARD"; // leave INSTALL so progress (not this screen) renders
+                await this._initialize(true);
+                // Cast: TS narrows _state to "DASHBOARD" from the assignment above and can't see
+                // that _initialize may set it to "ERROR" across the await.
+                if ((this._state as string) === "ERROR") {
+                  return; // _initialize surfaced a fatal error; don't override it
+                }
+              }
+              // After an erase install, enter provisioning so the device can be brought online:
+              // Wi-Fi devices get the setup form, while non-Wi-Fi devices (e.g. Ethernet) wait for
+              // the link to come up and then show the connected screen (see _enterProvision).
               this._state =
-                supportsImprov && this._installErase
+                this._client !== null && this._installErase
                   ? "PROVISION"
                   : "DASHBOARD";
             }}
@@ -825,19 +896,106 @@ export class EwtInstallDialog extends LitElement {
     if (this._state !== "ERROR") {
       this._error = undefined;
     }
-    // Scan for networks from scratch every time we enter provisioning.
-    // `_syncScanning` picks it up from here.
     if (this._state === "PROVISION") {
-      this._ssids = undefined;
+      // Re-query device/network state, then either let `_syncScanning` scan (Wi-Fi available)
+      // or wait for the device to come online via another interface (e.g. Ethernet). This also
+      // resets `_ssids` so the scan starts from scratch each time we enter provisioning.
+      this._enterProvision();
     } else {
-      // Reset this value if we leave provisioning.
+      // Reset these if we leave provisioning.
       this._provisionForce = false;
+      this._connectingToNetwork = false;
     }
 
     if (this._state === "INSTALL") {
       this._installConfirmed = false;
       this._installState = undefined;
     }
+  }
+
+  // The device is online via a non-Wi-Fi interface (e.g. Ethernet) and Wi-Fi provisioning is
+  // unavailable (the Wi-Fi state machine reports STOPPED). In that case there's nothing to
+  // provision, so we show the "Device connected" screen instead of a Wi-Fi form / scan.
+  private get _connectedWithoutWifi(): boolean {
+    return (
+      this._client?.state === ImprovSerialCurrentState.STOPPED &&
+      this._client?.networkState?.isOnline === true
+    );
+  }
+
+  // Re-read the device's current state + network state. Bounded so an unresponsive device
+  // (e.g. rebooting to switch network interface) can't hang us; errors are non-fatal and leave
+  // the last-known values in place.
+  private async _refreshDeviceState() {
+    try {
+      await this._client!.requestCurrentState(PROVISION_RPC_TIMEOUT);
+      await this._client!.requestNetworkState(PROVISION_RPC_TIMEOUT);
+    } catch (err) {
+      this.logger.debug(`Could not refresh device state: ${err}`);
+    }
+  }
+
+  private async _enterProvision() {
+    // Reflect the loading state synchronously so any render during the async re-query below
+    // shows the scanning spinner (the `if (this._busy)` branch of _renderProvision) instead of
+    // falling through to the SSID form, which would dereference this._ssids before it's loaded.
+    this._ssids = undefined;
+    this._busy = true;
+
+    this._connectingToNetwork = false;
+
+    // The device's Wi-Fi availability can change after we first read it at connect time
+    // (e.g. a dual-interface device that detects an Ethernet link and disables Wi-Fi). Re-query
+    // before provisioning so we don't offer a Wi-Fi form / scan that can't succeed.
+    await this._refreshDeviceState();
+
+    // Wi-Fi provisioning is available unless the state machine reports STOPPED. If it is, drop
+    // `_busy` and let `_syncScanning` (driven from `updated()`) start the scan and show the form.
+    if (this._client?.state !== ImprovSerialCurrentState.STOPPED) {
+      this._busy = false;
+      return;
+    }
+
+    // Wi-Fi can't be provisioned here (no Wi-Fi, or Wi-Fi disabled because the device runs on
+    // another interface). If it's already online elsewhere, show the connected screen now.
+    if (this._connectedWithoutWifi) {
+      this._busy = false;
+      return;
+    }
+
+    // If the device can come online without Wi-Fi (e.g. Ethernet), wait for that — the analog of
+    // the Wi-Fi connect wait — so we land on the "Device connected" screen (with the Add to Home
+    // Assistant / Visit Device links) once the link is up.
+    const net = this._client?.networkState;
+    const canComeOnlineWithoutWifi =
+      net !== undefined &&
+      (net.supportsEthernet || net.supportsThread || net.supportsModem);
+    if (!canComeOnlineWithoutWifi) {
+      // Wi-Fi is the only path and it's disabled -> "Wi-Fi off" message.
+      this._busy = false;
+      return;
+    }
+
+    this._connectingToNetwork = true;
+    for (
+      let i = 0;
+      i < ONLINE_WAIT_MAX_TRIES && this._state === "PROVISION";
+      i++
+    ) {
+      await sleep(2000);
+      if (this._state !== "PROVISION") {
+        return; // user navigated away
+      }
+      await this._refreshDeviceState();
+      if (this._connectedWithoutWifi) {
+        this._connectingToNetwork = false;
+        this._busy = false; // -> connected screen
+        return;
+      }
+    }
+    // Gave up waiting; stop the spinner. _renderProvision shows a "not connected yet" message.
+    this._connectingToNetwork = false;
+    this._busy = false;
   }
 
   /**
@@ -1095,11 +1253,11 @@ export class EwtInstallDialog extends LitElement {
     // `_syncScanning` to stop, but the provision RPC needs it stopped *now*.
     await this._stopScanning();
     try {
-      // Devices try to connect for ~30s before reporting failure. Our timeout
-      // must comfortably exceed that: it's only a safety net, and if it fires
-      // first the device's late failure packet rejects the *next* RPC we send
-      // (the resumed network scan) instead of this one.
-      await this._client!.provision(ssid, password, 45000);
+      // Our timeout must comfortably exceed the device's own connect attempt (improv_serial waits
+      // up to ~90s, longer than the ~30s Wi-Fi case, since switching networks on an already-online
+      // device can be slow). It's only a safety net: if it fires first, the device's late failure
+      // packet rejects the *next* RPC we send (the resumed network scan) instead of this one.
+      await this._client!.provision(ssid, password, PROVISION_CONNECT_TIMEOUT);
     } catch (err: any) {
       return;
     } finally {
