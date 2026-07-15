@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>NVS Configuration Test</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      max-width: 800px;
+      margin: 40px auto;
+      padding: 20px;
+    }
+    .test-section {
+      margin: 20px 0;
+      padding: 20px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+    }
+    .test-section h3 {
+      margin-top: 0;
+    }
+    .success {
+      background-color: #d4edda;
+      border-color: #c3e6cb;
+    }
+    .error {
+      background-color: #f8d7da;
+      border-color: #f5c6cb;
+    }
+    pre {
+      background: #f5f5f5;
+      padding: 10px;
+      border-radius: 4px;
+      overflow-x: auto;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h1>NVS Partition Builder Test</h1>
+  <p>This page tests the NVS partition builder functionality without requiring hardware.</p>
+
+  <div class="test-section">
+    <h3>Test 1: Build Simple NVS Partition</h3>
+    <button onclick="testSimplePartition()">Run Test</button>
+    <div id="test1-result"></div>
+  </div>
+
+  <div class="test-section">
+    <h3>Test 2: Build ESPHome WiFi Partition</h3>
+    <button onclick="testESPHomeWiFi()">Run Test</button>
+    <div id="test2-result"></div>
+  </div>
+
+  <div class="test-section">
+    <h3>Test 3: Build Multi-Field Configuration</h3>
+    <button onclick="testMultiField()">Run Test</button>
+    <div id="test3-result"></div>
+  </div>
+
+  <div class="test-section">
+    <h3>Test 4: Build ESPHome WiFi Struct (Correct Format)</h3>
+    <button onclick="testESPHomeWiFiStruct()">Run Test</button>
+    <div id="test4-result"></div>
+  </div>
+
+  <div class="test-section">
+    <h3>Test 5: Pack Binary Struct</h3>
+    <button onclick="testStructPacking()">Run Test</button>
+    <div id="test5-result"></div>
+  </div>
+
+  <div class="test-section">
+    <h3>Interactive Test: ESPHome WiFi Configuration</h3>
+    <p>Try the configuration form with ESPHome WiFi struct format:</p>
+    <esp-web-install-button manifest="./static/example-esphome-wifi.json">
+      Test ESPHome WiFi Form
+    </esp-web-install-button>
+    <p style="margin-top: 10px; font-size: 14px; color: #666;">
+      This uses the correct ESPHome struct format with numeric key.
+    </p>
+  </div>
+
+  <div class="test-section">
+    <h3>Interactive Test: Custom Configuration</h3>
+    <p>Try the configuration form with individual field storage:</p>
+    <esp-web-install-button manifest="./static/example-manifest-with-config.json">
+      Test Configuration Form
+    </esp-web-install-button>
+    <p style="margin-top: 10px; font-size: 14px; color: #666;">
+      Note: You'll need an ESP32 device connected to test the actual flashing.
+      The form will work without hardware to demonstrate the UI.
+      Run <code>script/develop</code> to start the dev server, then open http://localhost:5001/test-nvs.html
+    </p>
+  </div>
+
+  <script type="module">
+    import { buildNVSPartition, buildESPHomeWiFiNVS, packStruct } from './dist/nvs-partition-builder.js';
+
+    window.buildNVSPartition = buildNVSPartition;
+    window.buildESPHomeWiFiNVS = buildESPHomeWiFiNVS;
+    window.packStruct = packStruct;
+
+    window.testSimplePartition = function() {
+      const resultDiv = document.getElementById('test1-result');
+      try {
+        const entries = [
+          { namespace: 'test', key: 'value1', type: 'u8', value: 42 },
+          { namespace: 'test', key: 'value2', type: 'u32', value: 12345 },
+          { namespace: 'test', key: 'text', type: 'string', value: 'Hello NVS!' }
+        ];
+
+        const partition = buildNVSPartition(entries, 4096);
+        
+        resultDiv.innerHTML = `
+          <div class="success">
+            <strong>✓ Test Passed</strong><br>
+            Generated NVS partition: ${partition.length} bytes<br>
+            <pre>${formatBytes(partition.slice(0, 128))}</pre>
+          </div>
+        `;
+      } catch (error) {
+        resultDiv.innerHTML = `
+          <div class="error">
+            <strong>✗ Test Failed</strong><br>
+            ${error.message}
+          </div>
+        `;
+      }
+    };
+
+    window.testESPHomeWiFi = function() {
+      const resultDiv = document.getElementById('test2-result');
+      try {
+        const partition = buildESPHomeWiFiNVS('MyWiFiNetwork', 'SecurePassword123');
+        
+        resultDiv.innerHTML = `
+          <div class="success">
+            <strong>✓ Test Passed</strong><br>
+            Generated ESPHome WiFi partition: ${partition.length} bytes<br>
+            Contains WiFi credentials for ESP32 device<br>
+            <pre>${formatBytes(partition.slice(0, 128))}</pre>
+          </div>
+        `;
+      } catch (error) {
+        resultDiv.innerHTML = `
+          <div class="error">
+            <strong>✗ Test Failed</strong><br>
+            ${error.message}
+          </div>
+        `;
+      }
+    };
+
+    window.testMultiField = function() {
+      const resultDiv = document.getElementById('test3-result');
+      try {
+        const entries = [
+          { namespace: 'config', key: 'ssid', type: 'string', value: 'TestNetwork' },
+          { namespace: 'config', key: 'password', type: 'string', value: 'TestPass' },
+          { namespace: 'config', key: 'port', type: 'u16', value: 8080 },
+          { namespace: 'config', key: 'enabled', type: 'u8', value: 1 },
+          { namespace: 'config', key: 'device_name', type: 'string', value: 'my-esp32-device' }
+        ];
+
+        const partition = buildNVSPartition(entries, 12288);
+        
+        resultDiv.innerHTML = `
+          <div class="success">
+            <strong>✓ Test Passed</strong><br>
+            Generated multi-field partition: ${partition.length} bytes (3 pages)<br>
+            Contains 5 configuration entries<br>
+            <details>
+              <summary>View partition header (click to expand)</summary>
+              <pre>${formatBytes(partition.slice(0, 256))}</pre>
+            </details>
+          </div>
+        `;
+      } catch (error) {
+        resultDiv.innerHTML = `
+          <div class="error">
+            <strong>✗ Test Failed</strong><br>
+            ${error.message}
+          </div>
+        `;
+      }
+    };
+
+    window.testESPHomeWiFiStruct = function() {
+      const resultDiv = document.getElementById('test4-result');
+      try {
+        // Test the new struct-based format that ESPHome actually uses
+        const partition = buildESPHomeWiFiNVS('MyNetwork', 'MyPassword123');
+        
+        resultDiv.innerHTML = `
+          <div class="success">
+            <strong>✓ Test Passed</strong><br>
+            Generated ESPHome WiFi struct partition: ${partition.length} bytes<br>
+            Uses numeric key (88491487) and binary struct format<br>
+            Struct size: 98 bytes (33 + 65)<br>
+            <pre>${formatBytes(partition.slice(0, 192))}</pre>
+          </div>
+        `;
+      } catch (error) {
+        resultDiv.innerHTML = `
+          <div class="error">
+            <strong>✗ Test Failed</strong><br>
+            ${error.message}
+          </div>
+        `;
+      }
+    };
+
+    window.testStructPacking = function() {
+      const resultDiv = document.getElementById('test5-result');
+      try {
+        // Test struct packing directly
+        const structData = packStruct([
+          { type: 'string', value: 'TestSSID', maxLength: 33 },
+          { type: 'string', value: 'TestPassword', maxLength: 65 },
+        ]);
+        
+        resultDiv.innerHTML = `
+          <div class="success">
+            <strong>✓ Test Passed</strong><br>
+            Packed struct size: ${structData.length} bytes<br>
+            Expected: 98 bytes (33 + 65)<br>
+            Match: ${structData.length === 98 ? '✓' : '✗'}<br>
+            <details>
+              <summary>View struct data (click to expand)</summary>
+              <pre>${formatBytes(structData)}</pre>
+            </details>
+          </div>
+        `;
+      } catch (error) {
+        resultDiv.innerHTML = `
+          <div class="error">
+            <strong>✗ Test Failed</strong><br>
+            ${error.message}
+          </div>
+        `;
+      }
+    };
+
+    function formatBytes(bytes) {
+      let result = '';
+      for (let i = 0; i < bytes.length; i += 16) {
+        const offset = i.toString(16).padStart(4, '0');
+        const hex = Array.from(bytes.slice(i, i + 16))
+          .map(b => b.toString(16).padStart(2, '0'))
+          .join(' ');
+        const ascii = Array.from(bytes.slice(i, i + 16))
+          .map(b => b >= 32 && b < 127 ? String.fromCharCode(b) : '.')
+          .join('');
+        result += `${offset}: ${hex.padEnd(48, ' ')} ${ascii}\n`;
+      }
+      return result;
+    }
+  </script>
+
+  <script type="module" src="./dist/web/install-button.js"></script>
+</body>
+</html>

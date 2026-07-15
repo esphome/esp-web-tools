@@ -1,0 +1,80 @@
+{
+  "name": "ESPHome Firmware with WiFi Configuration",
+  "version": "1.0.0",
+  "new_install_prompt_erase": true,
+  "new_install_improv_wait_time": 10,
+  "customFields": [
+    {
+      "name": "wifi_ssid",
+      "label": "WiFi SSID",
+      "type": "text",
+      "required": true,
+      "placeholder": "Enter your WiFi network name"
+    },
+    {
+      "name": "wifi_password",
+      "label": "WiFi Password",
+      "type": "password",
+      "required": true,
+      "placeholder": "Enter your WiFi password"
+    }
+  ],
+  "nvsPartition": {
+    "offset": 36864,
+    "size": 16384,
+    "namespace": "esphome",
+    "struct": {
+      "key": 88491487,
+      "fields": [
+        {
+          "name": "wifi_ssid",
+          "type": "string",
+          "maxLength": 33
+        },
+        {
+          "name": "wifi_password",
+          "type": "string",
+          "maxLength": 65
+        }
+      ]
+    }
+  },
+  "builds": [
+    {
+      "chipFamily": "ESP32",
+      "parts": [
+        { "path": "bootloader_dout_40m.bin", "offset": 4096 },
+        { "path": "partitions.bin", "offset": 32768 },
+        { "path": "boot_app0.bin", "offset": 57344 },
+        { "path": "esp32.bin", "offset": 65536 }
+      ]
+    },
+    {
+      "chipFamily": "ESP32-C3",
+      "parts": [
+        { "path": "bootloader_dout_40m.bin", "offset": 0 },
+        { "path": "partitions.bin", "offset": 32768 },
+        { "path": "boot_app0.bin", "offset": 57344 },
+        { "path": "esp32-c3.bin", "offset": 65536 }
+      ]
+    },
+    {
+      "chipFamily": "ESP32-S2",
+      "parts": [
+        { "path": "bootloader_dout_40m.bin", "offset": 4096 },
+        { "path": "partitions.bin", "offset": 32768 },
+        { "path": "boot_app0.bin", "offset": 57344 },
+        { "path": "esp32-s2.bin", "offset": 65536 }
+      ]
+    },
+    {
+      "chipFamily": "ESP32-S3",
+      "parts": [
+        { "path": "bootloader_dout_40m.bin", "offset": 4096 },
+        { "path": "partitions.bin", "offset": 32768 },
+        { "path": "boot_app0.bin", "offset": 57344 },
+        { "path": "esp32-s3.bin", "offset": 65536 }
+      ]
+    }
+  ]
+}

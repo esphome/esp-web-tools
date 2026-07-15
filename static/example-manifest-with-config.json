@@ -1,0 +1,101 @@
+{
+  "name": "Example Firmware with Configuration",
+  "version": "1.0.0",
+  "new_install_prompt_erase": true,
+  "new_install_improv_wait_time": 10,
+  "customFields": [
+    {
+      "name": "wifi_ssid",
+      "label": "WiFi SSID",
+      "type": "text",
+      "required": true,
+      "placeholder": "Enter your WiFi network name"
+    },
+    {
+      "name": "wifi_password",
+      "label": "WiFi Password",
+      "type": "password",
+      "required": true,
+      "placeholder": "Enter your WiFi password"
+    },
+    {
+      "name": "device_name",
+      "label": "Device Name",
+      "type": "text",
+      "required": false,
+      "defaultValue": "my-device",
+      "placeholder": "Enter a name for your device"
+    },
+    {
+      "name": "enable_ota",
+      "label": "Enable OTA Updates",
+      "type": "checkbox",
+      "defaultValue": true
+    }
+  ],
+  "nvsPartition": {
+    "offset": 36864,
+    "size": 16384,
+    "namespace": "esphome",
+    "fields": [
+      {
+        "name": "wifi_ssid",
+        "key": "ssid",
+        "type": "string"
+      },
+      {
+        "name": "wifi_password",
+        "key": "password",
+        "type": "string"
+      },
+      {
+        "name": "device_name",
+        "key": "name",
+        "type": "string"
+      },
+      {
+        "name": "enable_ota",
+        "key": "ota_enabled",
+        "type": "u8"
+      }
+    ]
+  },
+  "builds": [
+    {
+      "chipFamily": "ESP32",
+      "parts": [
+        { "path": "bootloader_dout_40m.bin", "offset": 4096 },
+        { "path": "partitions.bin", "offset": 32768 },
+        { "path": "boot_app0.bin", "offset": 57344 },
+        { "path": "esp32.bin", "offset": 65536 }
+      ]
+    },
+    {
+      "chipFamily": "ESP32-C3",
+      "parts": [
+        { "path": "bootloader_dout_40m.bin", "offset": 0 },
+        { "path": "partitions.bin", "offset": 32768 },
+        { "path": "boot_app0.bin", "offset": 57344 },
+        { "path": "esp32-c3.bin", "offset": 65536 }
+      ]
+    },
+    {
+      "chipFamily": "ESP32-S2",
+      "parts": [
+        { "path": "bootloader_dout_40m.bin", "offset": 4096 },
+        { "path": "partitions.bin", "offset": 32768 },
+        { "path": "boot_app0.bin", "offset": 57344 },
+        { "path": "esp32-s2.bin", "offset": 65536 }
+      ]
+    },
+    {
+      "chipFamily": "ESP32-S3",
+      "parts": [
+        { "path": "bootloader_dout_40m.bin", "offset": 4096 },
+        { "path": "partitions.bin", "offset": 32768 },
+        { "path": "boot_app0.bin", "offset": 57344 },
+        { "path": "esp32-s3.bin", "offset": 65536 }
+      ]
+    }
+  ]
+}

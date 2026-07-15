@@ -38,6 +38,8 @@ import {
   PortNotReady,
 } from "improv-wifi-serial-sdk/dist/const";
 import { flash } from "./flash";
+import { buildNVSPartition, packStruct } from "./nvs-partition-builder";
+import type { NVSEntry } from "./nvs-partition-builder";
 import { textDownload } from "./util/file-download";
 import { fireEvent } from "./util/fire-event";
 import { sleep } from "./util/sleep";
@@ -101,11 +103,13 @@ export class EwtInstallDialog extends LitElement {
     | "PROVISION"
     | "INSTALL"
     | "ASK_ERASE"
+    | "CONFIGURATION"
     | "LOGS" = "DASHBOARD";
 
   @state() private _installErase = false;
   @state() private _installConfirmed = false;
   @state() private _installState?: FlashState;
+  @state() private _configurationValues: Record<string, string | number | boolean> = {};
 
   @state() private _provisionForce = false;
   private _wasProvisioned = false;
@@ -154,6 +158,8 @@ export class EwtInstallDialog extends LitElement {
       [heading, content, allowClosing] = this._renderInstall();
     } else if (this._state === "ASK_ERASE") {
       [heading, content] = this._renderAskErase();
+    } else if (this._state === "CONFIGURATION") {
+      [heading, content] = this._renderConfiguration();
     } else if (this._state === "ERROR") {
       [heading, content] = this._renderError(this._error!);
     } else if (this._state === "DASHBOARD") {
@@ -637,6 +643,60 @@ export class EwtInstallDialog extends LitElement {
     return [heading, content];
   }
 
+  _renderConfiguration(): [string | undefined, TemplateResult] {
+    const heading = "Configuration";
+    const fields = this._manifest.customFields || [];
+    
+    const content = html`
+      <div slot="content">
+        <div>
+          Please provide the following configuration for ${this._manifest.name}:
+        </div>
+        <div class="formfield-group">
+          ${fields.map(
+            (field) => html`
+              <label class="formfield">
+                ${field.type === "checkbox"
+                  ? html`
+                      <ew-checkbox
+                        touch-target="wrapper"
+                        name="${field.name}"
+                        ?checked=${field.defaultValue === true}
+                      ></ew-checkbox>
+                      ${field.label}${field.required ? " *" : ""}
+                    `
+                  : html`
+                      <div>${field.label}${field.required ? " *" : ""}</div>
+                      <ew-filled-text-field
+                        name="${field.name}"
+                        type="${field.type === "password" ? "password" : field.type === "number" ? "number" : "text"}"
+                        .value=${field.defaultValue?.toString() || ""}
+                        placeholder="${field.placeholder || ""}"
+                        .required=${field.required || false}
+                      ></ew-filled-text-field>
+                    `}
+              </label>
+            `
+          )}
+        </div>
+      </div>
+      <div slot="actions">
+        <ew-text-button
+          @click=${() => {
+            this._state = this._manifest.new_install_prompt_erase ? "ASK_ERASE" : "DASHBOARD";
+          }}
+        >
+          Back
+        </ew-text-button>
+        <ew-text-button @click=${this._handleConfigurationSubmit}>
+          Next
+        </ew-text-button>
+      </div>
+    `;
+
+    return [heading, content];
+  }
+
   _renderInstall(): [string | undefined, TemplateResult, boolean] {
     let heading: string | undefined;
     let content: TemplateResult;
@@ -1030,8 +1090,61 @@ export class EwtInstallDialog extends LitElement {
   }
 
   private _startInstall(erase: boolean) {
+    // Check if we need to show configuration form first
+    if (
+      this._manifest.customFields &&
+      this._manifest.customFields.length > 0 &&
+      Object.keys(this._configurationValues).length === 0
+    ) {
+      this._installErase = erase;
+      this._state = "CONFIGURATION";
+    } else {
+      this._state = "INSTALL";
+      this._installErase = erase;
+      this._installConfirmed = false;
+    }
+  }
+
+  private _handleConfigurationSubmit() {
+    // Collect form values
+    const fields = this._manifest.customFields || [];
+    const values: Record<string, string | number | boolean> = {};
+    let hasError = false;
+
+    for (const field of fields) {
+      if (field.type === "checkbox") {
+        const checkbox = this.shadowRoot!.querySelector(
+          `ew-checkbox[name="${field.name}"]`
+        ) as any;
+        values[field.name] = checkbox?.checked || false;
+      } else {
+        const textField = this.shadowRoot!.querySelector(
+          `ew-filled-text-field[name="${field.name}"]`
+        ) as EwFilledTextField;
+        
+        if (field.required && !textField?.value) {
+          hasError = true;
+          // Could add visual feedback here
+          continue;
+        }
+        
+        if (field.type === "number") {
+          values[field.name] = textField?.value ? Number(textField.value) : 0;
+        } else {
+          values[field.name] = textField?.value || "";
+        }
+      }
+    }
+
+    if (hasError) {
+      this._error = "Please fill in all required fields";
+      return;
+    }
+
+    this._configurationValues = values;
+    
+    // Continue with install flow - erase decision was already made in _startInstall
     this._state = "INSTALL";
-    this._installErase = erase;
     this._installConfirmed = false;
   }
 
@@ -1042,6 +1155,79 @@ export class EwtInstallDialog extends LitElement {
       await this._closeClientWithoutEvents(this._client);
     }
     this._client = undefined;
+
+    // Build NVS partition if configuration values and NVS config exist
+    let nvsData: Uint8Array | undefined;
+    if (
+      this._manifest.nvsPartition &&
+      this._manifest.customFields &&
+      Object.keys(this._configurationValues).length > 0
+    ) {
+      try {
+        const entries: NVSEntry[] = [];
+        const namespace = this._manifest.nvsPartition.namespace;
+        
+        // Check if using struct-based storage (ESPHome style)
+        if (this._manifest.nvsPartition.struct) {
+          const structConfig = this._manifest.nvsPartition.struct;
+          
+          // Pack form values into a binary struct
+          const structFields = structConfig.fields.map(field => {
+            let value = this._configurationValues[field.name];
+            
+            // Convert boolean to number for numeric types
+            if (typeof value === 'boolean' && 
+                (field.type === 'u8' || field.type === 'u16' || field.type === 'u32')) {
+              value = value ? 1 : 0;
+            }
+            
+            return {
+              type: field.type,
+              value: value as string | number,
+              maxLength: field.maxLength,
+            };
+          });
+          
+          const structData = packStruct(structFields);
+          
+          entries.push({
+            namespace,
+            key: structConfig.key,
+            type: 'blob',
+            value: structData,
+          });
+          
+          this.logger.log(`Built NVS struct with key ${structConfig.key}, size ${structData.length} bytes`);
+        } 
+        // Individual field storage
+        else if (this._manifest.nvsPartition.fields) {
+          for (const fieldConfig of this._manifest.nvsPartition.fields) {
+            const value = this._configurationValues[fieldConfig.name];
+            
+            if (value !== undefined) {
+              entries.push({
+                namespace,
+                key: fieldConfig.key,
+                type: fieldConfig.type,
+                value: value as string | number,
+              });
+            }
+          }
+          
+          this.logger.log(`Built NVS partition with ${entries.length} individual fields`);
+        }
+        
+        const partitionSize = this._manifest.nvsPartition.size || 12288; // 3 pages default
+        nvsData = buildNVSPartition(entries, partitionSize);
+        
+        this.logger.log('NVS partition generated successfully');
+      } catch (err: any) {
+        this.logger.error('Failed to build NVS partition:', err);
+        this._error = `Failed to build configuration: ${err.message}`;
+        this._state = "ERROR";
+        return;
+      }
+    }
 
     // Close port. ESPLoader likes opening it.
     await this.port.close();
@@ -1065,6 +1251,7 @@ export class EwtInstallDialog extends LitElement {
       this.manifestPath,
       this._manifest,
       this._installErase,
+      nvsData,
     );
   }
 

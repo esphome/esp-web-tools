@@ -25,6 +25,7 @@ export const flash = async (
   manifestPath: string,
   manifest: Manifest,
   eraseFirst: boolean,
+  nvsData?: Uint8Array,
 ) => {
   let build: Build | undefined;
   let chipFamily: Build["chipFamily"];
@@ -158,6 +159,27 @@ export const flash = async (
       await transport.disconnect();
       return;
     }
+  }
+
+  // Add NVS partition if provided
+  if (nvsData && manifest.nvsPartition) {
+    // Convert Uint8Array to binary string
+    let nvsString = '';
+    for (let i = 0; i < nvsData.length; i++) {
+      nvsString += String.fromCharCode(nvsData[i]);
+    }
+    
+    fileArray.push({
+      data: nvsString,
+      address: manifest.nvsPartition.offset,
+    });
+    totalSize += nvsData.length;
+    
+    fireStateEvent({
+      state: FlashStateType.PREPARING,
+      message: "NVS partition prepared",
+      details: { done: true },
+    });
   }
 
   fireStateEvent({
