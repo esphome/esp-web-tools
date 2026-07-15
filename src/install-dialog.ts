@@ -935,6 +935,12 @@ export class EwtInstallDialog extends LitElement {
       this._connectingToNetwork = false;
     }
 
+    if (this._state === "DASHBOARD") {
+      // The dashboard is otherwise a one-shot snapshot; keep it converging for
+      // a device that's about to come online via a non-Wi-Fi interface.
+      this._watchNetworkStateUntilOnline();
+    }
+
     if (this._state === "INSTALL") {
       this._installConfirmed = false;
       this._installState = undefined;
@@ -966,6 +972,38 @@ export class EwtInstallDialog extends LitElement {
   // network state.
   private get _deviceUrl(): string | undefined {
     return this._client?.nextUrl ?? this._networkState?.urls?.[0];
+  }
+
+  // While the dashboard shows a device that could come online via a non-Wi-Fi interface but
+  // isn't yet (e.g. it was just reset from the console and its Ethernet link is still coming
+  // up), poll its network state so the dashboard converges to the online affordances without
+  // user interaction. Ends when the device reports online, the page or client changes, or
+  // after the same bound as the provisioning wait.
+  private async _watchNetworkStateUntilOnline() {
+    const gen = this._provisionGeneration;
+    const client = this._client;
+    for (let i = 0; i < ONLINE_WAIT_MAX_TRIES; i++) {
+      if (
+        this._state !== "DASHBOARD" ||
+        gen !== this._provisionGeneration ||
+        this._client !== client ||
+        !client ||
+        client.state !== ImprovSerialCurrentState.STOPPED ||
+        this._networkState?.online !== false ||
+        !this._canComeOnlineWithoutWifi
+      ) {
+        return;
+      }
+      await sleep(2000);
+      if (
+        this._state !== "DASHBOARD" ||
+        gen !== this._provisionGeneration ||
+        this._client !== client
+      ) {
+        return;
+      }
+      await this._refreshDeviceState();
+    }
   }
 
   // Re-read the device's current state + network state. Bounded so an unresponsive device
@@ -1264,6 +1302,10 @@ export class EwtInstallDialog extends LitElement {
         // Don't leave the probe's failure behind as the device error.
         client.error = ImprovSerialErrorState.NO_ERROR;
       }
+      // Needed here as well as in `willUpdate`: on first connect DASHBOARD is
+      // the initial page (no state change), and on re-init after the logs page
+      // the client didn't exist yet when `willUpdate` ran.
+      this._watchNetworkStateUntilOnline();
     } catch (err: any) {
       // Clear old value
       this._info = undefined;
