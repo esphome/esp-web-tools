@@ -1208,11 +1208,9 @@ export class EwtInstallDialog extends LitElement {
         font-size: 12px;
       }
       .signal-excellent,
+      .signal-good,
       .lock-secured {
         color: #34a853;
-      }
-      .signal-good {
-        color: #4285f4;
       }
       .signal-fair {
         color: #fbbc04;
