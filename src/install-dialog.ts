@@ -115,9 +115,12 @@ export class EwtInstallDialog extends LitElement {
   @state() private _client?: ImprovSerial | null;
 
   // Connectivity + interface inventory from the device's network state; undefined when the
-  // device predates the command. The SDK returns rather than stores it, so we keep it here —
-  // refreshed in _initialize and _refreshDeviceState, whose callers trigger the re-renders.
-  private _networkState?: NetworkState;
+  // device predates the command. The SDK returns rather than stores it, so we keep it here,
+  // refreshed in _initialize and _refreshDeviceState. Reactive because refreshes complete
+  // after the render that a new `_client` (or a page change) already triggered — the dashboard
+  // would otherwise keep showing the pre-probe snapshot (e.g. "Connect to Wi-Fi" on an
+  // Ethernet-connected device after returning from the logs page).
+  @state() private _networkState?: NetworkState;
 
   @state() private _state:
     | "ERROR"
