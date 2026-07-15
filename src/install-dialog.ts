@@ -31,7 +31,11 @@ import {
   networkWifiFull,
 } from "./components/svg";
 import { Logger, Manifest, FlashStateType, FlashState } from "./const.js";
-import { ImprovSerial, Ssid } from "improv-wifi-serial-sdk/dist/serial";
+import {
+  ImprovSerial,
+  NetworkState,
+  Ssid,
+} from "improv-wifi-serial-sdk/dist/serial";
 import {
   ImprovSerialCurrentState,
   ImprovSerialErrorState,
@@ -53,9 +57,9 @@ console.log(
 const ERROR_ICON = "⚠️";
 const OK_ICON = "🎉";
 
-// Bound RPCs issued while (re)entering provisioning so a device that's unresponsive (e.g.
-// rebooting to switch network interface) can't hang the dialog. On expiry we fall through to
-// the normal empty-scan handling (manual SSID entry) instead of waiting forever.
+// Bound on the network-state requests so a device that's unresponsive (e.g. rebooting to
+// switch network interface) or predates the command and stays silent can't hold up the
+// dialog. Other RPCs are bounded by the SDK's default timeout (30s).
 const PROVISION_RPC_TIMEOUT = 5000;
 
 // How long to wait for the device to (dis)connect after sending Wi-Fi credentials. Kept a little
@@ -109,6 +113,11 @@ export class EwtInstallDialog extends LitElement {
 
   // null = NOT_SUPPORTED
   @state() private _client?: ImprovSerial | null;
+
+  // Connectivity + interface inventory from the device's network state; undefined when the
+  // device predates the command. The SDK returns rather than stores it, so we keep it here —
+  // refreshed in _initialize and _refreshDeviceState, whose callers trigger the re-renders.
+  private _networkState?: NetworkState;
 
   @state() private _state:
     | "ERROR"
@@ -242,7 +251,7 @@ export class EwtInstallDialog extends LitElement {
     let content: TemplateResult;
     let allowClosing = true;
 
-    const net = this._client!.networkState;
+    const net = this._networkState;
     const state = this._client!.state;
     // Wi-Fi provisioning is only offered when the device has Wi-Fi hardware and it isn't
     // currently disabled (STOPPED, e.g. running on Ethernet). Legacy devices that don't
@@ -255,7 +264,7 @@ export class EwtInstallDialog extends LitElement {
     // URL and the "online" affordances even when the Wi-Fi state machine isn't PROVISIONED.
     const deviceUrl = this._deviceUrl;
     const isOnline =
-      state === ImprovSerialCurrentState.PROVISIONED || net?.isOnline === true;
+      state === ImprovSerialCurrentState.PROVISIONED || net?.online === true;
     // Wi-Fi is unavailable but the device isn't online yet over its other interface (e.g.
     // Ethernet cable unplugged): still offer the provisioning flow, which waits for that
     // interface to come up instead of showing a Wi-Fi form (see _enterProvision). Without
@@ -453,7 +462,7 @@ export class EwtInstallDialog extends LitElement {
       // Distinguish "Wi-Fi present but disabled" (tell the user to enable it) from "no Wi-Fi at
       // all / couldn't come online" (don't mention Wi-Fi). Legacy devices (no network state) are
       // assumed Wi-Fi-capable, preserving the prior message.
-      const wifiSupported = this._client!.networkState?.supportsWifi ?? true;
+      const wifiSupported = this._networkState?.supportsWifi ?? true;
       content = html`
         <div slot="content">
           <ewt-page-message
@@ -935,14 +944,14 @@ export class EwtInstallDialog extends LitElement {
   private get _connectedWithoutWifi(): boolean {
     return (
       this._client?.state === ImprovSerialCurrentState.STOPPED &&
-      this._client?.networkState?.isOnline === true
+      this._networkState?.online === true
     );
   }
 
   // The device has a network interface other than Wi-Fi (e.g. Ethernet), so it can come
   // online without Wi-Fi provisioning.
   private get _canComeOnlineWithoutWifi(): boolean {
-    const net = this._client?.networkState;
+    const net = this._networkState;
     return (
       net !== undefined &&
       (net.supportsEthernet || net.supportsThread || net.supportsModem)
@@ -953,7 +962,7 @@ export class EwtInstallDialog extends LitElement {
   // interface (e.g. Ethernet) has no nextUrl and instead reports reachable URLs in its
   // network state.
   private get _deviceUrl(): string | undefined {
-    return this._client?.nextUrl ?? this._client?.networkState?.urls?.[0];
+    return this._client?.nextUrl ?? this._networkState?.urls?.[0];
   }
 
   // Re-read the device's current state + network state. Bounded so an unresponsive device
@@ -961,8 +970,11 @@ export class EwtInstallDialog extends LitElement {
   // the last-known values in place.
   private async _refreshDeviceState() {
     try {
-      await this._client!.requestCurrentState(PROVISION_RPC_TIMEOUT);
-      await this._client!.requestNetworkState(PROVISION_RPC_TIMEOUT);
+      // The state request is bounded by the SDK's default RPC timeout (30s).
+      await this._client!.requestCurrentState();
+      this._networkState = await this._client!.requestNetworkState(
+        PROVISION_RPC_TIMEOUT,
+      );
     } catch (err) {
       this.logger.debug(`Could not refresh device state: ${err}`);
     }
@@ -1235,6 +1247,20 @@ export class EwtInstallDialog extends LitElement {
       this._info = await client.initialize(timeout);
       this._client = client;
       client.addEventListener("disconnect", this._handleDisconnect);
+      // The network-state command is optional and the SDK doesn't probe it during
+      // initialize; do it ourselves. Devices that predate it reject with
+      // UNKNOWN_RPC_COMMAND, leaving `_networkState` undefined so the UI falls back
+      // to Wi-Fi-state-only behavior.
+      this._networkState = undefined;
+      try {
+        this._networkState = await client.requestNetworkState(
+          PROVISION_RPC_TIMEOUT,
+        );
+      } catch (err) {
+        this.logger.debug(`Device does not report network state: ${err}`);
+        // Don't leave the probe's failure behind as the device error.
+        client.error = ImprovSerialErrorState.NO_ERROR;
+      }
     } catch (err: any) {
       // Clear old value
       this._info = undefined;
@@ -1328,7 +1354,7 @@ export class EwtInstallDialog extends LitElement {
       // can never succeed. Skip legacy devices (no network state): they can't
       // be online without Wi-Fi, and probing 0x07 would overwrite the
       // "Unable to connect" error the form is about to display.
-      if (this._client!.networkState) {
+      if (this._networkState) {
         const provisionError = this._client!.error;
         await this._refreshDeviceState();
         if (!this._connectedWithoutWifi) {
