@@ -1028,11 +1028,31 @@ export class EwtInstallDialog extends LitElement {
 
     // Give a device that comes back empty-handed a little longer before we
     // show the form and tell the user there are no networks.
-    this._scanGraceTimeout = setTimeout(() => {
+    this._scanGraceTimeout = setTimeout(async () => {
       this._scanGraceTimeout = undefined;
-      if (this._ssids === undefined) {
+      if (this._ssids !== undefined || this._state !== "PROVISION") {
+        return;
+      }
+      // Nothing found within the grace period. On a Wi-Fi-capable device an
+      // empty scan is suspicious: it is also what we see when the device
+      // rebooted onto another interface mid-flow (e.g. it detected an Ethernet
+      // link and disabled Wi-Fi) — the reboot is invisible to us, and the new
+      // boot still answers scans with empty lists. Re-read the device state
+      // before showing a Wi-Fi form that may no longer be able to succeed.
+      // Stop scanning first so the state RPCs don't overlap an in-flight scan.
+      await this._stopScanning();
+      await this._refreshDeviceState();
+      if (this._showsProvisionForm) {
+        // Still provisioning Wi-Fi: show the form with manual entry.
+        // `_syncScanning` resumes the subscription from `updated()`.
         this._ssids = [];
         this._selectedSsid = null;
+      } else {
+        // The device left Wi-Fi provisioning mid-scan (e.g. it is now online
+        // via Ethernet). `state`/`networkState` aren't reactive properties, so
+        // re-render explicitly; `_renderProvision` picks the right screen and
+        // scanning stays stopped.
+        this.requestUpdate();
       }
     }, SCAN_GRACE_PERIOD);
 
@@ -1259,6 +1279,22 @@ export class EwtInstallDialog extends LitElement {
       // packet rejects the *next* RPC we send (the resumed network scan) instead of this one.
       await this._client!.provision(ssid, password, PROVISION_CONNECT_TIMEOUT);
     } catch (err: any) {
+      // Provisioning failed. One cause: the device left Wi-Fi mode mid-flow
+      // (e.g. it detected an Ethernet link and rebooted with Wi-Fi disabled),
+      // in which case it rejects credentials immediately. Re-read its state so
+      // the re-render shows the connected screen instead of a Wi-Fi form that
+      // can never succeed. Skip legacy devices (no network state): they can't
+      // be online without Wi-Fi, and probing 0x07 would overwrite the
+      // "Unable to connect" error the form is about to display.
+      if (this._client!.networkState) {
+        const provisionError = this._client!.error;
+        await this._refreshDeviceState();
+        if (!this._connectedWithoutWifi) {
+          // Staying on the form after a genuine Wi-Fi failure: restore the
+          // provision error in case a refresh RPC (e.g. a timeout) replaced it.
+          this._client!.error = provisionError;
+        }
+      }
       return;
     } finally {
       // If we end up back on the network form, `_syncScanning` resumes scanning.
