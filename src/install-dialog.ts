@@ -57,9 +57,10 @@ console.log(
 const ERROR_ICON = "⚠️";
 const OK_ICON = "🎉";
 
-// Bound on the network-state requests so a device that's unresponsive (e.g. rebooting to
-// switch network interface) or predates the command and stays silent can't hold up the
-// dialog. Other RPCs are bounded by the SDK's default timeout (30s).
+// Bound on the state/network-state requests so a device that's unresponsive (e.g. rebooting
+// to switch network interface) or predates the network-state command and stays silent can't
+// hold up the dialog — these run on every poll tick, so the bound also paces the poll loops.
+// Other RPCs are bounded by the SDK's default timeout (30s).
 const PROVISION_RPC_TIMEOUT = 5000;
 
 // How long to wait for the device to (dis)connect after sending Wi-Fi credentials. Kept a little
@@ -195,6 +196,9 @@ export class EwtInstallDialog extends LitElement {
         : this._renderDashboardNoImprov();
     } else if (this._state === "PROVISION") {
       [heading, content] = this._renderProvision();
+      // The busy screens have no Back button and their waits can be long, so
+      // keep closing available; the other provision screens have their own actions.
+      allowClosing = this._busy;
     } else if (this._state === "LOGS") {
       [heading, content] = this._renderLogs();
     }
@@ -251,21 +255,23 @@ export class EwtInstallDialog extends LitElement {
 
     const net = this._networkState;
     const state = this._client!.state;
-    // Wi-Fi provisioning is only offered when the device has Wi-Fi hardware and it isn't
-    // currently disabled (STOPPED, e.g. running on Ethernet). Legacy devices that don't
-    // report network state keep the prior always-shown behavior.
-    const showWifi =
-      net === undefined
-        ? true
-        : net.supportsWifi && state !== ImprovSerialCurrentState.STOPPED;
-    // The device may be online via a non-Wi-Fi interface (Ethernet); surface its reachable
-    // URL and the "online" affordances even when the Wi-Fi state machine isn't PROVISIONED.
+    // The device may be online via a non-Wi-Fi interface (Ethernet); surface the online
+    // affordances even when Wi-Fi isn't PROVISIONED. `net.online` is a snapshot from the
+    // last poll — a device that drops offline keeps its affordances (accepted, not re-polled).
     const deviceUrl = this._deviceUrl;
     const isOnline =
       state === ImprovSerialCurrentState.PROVISIONED || net?.online === true;
-    // Wi-Fi is unavailable but another interface (e.g. Ethernet) isn't online yet: offer
-    // the provisioning flow, which waits for that interface to come up instead of showing
-    // a Wi-Fi form (see _enterProvision).
+    // Offer Wi-Fi provisioning when the device has Wi-Fi hardware that isn't disabled
+    // (STOPPED, e.g. running on Ethernet). Legacy devices keep the prior always-shown item,
+    // as does a stranded device (Wi-Fi off, offline, no fallback) -> "enable Wi-Fi" guidance.
+    const showWifi =
+      net === undefined
+        ? true
+        : net.supportsWifi &&
+          (state !== ImprovSerialCurrentState.STOPPED ||
+            (!isOnline && !this._canComeOnlineWithoutWifi));
+    // Wi-Fi is unavailable but another interface (e.g. Ethernet) isn't online yet: offer the
+    // provisioning flow, which waits for that interface instead of showing a Wi-Fi form.
     const awaitNetwork =
       state === ImprovSerialCurrentState.STOPPED &&
       !isOnline &&
@@ -456,9 +462,8 @@ export class EwtInstallDialog extends LitElement {
       !this._connectedWithoutWifi
     ) {
       heading = undefined;
-      // Distinguish "Wi-Fi present but disabled" (tell the user to enable it) from "no Wi-Fi at
-      // all / couldn't come online" (don't mention Wi-Fi). Legacy devices (no network state) are
-      // assumed Wi-Fi-capable, preserving the prior message.
+      // Distinguish "Wi-Fi disabled" (tell the user to enable it) from "no Wi-Fi at all /
+      // couldn't come online". Legacy devices (no network state) keep the prior message.
       const wifiSupported = this._networkState?.supportsWifi ?? true;
       content = html`
         <div slot="content">
@@ -919,9 +924,6 @@ export class EwtInstallDialog extends LitElement {
     // Invalidate async continuations started for the previous page.
     this._provisionGeneration++;
     if (this._state === "PROVISION") {
-      // Re-query device/network state, then either let `_syncScanning` scan (Wi-Fi available)
-      // or wait for the device to come online via another interface (e.g. Ethernet). This also
-      // resets `_ssids` so the scan starts from scratch each time we enter provisioning.
       this._enterProvision();
     } else {
       // Reset these if we leave provisioning.
@@ -941,9 +943,8 @@ export class EwtInstallDialog extends LitElement {
     }
   }
 
-  // The device is online via a non-Wi-Fi interface (e.g. Ethernet) and Wi-Fi provisioning is
-  // unavailable (the Wi-Fi state machine reports STOPPED). In that case there's nothing to
-  // provision, so we show the "Device connected" screen instead of a Wi-Fi form / scan.
+  // Online via a non-Wi-Fi interface (e.g. Ethernet) while Wi-Fi provisioning is unavailable
+  // (STOPPED): nothing to provision, so the "Device connected" screen is shown.
   private get _connectedWithoutWifi(): boolean {
     return (
       this._client?.state === ImprovSerialCurrentState.STOPPED &&
@@ -961,115 +962,112 @@ export class EwtInstallDialog extends LitElement {
     );
   }
 
-  // A Wi-Fi-provisioned device reports its URL via nextUrl; a device online via another
-  // interface (e.g. Ethernet) has no nextUrl and instead reports reachable URLs in its
-  // network state.
+  // A Wi-Fi-provisioned device reports its URL via nextUrl; one online via another interface
+  // (e.g. Ethernet) reports reachable URLs in its network state instead.
   private get _deviceUrl(): string | undefined {
     return this._client?.nextUrl ?? this._networkState?.urls?.[0];
+  }
+
+  // Poll the device's network state every 2s (bounded by ONLINE_WAIT_MAX_TRIES) until
+  // `until` reports the wait is over, the page changes (any `_state` change or dialog
+  // close bumps `_provisionGeneration`), or the client is replaced.
+  private async _pollNetworkState(until: () => boolean) {
+    const gen = this._provisionGeneration;
+    const client = this._client;
+    for (let i = 0; i < ONLINE_WAIT_MAX_TRIES; i++) {
+      await sleep(2000);
+      if (gen !== this._provisionGeneration || this._client !== client) {
+        return;
+      }
+      await this._refreshDeviceState();
+      if (gen !== this._provisionGeneration || this._client !== client) {
+        return;
+      }
+      if (until()) {
+        return;
+      }
+    }
   }
 
   // Poll network state while the dashboard shows a device that could come online via a
   // non-Wi-Fi interface but isn't yet (e.g. just reset from the console), so it converges
   // to the online affordances. Ends on online, page/client change, or the wait bound.
   private async _watchNetworkStateUntilOnline() {
-    const gen = this._provisionGeneration;
-    const client = this._client;
-    for (let i = 0; i < ONLINE_WAIT_MAX_TRIES; i++) {
-      if (
-        this._state !== "DASHBOARD" ||
-        gen !== this._provisionGeneration ||
-        this._client !== client ||
-        !client ||
-        client.state !== ImprovSerialCurrentState.STOPPED ||
-        this._networkState?.online !== false ||
-        !this._canComeOnlineWithoutWifi
-      ) {
-        return;
-      }
-      await sleep(2000);
-      if (
-        this._state !== "DASHBOARD" ||
-        gen !== this._provisionGeneration ||
-        this._client !== client
-      ) {
-        return;
-      }
-      await this._refreshDeviceState();
+    const stopWatching = () =>
+      this._client?.state !== ImprovSerialCurrentState.STOPPED ||
+      this._networkState?.online !== false ||
+      !this._canComeOnlineWithoutWifi;
+    if (this._state !== "DASHBOARD" || stopWatching()) {
+      return;
     }
+    await this._pollNetworkState(stopWatching);
   }
 
   // Re-read the device's current state + network state. Bounded so an unresponsive device
   // (e.g. rebooting to switch network interface) can't hang us; errors are non-fatal and leave
   // the last-known values in place.
   private async _refreshDeviceState() {
+    const client = this._client!;
+    // A failed refresh must not leave its own error behind (the SDK stores a TIMEOUT on the
+    // client, and the provision form renders whatever the client holds): restore the
+    // pre-refresh error, e.g. a provision failure the form is about to display.
+    const error = client.error;
     try {
-      // The state request is bounded by the SDK's default RPC timeout (30s).
-      await this._client!.requestCurrentState();
-      this._networkState = await this._client!.requestNetworkState(
+      await client.requestCurrentState(PROVISION_RPC_TIMEOUT);
+      this._networkState = await client.requestNetworkState(
         PROVISION_RPC_TIMEOUT,
       );
     } catch (err) {
       this.logger.debug(`Could not refresh device state: ${err}`);
+      client.error = error;
     }
   }
 
   private async _enterProvision() {
-    // Reflect the loading state synchronously so any render during the async re-query below
-    // shows the scanning spinner (the `if (this._busy)` branch of _renderProvision) instead of
-    // falling through to the SSID form, which would dereference this._ssids before it's loaded.
+    // Set the loading state synchronously so any render during the re-query below shows
+    // the spinner instead of dereferencing `_ssids` before it's loaded.
     this._ssids = undefined;
     this._busy = true;
     this._connectingToNetwork = false;
 
-    // Bail after every await once the page moves on: a newer invocation (or no provisioning at
-    // all) owns the flags then. The same guard on the finally keeps a superseded invocation
-    // from stomping the newer one's spinner.
+    // Bail after every await once the page moves on: a newer invocation owns the flags then.
+    // The guard on the finally keeps a superseded invocation from stomping its spinner.
     const gen = this._provisionGeneration;
     try {
-      // The device's Wi-Fi availability can change after we first read it at connect time
-      // (e.g. a dual-interface device that detects an Ethernet link and disables Wi-Fi). Re-query
-      // before provisioning so we don't offer a Wi-Fi form / scan that can't succeed.
+      // Wi-Fi availability can change after connect time (e.g. a dual-interface device
+      // detects an Ethernet link and disables Wi-Fi); re-query so we don't offer a Wi-Fi
+      // form / scan that can't succeed.
       await this._refreshDeviceState();
       if (gen !== this._provisionGeneration) {
         return;
       }
 
-      // Wi-Fi provisioning is available unless the state machine reports STOPPED. Dropping
-      // `_busy` (in the finally) lets `_syncScanning` (driven from `updated()`) start the scan
-      // and show the form.
+      // Not STOPPED: Wi-Fi is provisionable. Dropping `_busy` (in the finally) lets
+      // `_syncScanning` start the scan and show the form.
       if (this._client?.state !== ImprovSerialCurrentState.STOPPED) {
         return;
       }
 
-      // Wi-Fi can't be provisioned here (no Wi-Fi, or Wi-Fi disabled because the device runs on
-      // another interface). If it's already online elsewhere, show the connected screen now.
+      // Wi-Fi can't be provisioned. If the device is already online elsewhere, show the
+      // connected screen now.
       if (this._connectedWithoutWifi) {
         return;
       }
 
-      // If the device can come online without Wi-Fi (e.g. Ethernet), wait for that — the analog
-      // of the Wi-Fi connect wait — so we land on the "Device connected" screen (with the Add to
-      // Home Assistant / Visit Device links) once the link is up.
       if (!this._canComeOnlineWithoutWifi) {
         // Wi-Fi is the only path and it's disabled -> "Wi-Fi off" message.
         return;
       }
 
       this._connectingToNetwork = true;
-      for (let i = 0; i < ONLINE_WAIT_MAX_TRIES; i++) {
-        await sleep(2000);
-        if (gen !== this._provisionGeneration) {
-          return;
-        }
-        await this._refreshDeviceState();
-        if (gen !== this._provisionGeneration) {
-          return;
-        }
-        if (this._connectedWithoutWifi) {
-          return; // -> connected screen
-        }
-      }
-      // Gave up waiting. _renderProvision shows a "not connected yet" message.
+      // Wait until the device comes online (-> connected screen) or leaves STOPPED (e.g. it
+      // re-enabled Wi-Fi -> the form shows right away instead of sitting out the wait).
+      await this._pollNetworkState(
+        () =>
+          this._client?.state !== ImprovSerialCurrentState.STOPPED ||
+          this._connectedWithoutWifi,
+      );
+      // `_renderProvision` picks the screen once `_busy` drops in the finally.
     } finally {
       if (gen === this._provisionGeneration) {
         this._connectingToNetwork = false;
@@ -1113,15 +1111,20 @@ export class EwtInstallDialog extends LitElement {
       if (this._ssids !== undefined || this._state !== "PROVISION") {
         return;
       }
-      // Nothing found. An empty scan is also what a device that rebooted onto another
-      // interface mid-flow answers (the reboot is invisible to us), so stop scanning and
-      // re-read the device state before showing a Wi-Fi form that may no longer succeed.
+      // A legacy device (no network state) can't have switched interfaces — show the form
+      // with manual entry right away instead of probing commands it doesn't support.
+      if (this._networkState === undefined) {
+        this._ssids = [];
+        this._selectedSsid = null;
+        return;
+      }
+      // An empty scan is also what a device that invisibly rebooted onto another interface
+      // answers, so stop scanning and re-read state before showing a doomed Wi-Fi form.
       const gen = this._provisionGeneration;
       await this._stopScanning();
       await this._refreshDeviceState();
-      // The awaits above run for seconds on an unresponsive device (RPC timeouts). If the user
-      // left provisioning — or left and re-entered — meanwhile, the new page owns scanning and
-      // `_ssids`; a late scan result may also have filled `_ssids` while we stopped.
+      // The awaits above can run for seconds. If the user left (or re-entered) provisioning
+      // meanwhile, the new page owns scanning; a late scan may also have filled `_ssids`.
       if (gen !== this._provisionGeneration || this._ssids !== undefined) {
         return;
       }
@@ -1276,18 +1279,27 @@ export class EwtInstallDialog extends LitElement {
       this._client = client;
       client.addEventListener("disconnect", this._handleDisconnect);
       // Optional command the SDK doesn't probe during initialize; do it ourselves. Legacy
-      // devices reject with UNKNOWN_RPC_COMMAND, leaving `_networkState` undefined so the
-      // UI falls back to Wi-Fi-state-only behavior.
+      // devices answer UNKNOWN_RPC_COMMAND, leaving `_networkState` undefined. A timeout is
+      // no answer — the device may just still be busy (e.g. post-install) — so retry those.
       this._networkState = undefined;
-      try {
-        this._networkState = await client.requestNetworkState(
-          PROVISION_RPC_TIMEOUT,
-        );
-      } catch (err) {
-        this.logger.debug(`Device does not report network state: ${err}`);
-        // Don't leave the probe's failure behind as the device error.
-        client.error = ImprovSerialErrorState.NO_ERROR;
+      for (let attempt = 0; ; attempt++) {
+        try {
+          this._networkState = await client.requestNetworkState(
+            PROVISION_RPC_TIMEOUT,
+          );
+          break;
+        } catch (err) {
+          if (
+            client.error !== ImprovSerialErrorState.TIMEOUT ||
+            attempt >= 2
+          ) {
+            this.logger.debug(`Device does not report network state: ${err}`);
+            break;
+          }
+        }
       }
+      // Don't leave the probe's failure behind as the device error.
+      client.error = ImprovSerialErrorState.NO_ERROR;
       // Needed here as well as in `willUpdate`: on first connect DASHBOARD is
       // the initial page (no state change), and on re-init after the logs page
       // the client didn't exist yet when `willUpdate` ran.
@@ -1377,17 +1389,11 @@ export class EwtInstallDialog extends LitElement {
       // would reject the next RPC (the resumed scan) instead of this one.
       await this._client!.provision(ssid, password, PROVISION_CONNECT_TIMEOUT);
     } catch (err: any) {
-      // A device that left Wi-Fi mode mid-flow rejects credentials immediately; re-read
-      // its state so the re-render shows the connected screen. Legacy devices skip the
-      // probe — it would overwrite the "Unable to connect" error the form shows.
+      // A device that left Wi-Fi mode mid-flow rejects credentials immediately; re-read its
+      // state so the re-render shows the connected screen. Legacy devices skip the probe; a
+      // failed probe keeps the provision error the form shows (see _refreshDeviceState).
       if (this._networkState) {
-        const provisionError = this._client!.error;
         await this._refreshDeviceState();
-        if (!this._connectedWithoutWifi) {
-          // Staying on the form after a genuine Wi-Fi failure: restore the
-          // provision error in case a refresh RPC (e.g. a timeout) replaced it.
-          this._client!.error = provisionError;
-        }
       }
       return;
     } finally {
@@ -1407,6 +1413,9 @@ export class EwtInstallDialog extends LitElement {
   }
 
   private async _handleClose() {
+    // Closing doesn't change `_state`, so bump the generation to stop any poll loop
+    // from issuing RPCs against the closed client.
+    this._provisionGeneration++;
     if (this._client) {
       await this._closeClientWithoutEvents(this._client);
     }
