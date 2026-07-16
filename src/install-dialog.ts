@@ -1289,10 +1289,7 @@ export class EwtInstallDialog extends LitElement {
           );
           break;
         } catch (err) {
-          if (
-            client.error !== ImprovSerialErrorState.TIMEOUT ||
-            attempt >= 2
-          ) {
+          if (client.error !== ImprovSerialErrorState.TIMEOUT || attempt >= 2) {
             this.logger.debug(`Device does not report network state: ${err}`);
             break;
           }
