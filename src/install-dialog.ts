@@ -829,6 +829,11 @@ export class EwtInstallDialog extends LitElement {
     // `_syncScanning` picks it up from here.
     if (this._state === "PROVISION") {
       this._ssids = undefined;
+      // The client never resets its error itself, so an old one (e.g. a
+      // timed-out scan) would otherwise render on the form forever.
+      if (this._client) {
+        this._client.error = ImprovSerialErrorState.NO_ERROR;
+      }
     } else {
       // Reset this value if we leave provisioning.
       this._provisionForce = false;
