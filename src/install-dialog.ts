@@ -876,7 +876,7 @@ export class EwtInstallDialog extends LitElement {
   // Poll network state while (and only while) the dashboard is shown, so the
   // menu converges when the device comes online (e.g. Ethernet link up).
   // Driven from `updated()`, like `_syncScanning`.
-  private _syncNetworkStatePolling() {
+  private _setupNetworkStatePolling() {
     const shouldPoll =
       this._state === "DASHBOARD" &&
       !!this._client &&
@@ -887,38 +887,38 @@ export class EwtInstallDialog extends LitElement {
     }
 
     if (!shouldPoll) {
-      clearInterval(this._networkStatePollInterval);
-      this._networkStatePollInterval = undefined;
+      this._stopNetworkStatePolling();
       return;
     }
 
-    this._refreshNetworkState();
+    const refresh = async () => {
+      const client = this._client;
+      if (!client) {
+        return;
+      }
+      try {
+        this._networkState = await client.requestNetworkState(
+          NETWORK_STATE_TIMEOUT,
+        );
+      } catch (err) {
+        if (client.error === ImprovSerialErrorState.UNKNOWN_RPC_COMMAND) {
+          // The device predates the command; stop asking.
+          this._networkState = null;
+          this._stopNetworkStatePolling();
+        }
+        this.logger.debug(`Failed to fetch network state: ${err}`);
+      }
+    };
+    refresh();
     this._networkStatePollInterval = setInterval(
-      () => this._refreshNetworkState(),
+      refresh,
       NETWORK_STATE_POLL_INTERVAL,
     );
   }
 
-  private async _refreshNetworkState() {
-    const client = this._client;
-    if (!client) {
-      return;
-    }
-    const error = client.error;
-    try {
-      this._networkState = await client.requestNetworkState(
-        NETWORK_STATE_TIMEOUT,
-      );
-    } catch (err) {
-      if (client.error === ImprovSerialErrorState.UNKNOWN_RPC_COMMAND) {
-        // The device predates the command; stop asking.
-        this._networkState = null;
-      }
-      this.logger.debug(`Failed to fetch network state: ${err}`);
-      // Keep the last-known state; a failed poll must not leave its error
-      // behind on the client (the provision form renders `client.error`).
-      client.error = error;
-    }
+  private _stopNetworkStatePolling() {
+    clearInterval(this._networkStatePollInterval);
+    this._networkStatePollInterval = undefined;
   }
 
   /**
@@ -1026,7 +1026,7 @@ export class EwtInstallDialog extends LitElement {
     }
 
     this._syncScanning();
-    this._syncNetworkStatePolling();
+    this._setupNetworkStatePolling();
 
     if (this._state !== "PROVISION") {
       return;
@@ -1203,14 +1203,18 @@ export class EwtInstallDialog extends LitElement {
   }
 
   private async _handleClose() {
-    clearInterval(this._networkStatePollInterval);
-    this._networkStatePollInterval = undefined;
     if (this._client) {
       await this._closeClientWithoutEvents(this._client);
     }
     fireEvent(this, "closed" as any);
     document.body.style.overflow = this._bodyOverflow!;
     this.parentNode!.removeChild(this);
+  }
+
+  public override disconnectedCallback() {
+    super.disconnectedCallback();
+    // The interval would otherwise keep firing against the closed client.
+    this._stopNetworkStatePolling();
   }
 
   /**
