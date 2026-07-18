@@ -723,7 +723,7 @@ export class EwtInstallDialog extends LitElement {
           ${this._installState.chipFamily === "ESP8266"
             ? "a minute"
             : "2 minutes"}.<br />
-          Keep this page visible to prevent slow down
+          Keep this page visible for fastest installation.
         `,
         percentage,
       );
@@ -872,7 +872,7 @@ export class EwtInstallDialog extends LitElement {
     // show the form and tell the user there are no networks.
     this._scanGraceTimeout = setTimeout(() => {
       this._scanGraceTimeout = undefined;
-      if (this._ssids === undefined) {
+      if (this._ssids === undefined && this._state === "PROVISION") {
         this._ssids = [];
         this._selectedSsid = null;
       }
