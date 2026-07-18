@@ -31,7 +31,11 @@ import {
   networkWifiFull,
 } from "./components/svg";
 import { Logger, Manifest, FlashStateType, FlashState } from "./const.js";
-import { ImprovSerial, Ssid } from "improv-wifi-serial-sdk/dist/serial";
+import {
+  ImprovSerial,
+  NetworkState,
+  Ssid,
+} from "improv-wifi-serial-sdk/dist/serial";
 import {
   ImprovSerialCurrentState,
   ImprovSerialErrorState,
@@ -52,6 +56,11 @@ console.log(
 
 const ERROR_ICON = "⚠️";
 const OK_ICON = "🎉";
+
+// Network state is polled in the background, so a failed request can recover
+// on a later tick; keep the timeout small to avoid queueing up requests.
+const NETWORK_STATE_TIMEOUT = 500;
+const NETWORK_STATE_POLL_INTERVAL = 2500;
 
 // A device that just booted can come back from its first scan with no networks
 // at all. Keep looking (the SDK scans every 3s, so this covers four scans)
@@ -94,6 +103,12 @@ export class EwtInstallDialog extends LitElement {
 
   // null = NOT_SUPPORTED
   @state() private _client?: ImprovSerial | null;
+
+  // undefined = not yet known
+  // null = the device doesn't support the network state command
+  @state() private _networkState?: NetworkState | null;
+
+  private _networkStatePollInterval?: ReturnType<typeof setInterval>;
 
   @state() private _state:
     | "ERROR"
@@ -249,20 +264,19 @@ export class EwtInstallDialog extends LitElement {
                 </ew-list-item>
               `
             : ""}
-          ${this._client!.nextUrl === undefined
+          ${this._deviceUrl === undefined
             ? ""
             : html`
                 <ew-list-item
                   type="link"
-                  href=${this._client!.nextUrl}
+                  href=${this._deviceUrl}
                   target="_blank"
                 >
                   ${listItemVisitDevice}
                   <div slot="headline">Visit Device</div>
                 </ew-list-item>
               `}
-          ${!this._manifest.home_assistant_domain ||
-          this._client!.state !== ImprovSerialCurrentState.PROVISIONED
+          ${!this._manifest.home_assistant_domain || !this._isOnline
             ? ""
             : html`
                 <ew-list-item
@@ -845,6 +859,68 @@ export class EwtInstallDialog extends LitElement {
     }
   }
 
+  // Online via provisioned Wi-Fi or any other interface (e.g. Ethernet).
+  private get _isOnline(): boolean {
+    return (
+      this._client?.state === ImprovSerialCurrentState.PROVISIONED ||
+      this._networkState?.online === true
+    );
+  }
+
+  // A Wi-Fi-provisioned device reports its URL via `nextUrl`; one online via
+  // another interface (e.g. Ethernet) reports it in its network state.
+  private get _deviceUrl(): string | undefined {
+    return this._client?.nextUrl ?? this._networkState?.urls[0];
+  }
+
+  // Poll network state while (and only while) the dashboard is shown, so the
+  // menu converges when the device comes online (e.g. Ethernet link up).
+  // Driven from `updated()`, like `_syncScanning`.
+  private _syncNetworkStatePolling() {
+    const shouldPoll =
+      this._state === "DASHBOARD" &&
+      !!this._client &&
+      this._networkState !== null;
+
+    if (shouldPoll === (this._networkStatePollInterval !== undefined)) {
+      return;
+    }
+
+    if (!shouldPoll) {
+      clearInterval(this._networkStatePollInterval);
+      this._networkStatePollInterval = undefined;
+      return;
+    }
+
+    this._refreshNetworkState();
+    this._networkStatePollInterval = setInterval(
+      () => this._refreshNetworkState(),
+      NETWORK_STATE_POLL_INTERVAL,
+    );
+  }
+
+  private async _refreshNetworkState() {
+    const client = this._client;
+    if (!client) {
+      return;
+    }
+    const error = client.error;
+    try {
+      this._networkState = await client.requestNetworkState(
+        NETWORK_STATE_TIMEOUT,
+      );
+    } catch (err) {
+      if (client.error === ImprovSerialErrorState.UNKNOWN_RPC_COMMAND) {
+        // The device predates the command; stop asking.
+        this._networkState = null;
+      }
+      this.logger.debug(`Failed to fetch network state: ${err}`);
+      // Keep the last-known state; a failed poll must not leave its error
+      // behind on the client (the provision form renders `client.error`).
+      client.error = error;
+    }
+  }
+
   /**
    * Return if the provision page shows the network form (and not a message).
    */
@@ -950,6 +1026,7 @@ export class EwtInstallDialog extends LitElement {
     }
 
     this._syncScanning();
+    this._syncNetworkStatePolling();
 
     if (this._state !== "PROVISION") {
       return;
@@ -1001,6 +1078,8 @@ export class EwtInstallDialog extends LitElement {
     }
 
     const client = new ImprovSerial(this.port!, this.logger);
+    // Don't carry network state over from a previous client (e.g. pre-install).
+    this._networkState = undefined;
     client.addEventListener("state-changed", () => {
       this.requestUpdate();
     });
@@ -1124,6 +1203,8 @@ export class EwtInstallDialog extends LitElement {
   }
 
   private async _handleClose() {
+    clearInterval(this._networkStatePollInterval);
+    this._networkStatePollInterval = undefined;
     if (this._client) {
       await this._closeClientWithoutEvents(this._client);
     }
