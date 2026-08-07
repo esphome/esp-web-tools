@@ -68,6 +68,16 @@ export class InstallButton extends HTMLElement {
 
   public overrides: EwtInstallDialog["overrides"];
 
+  /**
+   * Runs once after a successful flash and after the serial port reopens at
+   * 115200 baud. ESP Web Tools waits for this callback before it starts
+   * post-flash initialization. Release all serial stream locks before the
+   * callback returns, and leave the port open.
+   *
+   * A callback error is logged and does not change the flash result.
+   */
+  public onPostFlash?: EwtInstallDialog["onPostFlash"];
+
   public connectedCallback() {
     if (this.renderRoot) {
       return;

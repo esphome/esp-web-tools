@@ -8,6 +8,26 @@ Allow flashing ESPHome or other ESP-based firmwares via the browser. Will automa
 ></esp-web-install-button>
 ```
 
+To read serial output after a successful flash, set `onPostFlash` on the
+install button:
+
+```js
+const button = document.querySelector("esp-web-install-button");
+button.onPostFlash = async (port) => {
+  const reader = port.readable.getReader();
+  try {
+    // Read the firmware output here.
+  } finally {
+    reader.releaseLock();
+  }
+};
+```
+
+ESP Web Tools opens the port at 115200 baud before it calls the function. It
+waits for the function before it starts Improv initialization. The function
+must release all stream locks and leave the port open before it returns. An
+error is logged, but it does not change the successful flash result.
+
 Example manifest:
 
 The optional `serialType` field (`"cdc"` or `"uart"`) lets you ship separate firmware variants for chips that support both native USB CDC (built-in USB) and external USB-to-UART bridges. The correct variant is selected automatically based on the detected connection. Builds without a `serialType` are used as a fallback for any connection type.

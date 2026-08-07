@@ -24,5 +24,6 @@ jobs:
         with:
           node-version: 22
       - run: npm ci
+      - run: npm test
       - run: script/build
       - run: npm exec -- prettier --check src

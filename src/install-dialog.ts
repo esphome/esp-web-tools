@@ -45,6 +45,7 @@ import { downloadManifest } from "./util/manifest";
 import { dialogStyles } from "./styles";
 import { version } from "./version";
 import type { EwFilledSelect } from "./components/ew-filled-select";
+import { runPostFlash, type PostFlashCallback } from "./post-flash.js";
 
 console.log(
   `ESP Web Tools ${version} by Open Home Foundation; https://esphome.github.io/esp-web-tools/`,
@@ -87,6 +88,8 @@ export class EwtInstallDialog extends LitElement {
       deviceImprov: ImprovSerial["info"],
     ) => boolean;
   };
+
+  public onPostFlash?: PostFlashCallback;
 
   private _manifest!: Manifest;
 
@@ -1056,9 +1059,14 @@ export class EwtInstallDialog extends LitElement {
 
         if (state.state === FlashStateType.FINISHED) {
           sleep(100)
-            // Flashing closes the port
-            .then(() => this.port.open({ baudRate: 115200, bufferSize: 8192 }))
-            .then(() => this._initialize(true))
+            .then(() =>
+              runPostFlash(
+                this.port,
+                this.onPostFlash,
+                () => this._initialize(true),
+                this.logger,
+              ),
+            )
             .then(() => this.requestUpdate());
         } else if (state.state === FlashStateType.ERROR) {
           sleep(100)
