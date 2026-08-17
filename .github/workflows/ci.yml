@@ -25,4 +25,5 @@ jobs:
           node-version: 22
       - run: npm ci
       - run: script/build
+      - run: script/build_website
       - run: npm exec -- prettier --check src

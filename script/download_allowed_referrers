@@ -1,0 +1,45 @@
+# Downloads the referrer allow list that keeps private Home Assistant and
+# ESPHome URLs out of our analytics. Runs once before each website build.
+#
+# This never fails the build: if the download or the payload is bad we keep
+# whatever list is already on disk.
+
+cd "$(dirname "$0")/.."
+
+SOURCE_URL=https://www.openhomefoundation.org/allowed-referrers.json
+OUTPUT=website/allowed-referrers.json
+
+mkdir -p "$(dirname "$OUTPUT")"
+# So the site still builds if we have never managed to download the list.
+[ -f "$OUTPUT" ] || echo "[]" > "$OUTPUT"
+
+TMP=$(mktemp)
+trap 'rm -f "$TMP"' EXIT
+
+if ! curl --fail --location --silent --show-error \
+  --user-agent esp-web-tools-website-build \
+  "$SOURCE_URL" --output "$TMP"; then
+  echo "[allowed-referrers] download failed, keeping $OUTPUT"
+  exit 0
+fi
+
+node -e '
+const { readFileSync, writeFileSync } = require("node:fs");
+const [input, output] = process.argv.slice(1);
+
+try {
+  const payload = JSON.parse(readFileSync(input, "utf8"));
+  if (!Array.isArray(payload) || payload.some((entry) => typeof entry !== "string")) {
+    throw new Error("payload is not an array of strings");
+  }
+
+  const referrers = payload
+    .map((entry) => entry.trim().toLowerCase().replace(/\.$/, ""))
+    .filter((entry) => entry.length > 0);
+
+  writeFileSync(output, JSON.stringify(referrers, null, 2) + "\n");
+  console.log(`[allowed-referrers] wrote ${referrers.length} domains to ${output}`);
+} catch (err) {
+  console.warn(`[allowed-referrers] ${err.message}, keeping ${output}`);
+}
+' "$TMP" "$OUTPUT"

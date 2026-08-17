@@ -1,0 +1,43 @@
+# Stop on errors
+set -e
+
+cd "$(dirname "$0")/.."
+
+script/download_allowed_referrers
+
+rm -rf website/dist
+mkdir -p website/dist
+cp index.html 404.html website/dist/
+cp -r static website/dist/static
+
+# The pages carry an include comment instead of the analytics snippet, so that
+# the allow list is only ever inlined into what we deploy.
+node -e '
+const { readFileSync, writeFileSync } = require("node:fs");
+
+const referrers = JSON.parse(readFileSync("website/allowed-referrers.json", "utf8"));
+const analytics = readFileSync("website/plausible-analytics.html", "utf8")
+  .trimEnd()
+  .replace("__ALLOWED_REFERRERS__", JSON.stringify(referrers));
+
+const INCLUDE = /^([ \t]*)<!-- include: plausible-analytics.html -->$/m;
+
+for (const page of ["website/dist/index.html", "website/dist/404.html"]) {
+  const html = readFileSync(page, "utf8");
+  if (!INCLUDE.test(html)) {
+    throw new Error(`no analytics include in ${page}`);
+  }
+
+  writeFileSync(
+    page,
+    html.replace(INCLUDE, (_match, indent) =>
+      analytics
+        .split("\n")
+        .map((line) => (line.length > 0 ? indent + line : line))
+        .join("\n")
+    )
+  );
+}
+
+console.log(`[website] inlined analytics with ${referrers.length} domains`);
+'
