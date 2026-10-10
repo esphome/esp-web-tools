@@ -1,0 +1,55 @@
+<script
+  async
+  src="https://plausible.openhomefoundation.org/js/pa-eiPLGApXwBoksGTbkRQv2.js"
+></script>
+<script>
+  (function () {
+    // Visitors arriving from their own Home Assistant or ESPHome instance send
+    // their private URL as the referrer. The allow list is downloaded at build
+    // time by script/download_allowed_referrers; every referrer that is not on
+    // it gets replaced before Plausible records it.
+    var allowedReferrers = __ALLOWED_REFERRERS__;
+
+    window.plausible =
+      window.plausible ||
+      function () {
+        (plausible.q = plausible.q || []).push(arguments);
+      };
+    plausible.init =
+      plausible.init ||
+      function (options) {
+        plausible.o = options || {};
+      };
+
+    plausible.init({
+      transformRequest: function (payload) {
+        var referrer = payload.r;
+        if (!referrer) return payload;
+
+        var host = "";
+        try {
+          host = new URL(referrer).hostname.replace(/\.$/, "");
+        } catch (err) {
+          // Unparseable referrer: falls through and gets replaced.
+        }
+
+        for (var i = 0; i < allowedReferrers.length; i++) {
+          var domain = allowedReferrers[i];
+          if (
+            host === domain ||
+            (host.length > domain.length &&
+              host.slice(-(domain.length + 1)) === "." + domain)
+          ) {
+            return payload;
+          }
+        }
+
+        // One aggregate bucket, so we can see how much we filter without
+        // learning anything about individual visitors. .invalid is reserved by
+        // RFC 2606 and can never collide with a real domain.
+        payload.r = "https://unlisted.invalid/";
+        return payload;
+      },
+    });
+  })();
+</script>
