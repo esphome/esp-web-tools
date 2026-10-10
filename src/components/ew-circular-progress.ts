@@ -1,5 +1,5 @@
 import { CircularProgress } from "@material/web/progress/internal/circular-progress.js";
-import { styles } from "@material/web/progress/internal/circular-progress-styles.js";
+import { styles } from "@material/web/progress/internal/circular-progress-styles.cssresult.js";
 
 declare global {
   interface HTMLElementTagNameMap {

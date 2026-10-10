@@ -1,6 +1,6 @@
 import { IconButton } from "@material/web/iconbutton/internal/icon-button.js";
-import { styles as sharedStyles } from "@material/web/iconbutton/internal/shared-styles.js";
-import { styles } from "@material/web/iconbutton/internal/standard-styles.js";
+import { styles as sharedStyles } from "@material/web/iconbutton/internal/shared-styles.cssresult.js";
+import { styles } from "@material/web/iconbutton/internal/standard-styles.cssresult.js";
 
 declare global {
   interface HTMLElementTagNameMap {
