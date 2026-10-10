@@ -1,5 +1,5 @@
 import { Checkbox } from "@material/web/checkbox/internal/checkbox.js";
-import { styles } from "@material/web/checkbox/internal/checkbox-styles.js";
+import { styles } from "@material/web/checkbox/internal/checkbox-styles.cssresult.js";
 
 declare global {
   interface HTMLElementTagNameMap {
