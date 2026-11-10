@@ -127,6 +127,8 @@ export class EwtInstallDialog extends LitElement {
 
   private _bodyOverflow: string | null = null;
 
+  private _viewportListening = false;
+
   protected render() {
     if (!this.port) {
       return html``;
@@ -977,6 +979,7 @@ export class EwtInstallDialog extends LitElement {
 
     if (changedProps.has("_state")) {
       this.setAttribute("state", this._state);
+      this._syncViewportTracking();
     }
 
     this._syncScanning();
@@ -1189,6 +1192,40 @@ export class EwtInstallDialog extends LitElement {
     await client.close();
   }
 
+  public override disconnectedCallback() {
+    super.disconnectedCallback();
+    this._syncViewportTracking();
+  }
+
+  // On phones the logs view fills the screen. The on-screen keyboard shrinks
+  // the visual viewport but not the layout viewport (so `dvh` does not
+  // change), so while the logs are shown we mirror the visual viewport into
+  // CSS variables that the narrow-screen styles use for size and position.
+  private _syncViewportTracking() {
+    const vv = window.visualViewport;
+    const shouldTrack = this.isConnected && this._state === "LOGS" && !!vv;
+    if (shouldTrack === this._viewportListening) {
+      return;
+    }
+    this._viewportListening = shouldTrack;
+    if (shouldTrack) {
+      vv!.addEventListener("resize", this._updateViewportVars);
+      vv!.addEventListener("scroll", this._updateViewportVars);
+      this._updateViewportVars();
+    } else {
+      vv?.removeEventListener("resize", this._updateViewportVars);
+      vv?.removeEventListener("scroll", this._updateViewportVars);
+      this.style.removeProperty("--ewt-vv-height");
+      this.style.removeProperty("--ewt-vv-top");
+    }
+  }
+
+  private _updateViewportVars = () => {
+    const vv = window.visualViewport!;
+    this.style.setProperty("--ewt-vv-height", `${vv.height}px`);
+    this.style.setProperty("--ewt-vv-top", `${vv.offsetTop}px`);
+  };
+
   private _preventDefault(ev: Event) {
     ev.preventDefault();
   }
@@ -1298,6 +1335,30 @@ export class EwtInstallDialog extends LitElement {
       ewt-console {
         width: calc(80vw - 48px);
         height: calc(90vh - 168px);
+      }
+      /* On phones the logs view takes the whole screen */
+      @media (max-width: 600px) {
+        :host([state="LOGS"]) ew-dialog {
+          width: 100dvw;
+          height: var(--ewt-vv-height, 100dvh);
+          max-width: 100dvw;
+          max-height: var(--ewt-vv-height, 100dvh);
+          margin: var(--ewt-vv-top, 0px) 0 0;
+        }
+        :host([state="LOGS"]) div[slot="headline"] {
+          padding: 12px 16px 0;
+        }
+        :host([state="LOGS"]) div[slot="content"] {
+          padding: 8px 0 0;
+        }
+        :host([state="LOGS"]) div[slot="actions"] {
+          padding: 8px;
+        }
+        :host([state="LOGS"]) ewt-console {
+          width: 100%;
+          /* headline + content padding + actions */
+          height: calc(var(--ewt-vv-height, 100dvh) - 112px);
+        }
       }
     `,
   ];

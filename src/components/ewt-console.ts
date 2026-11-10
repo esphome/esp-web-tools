@@ -47,6 +47,16 @@ export class EwtConsole extends HTMLElement {
           outline: none;
         }
         ${coloredConsoleStyles}
+        @media (max-width: 600px) {
+          form {
+            padding: 0 4px 0 8px;
+          }
+          .log {
+            font-size: 11px;
+            padding: 8px;
+            border-radius: 0;
+          }
+        }
       </style>
       <div class="log"></div>
       ${
@@ -60,7 +70,20 @@ export class EwtConsole extends HTMLElement {
       }
     `;
 
-    this._console = new ColoredConsole(this.shadowRoot!.querySelector("div")!);
+    const log = this.shadowRoot!.querySelector("div")!;
+    this._console = new ColoredConsole(log);
+
+    // Keep the newest lines in view when the log area is resized (e.g. the
+    // on-screen keyboard opens) while the user is scrolled to the bottom.
+    let stickToBottom = true;
+    log.addEventListener("scroll", () => {
+      stickToBottom = log.scrollTop > log.scrollHeight - log.offsetHeight - 50;
+    });
+    new ResizeObserver(() => {
+      if (stickToBottom) {
+        log.scrollTop = log.scrollHeight;
+      }
+    }).observe(log);
 
     if (this.allowInput) {
       const input = this.shadowRoot!.querySelector("input")!;
