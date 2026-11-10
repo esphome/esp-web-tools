@@ -15,7 +15,7 @@ workflows:
         - 'actions/setup-node@v7.1.0'
         - 'actions/upload-pages-artifact@v5.0.0'
     '.github/workflows/release-drafter.yml':
-        - 'release-drafter/release-drafter@v7.9.0'
+        - 'release-drafter/release-drafter@v7.10.0'
     '.github/workflows/verify-lockfile.yml':
         - 'actions/checkout@v7.0.1'
 dependencies:
@@ -46,8 +46,8 @@ dependencies:
         repo_id: 496012378
         uses:
             - 'actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f'
-    'release-drafter/release-drafter@v7.9.0':
-        ref: 'v7.9.0'
-        commit: 'sha1-72967cdc98ddd3160f1fc3dff619de365e137dd0'
+    'release-drafter/release-drafter@v7.10.0':
+        ref: 'v7.10.0'
+        commit: 'sha1-978bb0b30c5ee8cdd332ced253758157150d43f0'
         owner_id: 58292376
         repo_id: 139022359
