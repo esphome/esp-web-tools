@@ -1,9 +1,10 @@
 import type { FlashState } from "./const";
 import type { EwtInstallDialog } from "./install-dialog";
 import { connect } from "./connect";
+import { isSerialSupported } from "./util/serial";
 
 export class InstallButton extends HTMLElement {
-  public static isSupported = "serial" in navigator;
+  public static isSupported = isSerialSupported();
 
   public static isAllowed = window.isSecureContext;
 

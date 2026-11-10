@@ -1,10 +1,11 @@
 import type { InstallButton } from "./install-button.js";
+import { requestSerialPort } from "./util/serial.js";
 
 export const connect = async (button: InstallButton) => {
   import("./install-dialog.js");
   let port: SerialPort | undefined;
   try {
-    port = await navigator.serial.requestPort();
+    port = await requestSerialPort();
   } catch (err: any) {
     if ((err as DOMException).name === "NotFoundError") {
       import("./no-port-picked/index").then((mod) =>
