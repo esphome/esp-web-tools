@@ -1,6 +1,6 @@
 {
   "name": "esp-web-tools",
-  "version": "0.0.0",
+  "version": "10.5.0",
   "description": "Web tools for ESP devices",
   "main": "dist/install-button.js",
   "repository": {
