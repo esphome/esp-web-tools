@@ -255,12 +255,12 @@ export class EwtInstallDialog extends LitElement {
               : ""
           }
           ${
-            this._client!.nextUrl === undefined
+            this._deviceUrl === undefined
               ? ""
               : html`
                   <ew-list-item
                     type="link"
-                    href=${this._client!.nextUrl}
+                    href=${this._deviceUrl}
                     target="_blank"
                   >
                     ${listItemVisitDevice}
@@ -269,8 +269,7 @@ export class EwtInstallDialog extends LitElement {
                 `
           }
           ${
-            !this._manifest.home_assistant_domain ||
-            this._client!.state !== ImprovSerialCurrentState.PROVISIONED
+            !this._manifest.home_assistant_domain || !this._isOnline
               ? ""
               : html`
                   <ew-list-item
@@ -878,6 +877,19 @@ export class EwtInstallDialog extends LitElement {
     }
   }
 
+  // Online via provisioned Wi-Fi or any other interface (e.g. Ethernet).
+  private get _isOnline(): boolean {
+    return (
+      this._client?.state === ImprovSerialCurrentState.PROVISIONED ||
+      this._client?.networkState?.online === true
+    );
+  }
+
+  // Devices online via another interface report their URL in the network state.
+  private get _deviceUrl(): string | undefined {
+    return this._client?.nextUrl ?? this._client?.networkState?.urls[0];
+  }
+
   /**
    * Return if the provision page shows the network form (and not a message).
    */
@@ -985,6 +997,13 @@ export class EwtInstallDialog extends LitElement {
 
     this._syncScanning();
 
+    // Poll network state only while the dashboard is shown, so its menu converges.
+    if (this._state === "DASHBOARD") {
+      this._client?.startNetworkStatePolling();
+    } else {
+      this._client?.stopNetworkStatePolling();
+    }
+
     if (this._state !== "PROVISION") {
       return;
     }
@@ -1039,6 +1058,9 @@ export class EwtInstallDialog extends LitElement {
       this.requestUpdate();
     });
     client.addEventListener("error-changed", () => this.requestUpdate());
+    client.addEventListener("network-state-changed", () =>
+      this.requestUpdate(),
+    );
     try {
       // Improv re-sends the request every second until this timeout, so 1500ms
       // gets us a single retry. That gives a device that was busy on our first
