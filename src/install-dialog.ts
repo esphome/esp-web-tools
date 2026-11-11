@@ -42,6 +42,7 @@ import {
   PortNotReady,
 } from "improv-wifi-serial-sdk/dist/const";
 import { flash } from "./flash";
+import { ScreenWakeLock } from "./util/wake-lock";
 import { textDownload } from "./util/file-download";
 import { fireEvent } from "./util/fire-event";
 import { sleep } from "./util/sleep";
@@ -1152,6 +1153,9 @@ export class EwtInstallDialog extends LitElement {
     this._installConfirmed = false;
   }
 
+  // Keeps the screen awake while an install is running.
+  private _wakeLock = new ScreenWakeLock();
+
   private async _confirmInstall() {
     this._installConfirmed = true;
     this._installState = undefined;
@@ -1162,6 +1166,7 @@ export class EwtInstallDialog extends LitElement {
 
     // Close port. ESPLoader likes opening it.
     await this.port.close();
+    this._wakeLock.acquire();
     flash(
       (state) => {
         this._installState = state;
@@ -1182,7 +1187,7 @@ export class EwtInstallDialog extends LitElement {
       this.manifestPath,
       this._manifest,
       this._installErase,
-    );
+    ).finally(() => this._wakeLock.release());
   }
 
   private async _doProvision() {
@@ -1275,6 +1280,7 @@ export class EwtInstallDialog extends LitElement {
     super.disconnectedCallback();
     // The interval would otherwise keep firing against the closed client.
     this._stopNetworkStatePolling();
+    this._wakeLock.release();
     this._syncViewportTracking();
   }
 
