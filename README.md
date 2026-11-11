@@ -80,4 +80,10 @@ The optional `serialType` field (`"cdc"` or `"uart"`) lets you ship separate fir
 
 Run `script/develop`. This starts a server. Open it on http://localhost:5001.
 
+The website is `index.html` and `404.html` with the assets in `static`.
+`script/build_website` renders them into `website/dist`, which is what GitHub
+Pages serves. That build is also where the analytics snippet in
+`website/plausible-analytics.html` gets inlined, so it is not part of the pages
+you see while developing.
+
 [![ESPHome - A project from the Open Home Foundation](https://www.openhomefoundation.org/badges/esphome.png)](https://www.openhomefoundation.org/)

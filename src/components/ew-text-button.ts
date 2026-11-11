@@ -1,6 +1,6 @@
-import { styles as sharedStyles } from "@material/web/button/internal/shared-styles.js";
+import { styles as sharedStyles } from "@material/web/button/internal/shared-styles.cssresult.js";
 import { TextButton } from "@material/web/button/internal/text-button.js";
-import { styles as textStyles } from "@material/web/button/internal/text-styles.js";
+import { styles as textStyles } from "@material/web/button/internal/text-styles.cssresult.js";
 
 declare global {
   interface HTMLElementTagNameMap {

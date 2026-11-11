@@ -1,0 +1,101 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Page not found - ESP Web Tools</title>
+    <meta
+      name="description"
+      content="The page you are looking for could not be found."
+    />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="robots" content="noindex" />
+    <meta name="color-scheme" content="dark light" />
+    <style>
+      body {
+        font-family:
+          -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Ubuntu, sans-serif;
+        padding: 0;
+        margin: 0;
+        line-height: 1.4;
+      }
+      .content {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 12px;
+      }
+      a {
+        color: #03a9f4;
+      }
+      .footer {
+        margin-top: 24px;
+        border-top: 1px solid #ccc;
+        padding-top: 24px;
+        text-align: center;
+      }
+      .footer .initiative {
+        font-style: italic;
+      }
+      .footer .analytics {
+        max-width: 30rem;
+        margin: 16px auto 0;
+        text-wrap: balance;
+      }
+      .footer .analytics a {
+        text-decoration: underline;
+      }
+      @media (prefers-color-scheme: dark) {
+        body {
+          background-color: #333;
+          color: #fff;
+        }
+        a {
+          color: #58a6ff;
+        }
+      }
+    </style>
+
+    <!-- include: plausible-analytics.html -->
+  </head>
+  <body>
+    <div class="content">
+      <h1>Page not found</h1>
+      <p>
+        Sorry, the page you are looking for does not exist. It might have moved,
+        or the link that brought you here could be out of date.
+      </p>
+      <p>
+        Head back to the <a href="/esp-web-tools/">home page</a> to install and
+        manage firmware on your ESP8266 and ESP32 devices.
+      </p>
+
+      <div class="footer">
+        <div class="initiative">
+          ESP Web Tools is a project by
+          <a href="https://esphome.io">ESPHome</a>,
+          <a href="https://www.openhomefoundation.org">Open Home Foundation</a>.
+        </div>
+        <div class="analytics">
+          This website uses
+          <a
+            href="https://www.openhomefoundation.org/blog/making-our-web-analytics-open-source-with-plausible/"
+            rel="noopener"
+            >privacy-first analytics</a
+          >
+          to help us improve the site. You can view all data in our
+          <a
+            href="https://plausible.openhomefoundation.org/esphome.github.io/esp-web-tools"
+            rel="noopener"
+            >public dashboard</a
+          >.
+        </div>
+      </div>
+    </div>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        if (typeof window.plausible === "function") window.plausible("404");
+      });
+    </script>
+  </body>
+</html>

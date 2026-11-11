@@ -55,20 +55,22 @@ class EwtNoPortPickedDialog extends LitElement {
               Make sure that the USB cable you use can be used for data and is
               not a power-only cable.
             </li>
-            ${OS === "Linux"
-              ? html`
-                  <li>
-                    If you are using a Linux flavor, make sure that your user is
-                    part of the <code>dialout</code> group so it has permission
-                    to access the device.
-                    <code class="block"
-                      >sudo usermod -a -G dialout YourUserName</code
-                    >
-                    You may need to log out & back in or reboot to activate the
-                    new group access.
-                  </li>
-                `
-              : ""}
+            ${
+              OS === "Linux"
+                ? html`
+                    <li>
+                      If you are using a Linux flavor, make sure that your user
+                      is part of the <code>dialout</code> group so it has
+                      permission to access the device.
+                      <code class="block"
+                        >sudo usermod -a -G dialout YourUserName</code
+                      >
+                      You may need to log out & back in or reboot to activate
+                      the new group access.
+                    </li>
+                  `
+                : ""
+            }
             <li>
               Make sure you have the right drivers installed. Below are the
               drivers for common chips used in ESP devices:
@@ -121,16 +123,18 @@ class EwtNoPortPickedDialog extends LitElement {
           </ol>
         </div>
         <div slot="actions">
-          ${this.doTryAgain
-            ? html`
-                <ew-text-button @click=${this.close}>Cancel</ew-text-button>
-                <ew-text-button @click=${this.tryAgain}>
-                  Try Again
-                </ew-text-button>
-              `
-            : html`
-                <ew-text-button @click=${this.close}>Close</ew-text-button>
-              `}
+          ${
+            this.doTryAgain
+              ? html`
+                  <ew-text-button @click=${this.close}>Cancel</ew-text-button>
+                  <ew-text-button @click=${this.tryAgain}>
+                    Try Again
+                  </ew-text-button>
+                `
+              : html`
+                  <ew-text-button @click=${this.close}>Close</ew-text-button>
+                `
+          }
         </div>
       </ew-dialog>
     `;

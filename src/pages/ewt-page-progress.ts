@@ -13,9 +13,9 @@ class EwtPageProgress extends LitElement {
         <ew-circular-progress
           active
           ?indeterminate=${this.progress === undefined}
-          .value=${this.progress !== undefined
-            ? this.progress / 100
-            : undefined}
+          .value=${
+            this.progress !== undefined ? this.progress / 100 : undefined
+          }
         ></ew-circular-progress>
         ${this.progress !== undefined ? html`<div>${this.progress}%</div>` : ""}
       </div>
