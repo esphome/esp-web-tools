@@ -4,7 +4,6 @@ import {
   findInterface,
   type LineConfig,
   type UsbSerialDriver,
-  type UsbSerialDriverDefinition,
   type UsbSerialEndpoints,
 } from "./driver";
 
@@ -14,7 +13,6 @@ import {
  * addressed to that interface.
  */
 
-const VENDOR_ID = 0x10c4;
 const VENDOR_CLASS = 0xff;
 
 const IFC_ENABLE = 0x00;
@@ -104,12 +102,5 @@ class Cp210xDriver implements UsbSerialDriver {
   }
 }
 
-export const cp210xDriver: UsbSerialDriverDefinition = {
-  name: "CP210x",
-  // Same product IDs as the Linux cp210x driver's default table.
-  filters: [0xea60, 0xea61, 0xea63, 0xea70, 0xea71].map((productId) => ({
-    vendorId: VENDOR_ID,
-    productId,
-  })),
-  create: (device) => new Cp210xDriver(device),
-};
+export const createCp210xDriver = (device: USBDevice): UsbSerialDriver =>
+  new Cp210xDriver(device);

@@ -4,7 +4,6 @@ import {
   findInterface,
   type LineConfig,
   type UsbSerialDriver,
-  type UsbSerialDriverDefinition,
   type UsbSerialEndpoints,
 } from "./driver";
 
@@ -95,8 +94,5 @@ class CdcAcmDriver implements UsbSerialDriver {
   }
 }
 
-export const cdcAcmDriver: UsbSerialDriverDefinition = {
-  name: "CDC-ACM",
-  filters: [{ classCode: CDC_CLASS }],
-  create: (device) => new CdcAcmDriver(device),
-};
+export const createCdcAcmDriver = (device: USBDevice): UsbSerialDriver =>
+  new CdcAcmDriver(device);
