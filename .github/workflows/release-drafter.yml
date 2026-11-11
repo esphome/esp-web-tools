@@ -5,10 +5,71 @@ on:
     branches:
       - main
 
+# GITHUB_TOKEN is only used by Release Drafter; the version bump is pushed
+# with a minted app token.
+permissions:
+  contents: write
+  pull-requests: read
+
+# Runs push the version bump to main, so they must not race each other.
+concurrency:
+  group: release-drafter
+  cancel-in-progress: false
+
 jobs:
   update_release_draft:
     runs-on: ubuntu-latest
     steps:
-      - uses: release-drafter/release-drafter@v7.10.0
+      - name: Update release draft
+        id: drafter
+        uses: release-drafter/release-drafter@v7.10.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Generate a token
+        id: app-token
+        uses: actions/create-github-app-token@v3.3.0
+        with:
+          client-id: ${{ vars.ESPHOME_GITHUB_APP_CLIENT_ID }}
+          private-key: ${{ secrets.ESPHOME_GITHUB_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ github.event.repository.name }}
+          permission-contents: write # push the version bump commit to main
+
+      - name: Checkout main
+        uses: actions/checkout@v7.0.1
+        with:
+          ref: main
+          token: ${{ steps.app-token.outputs.token }}
+
+      - name: Set package version to the drafted release
+        env:
+          VERSION: ${{ steps.drafter.outputs.resolved_version }}
+        run: |
+          if [ -z "$VERSION" ]; then
+            echo "::error::Release Drafter did not resolve a version."
+            exit 1
+          fi
+          npm version "$VERSION" --no-git-tag-version --allow-same-version --ignore-scripts
+
+      # The push re-triggers this workflow; that run resolves the same
+      # version, finds nothing to change and stops here.
+      - name: Commit and push version bump
+        env:
+          VERSION: ${{ steps.drafter.outputs.resolved_version }}
+          APP_SLUG: ${{ steps.app-token.outputs.app-slug }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          if git diff --quiet -- package.json package-lock.json; then
+            echo "package.json is already at $VERSION."
+            exit 0
+          fi
+          if ! user_id=$(gh api "/users/${APP_SLUG}[bot]" --jq .id); then
+            echo "::error::Could not look up the ${APP_SLUG}[bot] user."
+            exit 1
+          fi
+          git config user.name "${APP_SLUG}[bot]"
+          git config user.email "${user_id}+${APP_SLUG}[bot]@users.noreply.github.com"
+          git add package.json package-lock.json
+          git commit -m "Bump version to $VERSION"
+          git push origin HEAD:main
