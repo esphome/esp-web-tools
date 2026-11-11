@@ -33,6 +33,7 @@ class EwtNoPortPickedDialog extends LitElement {
 
   public render() {
     const OS = getOperatingSystem();
+    const isAndroid = OS === "Android";
 
     return html`
       <ew-dialog open @closed=${this._handleClose}>
@@ -43,10 +44,22 @@ class EwtNoPortPickedDialog extends LitElement {
             listed, try the following steps:
           </div>
           <ol>
-            <li>
-              Make sure that the device is connected to this computer (the one
-              that runs the browser that shows this website)
-            </li>
+            ${
+              isAndroid
+                ? html`
+                    <li>
+                      Make sure that the device is plugged into this phone or
+                      tablet. Most phones need a USB OTG adapter or a USB-C
+                      cable to connect to a device.
+                    </li>
+                  `
+                : html`
+                    <li>
+                      Make sure that the device is connected to this computer
+                      (the one that runs the browser that shows this website)
+                    </li>
+                  `
+            }
             <li>
               Most devices have a tiny light when it is powered on. If yours has
               one, make sure it is on.
@@ -71,55 +84,67 @@ class EwtNoPortPickedDialog extends LitElement {
                   `
                 : ""
             }
-            <li>
-              Make sure you have the right drivers installed. Below are the
-              drivers for common chips used in ESP devices:
-              <ul>
-                <li>
-                  CP2102 drivers:
-                  <a
-                    href="https://www.silabs.com/developers/usb-to-uart-bridge-vcp-drivers"
-                    target="_blank"
-                    rel="noopener"
-                    >Windows & Mac</a
-                  >
-                </li>
-                <li>
-                  CH342, CH343, CH9102 drivers:
-                  <a
-                    href="https://www.wch.cn/downloads/CH343SER_ZIP.html"
-                    target="_blank"
-                    rel="noopener"
-                    >Windows</a
-                  >,
-                  <a
-                    href="https://www.wch.cn/downloads/CH34XSER_MAC_ZIP.html"
-                    target="_blank"
-                    rel="noopener"
-                    >Mac</a
-                  >
-                  <br />
-                  (download via blue button with ${cloudDownload} icon)
-                </li>
-                <li>
-                  CH340, CH341 drivers:
-                  <a
-                    href="https://www.wch.cn/downloads/CH341SER_ZIP.html"
-                    target="_blank"
-                    rel="noopener"
-                    >Windows</a
-                  >,
-                  <a
-                    href="https://www.wch.cn/downloads/CH341SER_MAC_ZIP.html"
-                    target="_blank"
-                    rel="noopener"
-                    >Mac</a
-                  >
-                  <br />
-                  (download via blue button with ${cloudDownload} icon)
-                </li>
-              </ul>
-            </li>
+            ${
+              isAndroid
+                ? html`
+                    <li>
+                      No drivers are needed on Android. If your device still
+                      isn't listed, its USB chip may not be supported on Android
+                      yet. Try again from a computer instead.
+                    </li>
+                  `
+                : html`
+                    <li>
+                      Make sure you have the right drivers installed. Below are
+                      the drivers for common chips used in ESP devices:
+                      <ul>
+                        <li>
+                          CP2102 drivers:
+                          <a
+                            href="https://www.silabs.com/developers/usb-to-uart-bridge-vcp-drivers"
+                            target="_blank"
+                            rel="noopener"
+                            >Windows & Mac</a
+                          >
+                        </li>
+                        <li>
+                          CH342, CH343, CH9102 drivers:
+                          <a
+                            href="https://www.wch.cn/downloads/CH343SER_ZIP.html"
+                            target="_blank"
+                            rel="noopener"
+                            >Windows</a
+                          >,
+                          <a
+                            href="https://www.wch.cn/downloads/CH34XSER_MAC_ZIP.html"
+                            target="_blank"
+                            rel="noopener"
+                            >Mac</a
+                          >
+                          <br />
+                          (download via blue button with ${cloudDownload} icon)
+                        </li>
+                        <li>
+                          CH340, CH341 drivers:
+                          <a
+                            href="https://www.wch.cn/downloads/CH341SER_ZIP.html"
+                            target="_blank"
+                            rel="noopener"
+                            >Windows</a
+                          >,
+                          <a
+                            href="https://www.wch.cn/downloads/CH341SER_MAC_ZIP.html"
+                            target="_blank"
+                            rel="noopener"
+                            >Mac</a
+                          >
+                          <br />
+                          (download via blue button with ${cloudDownload} icon)
+                        </li>
+                      </ul>
+                    </li>
+                  `
+            }
           </ol>
         </div>
         <div slot="actions">
