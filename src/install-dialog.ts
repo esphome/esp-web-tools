@@ -111,12 +111,8 @@ export class EwtInstallDialog extends LitElement {
   private _networkStatePollInterval?: ReturnType<typeof setInterval>;
 
   @state() private _state:
-    | "ERROR"
-    | "DASHBOARD"
-    | "PROVISION"
-    | "INSTALL"
-    | "ASK_ERASE"
-    | "LOGS" = "DASHBOARD";
+    "ERROR" | "DASHBOARD" | "PROVISION" | "INSTALL" | "ASK_ERASE" | "LOGS" =
+    "DASHBOARD";
 
   @state() private _installErase = false;
   @state() private _installConfirmed = false;
@@ -145,6 +141,8 @@ export class EwtInstallDialog extends LitElement {
   private _scanGraceTimeout?: ReturnType<typeof setTimeout>;
 
   private _bodyOverflow: string | null = null;
+
+  private _viewportListening = false;
 
   protected render() {
     if (!this.port) {
@@ -189,13 +187,15 @@ export class EwtInstallDialog extends LitElement {
         @closed=${this._handleClose}
       >
         ${heading ? html`<div slot="headline">${heading}</div>` : ""}
-        ${allowClosing
-          ? html`
-              <ew-icon-button slot="headline" @click=${this._closeDialog}>
-                ${closeIcon}
-              </ew-icon-button>
-            `
-          : ""}
+        ${
+          allowClosing
+            ? html`
+                <ew-icon-button slot="headline" @click=${this._closeDialog}>
+                  ${closeIcon}
+                </ew-icon-button>
+              `
+            : ""
+        }
         ${content!}
       </ew-dialog>
     `;
@@ -241,53 +241,61 @@ export class EwtInstallDialog extends LitElement {
               (${this._info!.chipFamily})
             </div>
           </ew-list-item>
-          ${!this._isSameVersion
-            ? html`
-                <ew-list-item
-                  type="button"
-                  @click=${() => {
-                    if (this._isSameFirmware) {
-                      this._startInstall(false);
-                    } else if (this._manifest.new_install_prompt_erase) {
-                      this._state = "ASK_ERASE";
-                    } else {
-                      this._startInstall(true);
-                    }
-                  }}
-                >
-                  ${listItemInstallIcon}
-                  <div slot="headline">
-                    ${!this._isSameFirmware
-                      ? `Install ${this._manifest.name}`
-                      : `Update ${this._manifest.name}`}
-                  </div>
-                </ew-list-item>
-              `
-            : ""}
-          ${this._deviceUrl === undefined
-            ? ""
-            : html`
-                <ew-list-item
-                  type="link"
-                  href=${this._deviceUrl}
-                  target="_blank"
-                >
-                  ${listItemVisitDevice}
-                  <div slot="headline">Visit Device</div>
-                </ew-list-item>
-              `}
-          ${!this._manifest.home_assistant_domain || !this._isOnline
-            ? ""
-            : html`
-                <ew-list-item
-                  type="link"
-                  href=${`https://my.home-assistant.io/redirect/config_flow_start/?domain=${this._manifest.home_assistant_domain}`}
-                  target="_blank"
-                >
-                  ${listItemHomeAssistant}
-                  <div slot="headline">Add to Home Assistant</div>
-                </ew-list-item>
-              `}
+          ${
+            !this._isSameVersion
+              ? html`
+                  <ew-list-item
+                    type="button"
+                    @click=${() => {
+                      if (this._isSameFirmware) {
+                        this._startInstall(false);
+                      } else if (this._manifest.new_install_prompt_erase) {
+                        this._state = "ASK_ERASE";
+                      } else {
+                        this._startInstall(true);
+                      }
+                    }}
+                  >
+                    ${listItemInstallIcon}
+                    <div slot="headline">
+                      ${
+                        !this._isSameFirmware
+                          ? `Install ${this._manifest.name}`
+                          : `Update ${this._manifest.name}`
+                      }
+                    </div>
+                  </ew-list-item>
+                `
+              : ""
+          }
+          ${
+            this._deviceUrl === undefined
+              ? ""
+              : html`
+                  <ew-list-item
+                    type="link"
+                    href=${this._deviceUrl}
+                    target="_blank"
+                  >
+                    ${listItemVisitDevice}
+                    <div slot="headline">Visit Device</div>
+                  </ew-list-item>
+                `
+          }
+          ${
+            !this._manifest.home_assistant_domain || !this._isOnline
+              ? ""
+              : html`
+                  <ew-list-item
+                    type="link"
+                    href=${`https://my.home-assistant.io/redirect/config_flow_start/?domain=${this._manifest.home_assistant_domain}`}
+                    target="_blank"
+                  >
+                    ${listItemHomeAssistant}
+                    <div slot="headline">Add to Home Assistant</div>
+                  </ew-list-item>
+                `
+          }
           <ew-list-item
             type="button"
             @click=${() => {
@@ -301,9 +309,11 @@ export class EwtInstallDialog extends LitElement {
           >
             ${listItemWifi}
             <div slot="headline">
-              ${this._client!.state === ImprovSerialCurrentState.PROVISIONED
-                ? "Change Wi-Fi"
-                : "Connect to Wi-Fi"}
+              ${
+                this._client!.state === ImprovSerialCurrentState.PROVISIONED
+                  ? "Change Wi-Fi"
+                  : "Connect to Wi-Fi"
+              }
             </div>
           </ew-list-item>
           <ew-list-item
@@ -322,30 +332,34 @@ export class EwtInstallDialog extends LitElement {
             ${listItemConsole}
             <div slot="headline">Logs & Console</div>
           </ew-list-item>
-          ${this._isSameFirmware && this._manifest.funding_url
-            ? html`
-                <ew-list-item
-                  type="link"
-                  href=${this._manifest.funding_url}
-                  target="_blank"
-                >
-                  ${listItemFundDevelopment}
-                  <div slot="headline">Fund Development</div>
-                </ew-list-item>
-              `
-            : ""}
-          ${this._isSameVersion
-            ? html`
-                <ew-list-item
-                  type="button"
-                  class="danger"
-                  @click=${() => this._startInstall(true)}
-                >
-                  ${listItemEraseUserData}
-                  <div slot="headline">Erase User Data</div>
-                </ew-list-item>
-              `
-            : ""}
+          ${
+            this._isSameFirmware && this._manifest.funding_url
+              ? html`
+                  <ew-list-item
+                    type="link"
+                    href=${this._manifest.funding_url}
+                    target="_blank"
+                  >
+                    ${listItemFundDevelopment}
+                    <div slot="headline">Fund Development</div>
+                  </ew-list-item>
+                `
+              : ""
+          }
+          ${
+            this._isSameVersion
+              ? html`
+                  <ew-list-item
+                    type="button"
+                    class="danger"
+                    @click=${() => this._startInstall(true)}
+                  >
+                    ${listItemEraseUserData}
+                    <div slot="headline">Erase User Data</div>
+                  </ew-list-item>
+                `
+              : ""
+          }
         </ew-list>
       </div>
     `;
@@ -436,66 +450,74 @@ export class EwtInstallDialog extends LitElement {
             .icon=${OK_ICON}
             label="Device connected to the network!"
           ></ewt-page-message>
-          ${showSetupLinks
+          ${
+            showSetupLinks
+              ? html`
+                  <ew-list>
+                    ${
+                      this._client!.nextUrl === undefined
+                        ? ""
+                        : html`
+                            <ew-list-item
+                              type="link"
+                              href=${this._client!.nextUrl}
+                              target="_blank"
+                              @click=${() => {
+                                this._state = "DASHBOARD";
+                              }}
+                            >
+                              ${listItemVisitDevice}
+                              <div slot="headline">Visit Device</div>
+                            </ew-list-item>
+                          `
+                    }
+                    ${
+                      !this._manifest.home_assistant_domain
+                        ? ""
+                        : html`
+                            <ew-list-item
+                              type="link"
+                              href=${`https://my.home-assistant.io/redirect/config_flow_start/?domain=${this._manifest.home_assistant_domain}`}
+                              target="_blank"
+                              @click=${() => {
+                                this._state = "DASHBOARD";
+                              }}
+                            >
+                              ${listItemHomeAssistant}
+                              <div slot="headline">Add to Home Assistant</div>
+                            </ew-list-item>
+                          `
+                    }
+                    <ew-list-item
+                      type="button"
+                      @click=${() => {
+                        this._state = "DASHBOARD";
+                      }}
+                    >
+                      <div slot="start" class="fake-icon"></div>
+                      <div slot="headline">Skip</div>
+                    </ew-list-item>
+                  </ew-list>
+                `
+              : ""
+          }
+        </div>
+
+        ${
+          !showSetupLinks
             ? html`
-                <ew-list>
-                  ${this._client!.nextUrl === undefined
-                    ? ""
-                    : html`
-                        <ew-list-item
-                          type="link"
-                          href=${this._client!.nextUrl}
-                          target="_blank"
-                          @click=${() => {
-                            this._state = "DASHBOARD";
-                          }}
-                        >
-                          ${listItemVisitDevice}
-                          <div slot="headline">Visit Device</div>
-                        </ew-list-item>
-                      `}
-                  ${!this._manifest.home_assistant_domain
-                    ? ""
-                    : html`
-                        <ew-list-item
-                          type="link"
-                          href=${`https://my.home-assistant.io/redirect/config_flow_start/?domain=${this._manifest.home_assistant_domain}`}
-                          target="_blank"
-                          @click=${() => {
-                            this._state = "DASHBOARD";
-                          }}
-                        >
-                          ${listItemHomeAssistant}
-                          <div slot="headline">Add to Home Assistant</div>
-                        </ew-list-item>
-                      `}
-                  <ew-list-item
-                    type="button"
+                <div slot="actions">
+                  <ew-text-button
                     @click=${() => {
                       this._state = "DASHBOARD";
                     }}
                   >
-                    <div slot="start" class="fake-icon"></div>
-                    <div slot="headline">Skip</div>
-                  </ew-list-item>
-                </ew-list>
+                    Continue
+                  </ew-text-button>
+                </div>
               `
-            : ""}
-        </div>
-
-        ${!showSetupLinks
-          ? html`
-              <div slot="actions">
-                <ew-text-button
-                  @click=${() => {
-                    this._state = "DASHBOARD";
-                  }}
-                >
-                  Continue
-                </ew-text-button>
-              </div>
-            `
-          : ""}
+            : ""
+        }
       `;
     } else if (this._ssids === undefined) {
       // Waiting for the first scan to come back.
@@ -527,53 +549,55 @@ export class EwtInstallDialog extends LitElement {
         <div slot="content">
           <div>Connect your device to the network to start using it.</div>
           ${error ? html`<p class="error">${error}</p>` : ""}
-          ${this._ssids !== null
-            ? html`
-                <ew-filled-select
-                  menu-positioning="fixed"
-                  label="Network"
-                  @change=${(ev: { target: EwFilledSelect }) => {
-                    const index = ev.target.selectedIndex;
-                    // The "Join Other" item is always the last item.
-                    this._selectedSsid =
-                      index === this._ssids!.length
-                        ? null
-                        : this._ssids![index].name;
-                    // Picking "Join other" ourselves starts from a blank name.
-                    this._manualSsid = "";
-                  }}
-                >
-                  ${this._ssids!.map((info) => {
-                    const signal = signalStrength(info.rssi);
-                    return html`
-                      <ew-select-option
-                        .selected=${selectedSsid === info}
-                        .value=${info.name}
-                      >
-                        <span slot="start" class=${signal.class}>
-                          ${signal.icon}
-                        </span>
-                        <span slot="headline">${info.name}</span>
-                        <span slot="end" class="network-details">
-                          <span class="signal-strength">${info.rssi}dB</span>
-                          <span
-                            class=${info.secured
-                              ? "lock-secured"
-                              : "lock-unsecured"}
-                          >
-                            ${info.secured ? lockIcon : lockOpenIcon}
+          ${
+            this._ssids !== null
+              ? html`
+                  <ew-filled-select
+                    menu-positioning="fixed"
+                    label="Network"
+                    @change=${(ev: { target: EwFilledSelect }) => {
+                      const index = ev.target.selectedIndex;
+                      // The "Join Other" item is always the last item.
+                      this._selectedSsid =
+                        index === this._ssids!.length
+                          ? null
+                          : this._ssids![index].name;
+                      // Picking "Join other" ourselves starts from a blank name.
+                      this._manualSsid = "";
+                    }}
+                  >
+                    ${this._ssids!.map((info) => {
+                      const signal = signalStrength(info.rssi);
+                      return html`
+                        <ew-select-option
+                          .selected=${selectedSsid === info}
+                          .value=${info.name}
+                        >
+                          <span slot="start" class=${signal.class}>
+                            ${signal.icon}
                           </span>
-                        </span>
-                      </ew-select-option>
-                    `;
-                  })}
-                  <ew-divider></ew-divider>
-                  <ew-select-option .selected=${!selectedSsid}>
-                    Join other…
-                  </ew-select-option>
-                </ew-filled-select>
-              `
-            : ""}
+                          <span slot="headline">${info.name}</span>
+                          <span slot="end" class="network-details">
+                            <span class="signal-strength">${info.rssi}dB</span>
+                            <span
+                              class=${
+                                info.secured ? "lock-secured" : "lock-unsecured"
+                              }
+                            >
+                              ${info.secured ? lockIcon : lockOpenIcon}
+                            </span>
+                          </span>
+                        </ew-select-option>
+                      `;
+                    })}
+                    <ew-divider></ew-divider>
+                    <ew-select-option .selected=${!selectedSsid}>
+                      Join other…
+                    </ew-select-option>
+                  </ew-filled-select>
+                `
+              : ""
+          }
           ${
             // Show input box if command not supported or "Join Other" selected
             !selectedSsid
@@ -586,20 +610,22 @@ export class EwtInstallDialog extends LitElement {
                 `
               : ""
           }
-          ${!selectedSsid || selectedSsid.secured
-            ? html`
-                <ew-filled-text-field
-                  label="Password"
-                  name="password"
-                  type="password"
-                  @keydown=${(ev: KeyboardEvent) => {
-                    if (ev.key === "Enter") {
-                      this._doProvision();
-                    }
-                  }}
-                ></ew-filled-text-field>
-              `
-            : ""}
+          ${
+            !selectedSsid || selectedSsid.secured
+              ? html`
+                  <ew-filled-text-field
+                    label="Password"
+                    name="password"
+                    type="password"
+                    @keydown=${(ev: KeyboardEvent) => {
+                      if (ev.key === "Enter") {
+                        this._doProvision();
+                      }
+                    }}
+                  ></ew-filled-text-field>
+                `
+              : ""
+          }
         </div>
         <div slot="actions">
           <ew-text-button
@@ -676,15 +702,19 @@ export class EwtInstallDialog extends LitElement {
       const action = isUpdate ? "update to" : "install";
       content = html`
         <div slot="content">
-          ${isUpdate
-            ? html`Your device is running
-                ${this._info!.firmware}&nbsp;${this._info!.version}.<br /><br />`
-            : ""}
+          ${
+            isUpdate
+              ? html`Your device is running
+                  ${this._info!.firmware}&nbsp;${this._info!.version}.<br /><br />`
+              : ""
+          }
           Do you want to ${action}
           ${this._manifest.name}&nbsp;${this._manifest.version}?
-          ${this._installErase
-            ? html`<br /><br />All data on the device will be erased.`
-            : ""}
+          ${
+            this._installErase
+              ? html`<br /><br />All data on the device will be erased.`
+              : ""
+          }
         </div>
         <div slot="actions">
           <ew-text-button
@@ -734,9 +764,11 @@ export class EwtInstallDialog extends LitElement {
           ${undeterminateLabel ? html`${undeterminateLabel}<br />` : ""}
           <br />
           This will take
-          ${this._installState.chipFamily === "ESP8266"
-            ? "a minute"
-            : "2 minutes"}.<br />
+          ${
+            this._installState.chipFamily === "ESP8266"
+              ? "a minute"
+              : "2 minutes"
+          }.<br />
           Keep this page visible for fastest installation.
         `,
         percentage,
@@ -1023,6 +1055,7 @@ export class EwtInstallDialog extends LitElement {
 
     if (changedProps.has("_state")) {
       this.setAttribute("state", this._state);
+      this._syncViewportTracking();
     }
 
     this._syncScanning();
@@ -1211,12 +1244,6 @@ export class EwtInstallDialog extends LitElement {
     this.parentNode!.removeChild(this);
   }
 
-  public override disconnectedCallback() {
-    super.disconnectedCallback();
-    // The interval would otherwise keep firing against the closed client.
-    this._stopNetworkStatePolling();
-  }
-
   /**
    * Return if the device runs same firmware as manifest.
    */
@@ -1243,6 +1270,42 @@ export class EwtInstallDialog extends LitElement {
     client.removeEventListener("disconnect", this._handleDisconnect);
     await client.close();
   }
+
+  public override disconnectedCallback() {
+    super.disconnectedCallback();
+    // The interval would otherwise keep firing against the closed client.
+    this._stopNetworkStatePolling();
+    this._syncViewportTracking();
+  }
+
+  // On phones the logs view fills the screen. The on-screen keyboard shrinks
+  // the visual viewport but not the layout viewport (so `dvh` does not
+  // change), so while the logs are shown we mirror the visual viewport into
+  // CSS variables that the narrow-screen styles use for size and position.
+  private _syncViewportTracking() {
+    const vv = window.visualViewport;
+    const shouldTrack = this.isConnected && this._state === "LOGS" && !!vv;
+    if (shouldTrack === this._viewportListening) {
+      return;
+    }
+    this._viewportListening = shouldTrack;
+    if (shouldTrack) {
+      vv!.addEventListener("resize", this._updateViewportVars);
+      vv!.addEventListener("scroll", this._updateViewportVars);
+      this._updateViewportVars();
+    } else {
+      vv?.removeEventListener("resize", this._updateViewportVars);
+      vv?.removeEventListener("scroll", this._updateViewportVars);
+      this.style.removeProperty("--ewt-vv-height");
+      this.style.removeProperty("--ewt-vv-top");
+    }
+  }
+
+  private _updateViewportVars = () => {
+    const vv = window.visualViewport!;
+    this.style.setProperty("--ewt-vv-height", `${vv.height}px`);
+    this.style.setProperty("--ewt-vv-top", `${vv.offsetTop}px`);
+  };
 
   private _preventDefault(ev: Event) {
     ev.preventDefault();
@@ -1353,6 +1416,30 @@ export class EwtInstallDialog extends LitElement {
       ewt-console {
         width: calc(80vw - 48px);
         height: calc(90vh - 168px);
+      }
+      /* On phones the logs view takes the whole screen */
+      @media (max-width: 600px) {
+        :host([state="LOGS"]) ew-dialog {
+          width: 100dvw;
+          height: var(--ewt-vv-height, 100dvh);
+          max-width: 100dvw;
+          max-height: var(--ewt-vv-height, 100dvh);
+          margin: var(--ewt-vv-top, 0px) 0 0;
+        }
+        :host([state="LOGS"]) div[slot="headline"] {
+          padding: 12px 16px 0;
+        }
+        :host([state="LOGS"]) div[slot="content"] {
+          padding: 8px 0 0;
+        }
+        :host([state="LOGS"]) div[slot="actions"] {
+          padding: 8px;
+        }
+        :host([state="LOGS"]) ewt-console {
+          width: 100%;
+          /* headline + content padding + actions */
+          height: calc(var(--ewt-vv-height, 100dvh) - 112px);
+        }
       }
     `,
   ];

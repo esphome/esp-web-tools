@@ -1,6 +1,6 @@
-import { styles as filledStyles } from "@material/web/textfield/internal/filled-styles.js";
+import { styles as filledStyles } from "@material/web/textfield/internal/filled-styles.cssresult.js";
 import { FilledTextField } from "@material/web/textfield/internal/filled-text-field.js";
-import { styles as sharedStyles } from "@material/web/textfield/internal/shared-styles.js";
+import { styles as sharedStyles } from "@material/web/textfield/internal/shared-styles.cssresult.js";
 import { literal } from "lit/static-html.js";
 
 declare global {

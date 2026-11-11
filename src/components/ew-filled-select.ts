@@ -1,6 +1,6 @@
 import { FilledSelect } from "@material/web/select/internal/filled-select.js";
-import { styles } from "@material/web/select/internal/filled-select-styles.js";
-import { styles as sharedStyles } from "@material/web/select/internal/shared-styles.js";
+import { styles } from "@material/web/select/internal/filled-select-styles.cssresult.js";
+import { styles as sharedStyles } from "@material/web/select/internal/shared-styles.cssresult.js";
 
 declare global {
   interface HTMLElementTagNameMap {

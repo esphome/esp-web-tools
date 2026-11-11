@@ -115,6 +115,14 @@
         font-style: italic;
         margin-top: 16px;
       }
+      .footer .analytics {
+        max-width: 30rem;
+        margin: 16px auto 0;
+        text-wrap: balance;
+      }
+      .footer .analytics a {
+        text-decoration: underline;
+      }
       table {
         border-spacing: 0;
       }
@@ -144,6 +152,8 @@
           : "https://unpkg.com/esp-web-tools/dist/web/install-button.js?module"
       );
     </script>
+
+    <!-- include: plausible-analytics.html -->
   </head>
   <body>
     <div class="content">
@@ -239,16 +249,6 @@
             />
           </div>
           <div class="name">Squeezelite-ESP32</div>
-        </a>
-        <a
-          href="https://2smart.com/docs-resources/platform-updates/platform-updates-13-07-2022"
-          target="_blank"
-          class="project"
-        >
-          <div class="logo">
-            <img src="static/logos/2smart.png" alt="2Smart logo" />
-          </div>
-          <div class="name">2Smart</div>
         </a>
         <a href="https://clockwise.page" target="_blank" class="project">
           <div class="logo">
@@ -675,6 +675,20 @@ document.querySelector("esp-web-install-button").manifest = URL.createObjectURL(
         <div>
           ESP Web Tools is
           <a href="https://github.com/esphome/esp-web-tools">open source</a>.
+        </div>
+        <div class="analytics">
+          This website uses
+          <a
+            href="https://www.openhomefoundation.org/blog/making-our-web-analytics-open-source-with-plausible/"
+            rel="noopener"
+            >privacy-first analytics</a
+          >
+          to help us improve the site. You can view all data in our
+          <a
+            href="https://plausible.openhomefoundation.org/esphome.github.io/esp-web-tools"
+            rel="noopener"
+            >public dashboard</a
+          >.
         </div>
       </div>
     </div>
