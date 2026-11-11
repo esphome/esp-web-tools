@@ -4,7 +4,6 @@ import {
   findInterface,
   type LineConfig,
   type UsbSerialDriver,
-  type UsbSerialDriverDefinition,
   type UsbSerialEndpoints,
 } from "./driver";
 
@@ -209,12 +208,5 @@ export const ftdiStripStatus = (
   return out.subarray(0, length);
 };
 
-export const ftdiDriver: UsbSerialDriverDefinition = {
-  name: "FTDI",
-  // FT232R/BM/AM, FT2232, FT4232, FT232H, FT-X.
-  filters: [0x6001, 0x6010, 0x6011, 0x6014, 0x6015].map((productId) => ({
-    vendorId: 0x0403,
-    productId,
-  })),
-  create: (device) => new FtdiDriver(device),
-};
+export const createFtdiDriver = (device: USBDevice): UsbSerialDriver =>
+  new FtdiDriver(device);

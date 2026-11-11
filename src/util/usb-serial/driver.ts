@@ -21,7 +21,7 @@ export interface UsbSerialEndpoints {
   out: USBEndpoint;
 }
 
-/** One opened chip. Created by `UsbSerialDriverDefinition.create`. */
+/** One opened chip. Created by the factory a definition's `load` resolves to. */
 export interface UsbSerialDriver {
   /**
    * Claim the interfaces and initialise the chip. The USB configuration is
@@ -43,7 +43,11 @@ export interface UsbSerialDriver {
   close?(): Promise<void>;
 }
 
-/** A registry entry describing a supported family of chips. */
+/**
+ * A registry entry describing a supported family of chips. Only the filters
+ * are needed up front (for the device picker); the driver code itself is
+ * fetched with `load` once a matching device has been picked.
+ */
 export interface UsbSerialDriverDefinition {
   name: string;
   /**
@@ -52,7 +56,8 @@ export interface UsbSerialDriverDefinition {
    * is set must match, and `classCode` matches the device or any interface.
    */
   filters: USBDeviceFilter[];
-  create(device: USBDevice): UsbSerialDriver;
+  /** Lazily fetch the driver code and resolve to its factory. */
+  load(): Promise<(device: USBDevice) => UsbSerialDriver>;
 }
 
 const matchesFilter = (device: USBDevice, filter: USBDeviceFilter): boolean => {

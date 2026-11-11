@@ -1,7 +1,7 @@
 import type { FlashState } from "./const";
 import type { EwtInstallDialog } from "./install-dialog";
 import { connect } from "./connect";
-import { isSerialSupported } from "./util/serial";
+import { isSerialSupported, preloadSerialSupport } from "./util/serial";
 
 export class InstallButton extends HTMLElement {
   public static isSupported = isSerialSupported();
@@ -85,6 +85,7 @@ export class InstallButton extends HTMLElement {
     }
 
     this.toggleAttribute("install-supported", true);
+    preloadSerialSupport();
 
     const slot = document.createElement("slot");
 

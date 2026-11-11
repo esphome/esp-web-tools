@@ -5,7 +5,6 @@ import {
   findInterface,
   type LineConfig,
   type UsbSerialDriver,
-  type UsbSerialDriverDefinition,
   type UsbSerialEndpoints,
 } from "./driver";
 
@@ -162,13 +161,5 @@ class Ch34xDriver implements UsbSerialDriver {
   }
 }
 
-export const ch34xDriver: UsbSerialDriverDefinition = {
-  name: "CH340/CH341",
-  filters: [
-    { vendorId: 0x1a86, productId: 0x7523 },
-    { vendorId: 0x1a86, productId: 0x7522 },
-    { vendorId: 0x1a86, productId: 0x5523 },
-    { vendorId: 0x4348, productId: 0x5523 },
-  ],
-  create: (device) => new Ch34xDriver(device),
-};
+export const createCh34xDriver = (device: USBDevice): UsbSerialDriver =>
+  new Ch34xDriver(device);

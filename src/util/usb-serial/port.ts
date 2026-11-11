@@ -1,9 +1,4 @@
-import type {
-  LineConfig,
-  UsbSerialDriver,
-  UsbSerialDriverDefinition,
-  UsbSerialEndpoints,
-} from "./driver";
+import type { LineConfig, UsbSerialDriver, UsbSerialEndpoints } from "./driver";
 
 const DEFAULT_BUFFER_SIZE = 255;
 
@@ -49,7 +44,7 @@ export class UsbSerialPort {
 
   constructor(
     private readonly _device: USBDevice,
-    private readonly _definition: UsbSerialDriverDefinition,
+    private readonly _createDriver: (device: USBDevice) => UsbSerialDriver,
   ) {}
 
   private get _bufferSize(): number {
@@ -169,7 +164,7 @@ export class UsbSerialPort {
       if (this._device.configuration === null) {
         await this._device.selectConfiguration(1);
       }
-      const driver = this._definition.create(this._device);
+      const driver = this._createDriver(this._device);
       this._driver = driver;
       this._endpoints = await driver.open();
       await driver.setLineConfig(config);
