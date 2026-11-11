@@ -189,7 +189,8 @@
       >
         <i slot="unsupported">
           The demo is not available because your browser does not support Web
-          Serial. Open this page in Mozilla Firefox, Google Chrome or Microsoft Edge instead<span
+          Serial. Open this page in Mozilla Firefox, Google Chrome, Microsoft
+          Edge or Google Chrome on Android instead<span
             class="not-supported-i hidden"
           >
             (but not on your iOS device)</span
@@ -336,10 +337,10 @@
         firmware variant from the manifest.
       </p>
       <p>
-        Web Serial is available in Mozilla Firefox, Google Chrome and Microsoft Edge
-        browsers<span class="not-supported-i hidden">
+        ESP Web Tools works in Mozilla Firefox, Google Chrome, Microsoft Edge
+        and Google Chrome on Android<span class="not-supported-i hidden">
           (but not on your iOS device)</span
-        >. Android support should be possible but has not been implemented yet.
+        >.
       </p>
 
       <h3 id="improv">Configuring Wi-Fi</h3>
@@ -695,7 +696,9 @@ document.querySelector("esp-web-install-button").manifest = URL.createObjectURL(
     <script>
       {
         if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
-          document.querySelector(".not-supported-i").classList.remove("hidden");
+          document
+            .querySelectorAll(".not-supported-i")
+            .forEach((el) => el.classList.remove("hidden"));
         }
 
         const search = new URLSearchParams(window.location.search);
