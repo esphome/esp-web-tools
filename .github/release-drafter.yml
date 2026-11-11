@@ -1,11 +1,20 @@
+name-template: "$RESOLVED_VERSION"
+tag-template: "$RESOLVED_VERSION"
+
 categories:
   - title: "Breaking Changes"
-    labels:
-      - "breaking change"
+    semver-increment: major
+    when:
+      label: "breaking change"
+  - title: "New Features"
+    semver-increment: minor
+    when:
+      label: "new-feature"
   - title: "Dependencies"
     collapse-after: 1
-    labels:
-      - "dependencies"
+    when:
+      label: "dependencies"
+
 template: |
   ## What's Changed
 

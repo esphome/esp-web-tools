@@ -15,6 +15,8 @@ workflows:
         - 'actions/setup-node@v7.1.0'
         - 'actions/upload-pages-artifact@v5.0.0'
     '.github/workflows/release-drafter.yml':
+        - 'actions/checkout@v7.0.1'
+        - 'actions/create-github-app-token@v3.3.0'
         - 'release-drafter/release-drafter@v7.10.0'
     '.github/workflows/verify-lockfile.yml':
         - 'actions/checkout@v7.0.1'
@@ -24,6 +26,11 @@ dependencies:
         commit: 'sha1-3d3c42e5aac5ba805825da76410c181273ba90b1'
         owner_id: 44036562
         repo_id: 197814629
+    'actions/create-github-app-token@v3.3.0':
+        ref: 'v3.3.0'
+        commit: 'sha1-64ab729a6294000f5aa4a4bc0b73d1f32bc45510'
+        owner_id: 44036562
+        repo_id: 642580244
     'actions/deploy-pages@v5.0.1':
         ref: 'v5.0.1'
         commit: 'sha1-368f82528645a54fb793d4d04e342629a3f51346'
