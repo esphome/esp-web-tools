@@ -3,7 +3,6 @@ import json from "@rollup/plugin-json";
 import terser from "@rollup/plugin-terser";
 import babel from "@rollup/plugin-babel";
 import commonjs from "@rollup/plugin-commonjs";
-import { createManualChunks } from "./script/rollup-manual-chunks.mjs";
 
 const ENTRY = "install-button.js";
 
@@ -12,7 +11,6 @@ const config = {
   output: {
     dir: "dist/web",
     format: "module",
-    manualChunks: createManualChunks(),
   },
   external: ["https://www.improv-wifi.com/sdk-js/launch-button.js"],
   preserveEntrySignatures: false,

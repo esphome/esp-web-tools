@@ -12,27 +12,18 @@ const exec = promisify(execFile);
 const root = path.resolve(__dirname, "..");
 let tscDir: string;
 
-const build = async (withManualChunks: boolean): Promise<OutputChunk[]> => {
+const build = async (): Promise<OutputChunk[]> => {
   const { output, ...rest } = baseConfig;
-  const { manualChunks, ...outputRest } = output;
   const bundle = await rollup({
     ...rest,
     input: path.join(tscDir, "install-button.js"),
   });
   try {
-    const result = await bundle.generate({
-      ...outputRest,
-      ...(withManualChunks ? { manualChunks } : {}),
-    });
+    const result = await bundle.generate(output);
     return result.output.filter((o): o is OutputChunk => o.type === "chunk");
   } finally {
     await bundle.close();
   }
-};
-
-const importsEntry = (chunks: OutputChunk[], chunk: OutputChunk): boolean => {
-  const entry = chunks.find((c) => c.isEntry)!;
-  return [...chunk.imports, ...chunk.dynamicImports].includes(entry.fileName);
 };
 
 beforeAll(async () => {
@@ -50,11 +41,24 @@ afterAll(async () => {
 });
 
 describe("rollup build", () => {
+  it("keeps the entry chunk free of imports of other chunks", async () => {
+    const entry = (await build()).find((c) => c.isEntry)!;
+    // The entry is loaded straight from a script tag, so it must be a single
+    // file that needs nothing else to start. Lazy chunks load on demand.
+    expect(entry.imports).toEqual([]);
+  }, 180_000);
+
   it("keeps lazy chunks from importing the entry chunk", async () => {
-    const chunks = await build(true);
-    expect(chunks.some((c) => /^shared.*\.js$/.test(c.fileName))).toBe(true);
+    // Pages often load the entry from an unpinned CDN URL while unpkg
+    // rewrites the chunks' relative imports to a pinned version URL. A lazy
+    // chunk importing the entry would run it a second time, which throws on
+    // the duplicate customElements.define.
+    const chunks = await build();
+    const entry = chunks.find((c) => c.isEntry)!;
     for (const chunk of chunks.filter((c) => !c.isEntry)) {
-      expect(importsEntry(chunks, chunk)).toBe(false);
+      expect([...chunk.imports, ...chunk.dynamicImports]).not.toContain(
+        entry.fileName,
+      );
     }
     const noPort = chunks.find((c) =>
       Object.keys(c.modules).some((m) =>
@@ -63,14 +67,5 @@ describe("rollup build", () => {
     )!;
     expect(noPort).toBeDefined();
     expect(noPort.isEntry).toBe(false);
-    expect(importsEntry(chunks, noPort)).toBe(false);
-  }, 180_000);
-
-  it("control: without manualChunks a lazy chunk imports the entry", async () => {
-    const chunks = await build(false);
-    const offenders = chunks.filter(
-      (c) => !c.isEntry && importsEntry(chunks, c),
-    );
-    expect(offenders.length).toBeGreaterThan(0);
   }, 180_000);
 });
