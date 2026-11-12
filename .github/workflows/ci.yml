@@ -28,6 +28,8 @@ jobs:
         run: npm ci
       - name: Build
         run: script/build
+      - name: Test
+        run: npm test
       - name: Build website
         run: script/build_website
       - name: Check formatting
