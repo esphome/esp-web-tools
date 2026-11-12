@@ -62,7 +62,8 @@ jobs:
             exit 1
           fi
           npm version --no-git-tag-version --allow-same-version --ignore-scripts "$RESOLVED_VERSION"
-          if git diff --quiet -- package.json package-lock.json; then
+          printf 'export const version = "%s";\n' "$RESOLVED_VERSION" > src/version.ts
+          if git diff --quiet -- package.json package-lock.json src/version.ts; then
             echo "Version already $RESOLVED_VERSION, nothing to commit."
           else
             if ! bot_id=$(gh api "users/${APP_SLUG}[bot]" --jq .id); then
@@ -71,7 +72,7 @@ jobs:
             fi
             git config user.name "${APP_SLUG}[bot]"
             git config user.email "${bot_id}+${APP_SLUG}[bot]@users.noreply.github.com"
-            git add package.json package-lock.json
+            git add package.json package-lock.json src/version.ts
             git commit -m "Bump version to $RESOLVED_VERSION"
             if ! git push origin HEAD:main; then
               echo "Push failed, rebasing onto latest main and retrying once."

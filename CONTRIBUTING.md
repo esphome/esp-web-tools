@@ -50,11 +50,11 @@ Releases are cut from GitHub draft releases. The package is built once, attached
 
 1. **Merge to `main`.** The `Draft release / Update draft` workflow:
    - updates the draft release notes and resolves the next version from the labels above,
-   - runs `npm version` and commits the bump to `main` as the ESPHome GitHub App,
+   - runs `npm version`, writes the version to `src/version.ts`, and commits the bump to `main` as the ESPHome GitHub App,
    - pins the draft to that commit,
    - removes any tarball left on the draft by an earlier build,
    - adds a "Do not publish this release yet" warning to the top of the draft.
-2. **Build.** When that finishes, `Build release` runs three jobs. `Find draft` checks that the draft is pinned to a commit on `main`. `Build` checks out that commit, checks that `package.json` matches the draft's tag and builds `esp-web-tools-<version>.tgz` with no token or secrets. `Attach to draft` then attaches the tarball to the draft and removes the warning.
+2. **Build.** When that finishes, `Build release` runs three jobs. `Find draft` checks that the draft is pinned to a commit on `main`. `Build` checks out that commit, checks that `package.json` and `src/version.ts` match the draft's tag and builds `esp-web-tools-<version>.tgz` with no token or secrets. `Attach to draft` then attaches the tarball to the draft and removes the warning.
 3. **Publish the draft.** When the warning is gone and the tarball is attached, review the notes and publish the release on GitHub.
 4. **npm.** `Publish / npm` runs in the `npm` environment. It downloads the tarball from the release, verifies it against the immutable release attestation, checks its version, and publishes it to npm with provenance via trusted publishing (no npm token).
 
