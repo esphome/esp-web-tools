@@ -1,44 +1,31 @@
-// For format details, see https://aka.ms/devcontainer.json. For config options, see the README at:
-// https://github.com/microsoft/vscode-dev-containers/tree/v0.177.0/containers/typescript-node
 {
   "name": "Node.js & TypeScript",
-  "build": {
-    "dockerfile": "Dockerfile",
-    // Update 'VARIANT' to pick a Node version: 12, 14, 16, 18, 20
-    "args": {
-      "VARIANT": "20"
-    }
-  },
-
-  // Add the IDs of extensions you want installed when the container is created.
-  "extensions": [
-    "dbaeumer.vscode-eslint",
-    "esbenp.prettier-vscode",
-    "bierner.lit-html",
-    "runem.lit-plugin"
-  ],
-
-  // Use 'forwardPorts' to make a list of ports inside the container available locally.
-  "forwardPorts": [5000],
-
-  // Use 'postCreateCommand' to run commands after the container is created.
-  "postCreateCommand": "npm install",
-
-  // Comment out connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
+  // Node version is set by the image tag: 22-bookworm, 24-bookworm, ...
+  "image": "mcr.microsoft.com/devcontainers/typescript-node:24-bookworm",
+  "forwardPorts": [5001],
+  "postCreateCommand": "npm ci",
   "remoteUser": "node",
-
-  "settings": {
-    "files.eol": "\n",
-    "editor.tabSize": 2,
-    "editor.formatOnPaste": false,
-    "editor.formatOnSave": true,
-    "editor.formatOnType": true,
-    "[typescript]": {
-      "editor.defaultFormatter": "esbenp.prettier-vscode"
-    },
-    "[javascript]": {
-      "editor.defaultFormatter": "esbenp.prettier-vscode"
-    },
-    "files.trimTrailingWhitespace": true
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "esbenp.prettier-vscode",
+        "bierner.lit-html",
+        "runem.lit-plugin"
+      ],
+      "settings": {
+        "files.eol": "\n",
+        "editor.tabSize": 2,
+        "editor.formatOnPaste": false,
+        "editor.formatOnSave": true,
+        "editor.formatOnType": true,
+        "[typescript]": {
+          "editor.defaultFormatter": "esbenp.prettier-vscode"
+        },
+        "[javascript]": {
+          "editor.defaultFormatter": "esbenp.prettier-vscode"
+        },
+        "files.trimTrailingWhitespace": true
+      }
+    }
   }
 }
