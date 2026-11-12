@@ -127,7 +127,7 @@ export class EwtConsole extends HTMLElement {
         .pipeTo(
           new WritableStream({
             write: (chunk) => {
-              this._console!.addLine(chunk.replace("\r", ""));
+              this._console!.addLine(chunk.replace(/\r/g, ""));
             },
           }),
         );
