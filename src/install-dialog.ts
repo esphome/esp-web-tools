@@ -31,12 +31,12 @@ import {
   networkWifiFull,
 } from "./components/svg";
 import { Logger, Manifest, FlashStateType, FlashState } from "./const.js";
-import { ImprovSerial, Ssid } from "improv-wifi-serial-sdk/dist/serial";
+import { ImprovSerial, Ssid } from "@improv-wifi/serial-sdk/dist/serial";
 import {
   ImprovSerialCurrentState,
   ImprovSerialErrorState,
   PortNotReady,
-} from "improv-wifi-serial-sdk/dist/const";
+} from "@improv-wifi/serial-sdk/dist/const";
 import { flash } from "./flash";
 import { ScreenWakeLock } from "./util/wake-lock";
 import { textDownload } from "./util/file-download";
