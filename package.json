@@ -28,9 +28,9 @@
     "typescript": "^7.0.2"
   },
   "dependencies": {
+    "@improv-wifi/serial-sdk": "3.0.0",
     "@material/web": "^2.5.0",
     "esptool-js": "^0.7.0",
-    "improv-wifi-serial-sdk": "2.9.0",
     "lit": "^3.2.1",
     "tslib": "^2.8.1"
   }
