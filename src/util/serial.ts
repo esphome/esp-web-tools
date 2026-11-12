@@ -1,6 +1,8 @@
-import { getOperatingSystem } from "./get-operating-system";
-
 /**
+ * The install button entry chunk must not import any other chunk, so this
+ * check is inlined here instead of using getOperatingSystem, which the lazy
+ * chunks also use. test/build.test.ts enforces this.
+ *
  * Chrome on Android ships a native Web Serial that only lists Bluetooth serial
  * devices, never USB ones. There (and wherever Web Serial is missing but
  * WebUSB is present) we speak to USB-UART bridges and native-USB ESP chips
@@ -8,7 +10,7 @@ import { getOperatingSystem } from "./get-operating-system";
  */
 const useWebUsb = (): boolean =>
   "usb" in navigator &&
-  (!("serial" in navigator) || getOperatingSystem() === "Android");
+  (!("serial" in navigator) || /Android/.test(navigator.userAgent));
 
 export const isSerialSupported = (): boolean =>
   "serial" in navigator || "usb" in navigator;

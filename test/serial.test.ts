@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-let os: string | null;
+let android: boolean;
 let usbImports: number;
 let usbFailuresLeft: number;
 const requestUsbSerialPort = vi.fn();
@@ -15,9 +15,10 @@ const setNav = (key: "serial" | "usb", value: unknown): void => {
 
 const load = async () => {
   vi.resetModules();
-  vi.doMock("../src/util/get-operating-system", () => ({
-    getOperatingSystem: () => os,
-  }));
+  Object.defineProperty(navigator, "userAgent", {
+    value: android ? "Mozilla/5.0 (Linux; Android 14)" : "Mozilla/5.0 (X11)",
+    configurable: true,
+  });
   vi.doMock("../src/util/usb-serial/index", () => {
     usbImports++;
     if (usbFailuresLeft > 0) {
@@ -30,7 +31,7 @@ const load = async () => {
 };
 
 beforeEach(() => {
-  os = "Linux";
+  android = false;
   usbImports = 0;
   usbFailuresLeft = 0;
   requestUsbSerialPort.mockReset();
@@ -69,7 +70,7 @@ describe("requestSerialPort", () => {
   });
 
   it("uses WebUSB on Android even with Web Serial", async () => {
-    os = "Android";
+    android = true;
     const requestPort = vi.fn();
     setNav("serial", { requestPort });
     setNav("usb", {});
@@ -88,7 +89,7 @@ describe("requestSerialPort", () => {
   });
 
   it("uses Web Serial on Android without WebUSB", async () => {
-    os = "Android";
+    android = true;
     const requestPort = vi.fn().mockResolvedValue("s");
     setNav("serial", { requestPort });
     const mod = await load();

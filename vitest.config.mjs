@@ -8,7 +8,6 @@ export default defineConfig({
       provider: "v8",
       reporter: [["text", { skipFull: false }]],
       include: [
-        "script/rollup-manual-chunks.mjs",
         "src/connect.ts",
         "src/util/serial.ts",
         "src/no-port-picked/index.ts",
