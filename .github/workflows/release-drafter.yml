@@ -5,16 +5,17 @@ on:
     branches:
       - main
 
-# Runs push the version bump to main, so they must not race each other.
-concurrency:
-  group: release-drafter
-  cancel-in-progress: false
-
 permissions: {}
 
 jobs:
   update_release_draft:
     name: Update draft
+    # Shared with the Attach to draft job in build-release.yml so the two never
+    # modify the draft at the same time. Set on the job (not the workflow) so a
+    # skipped bump-commit run never takes a place in the queue.
+    concurrency:
+      group: release-draft
+      cancel-in-progress: false
     # Skip the push of our own version bump commit. Rerunning here would
     # re-add the build-pending note and delete the tarball after the build
     # for that commit may already have finished.
