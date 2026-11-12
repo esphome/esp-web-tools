@@ -10,7 +10,8 @@
   "author": "ESPHome maintainers",
   "license": "Apache-2.0",
   "scripts": {
-    "prepublishOnly": "script/build"
+    "prepublishOnly": "script/build",
+    "test": "vitest run --coverage"
   },
   "devDependencies": {
     "@babel/preset-env": "^7.26.0",
@@ -22,10 +23,13 @@
     "@rollup/plugin-typescript": "^12.1.2",
     "@types/w3c-web-serial": "^1.0.7",
     "@types/w3c-web-usb": "^1.0.14",
+    "@vitest/coverage-v8": "^5.1.0",
+    "happy-dom": "^21.0.4",
     "prettier": "^3.4.2",
     "rollup": "^4.29.1",
     "serve": "^14.2.4",
-    "typescript": "^7.0.2"
+    "typescript": "^7.0.2",
+    "vitest": "^5.1.0"
   },
   "dependencies": {
     "@improv-wifi/serial-sdk": "3.0.0",

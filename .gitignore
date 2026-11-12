@@ -3,3 +3,4 @@ node_modules
 
 # Downloaded at build time by script/download_allowed_referrers
 /website/allowed-referrers.json
+coverage
