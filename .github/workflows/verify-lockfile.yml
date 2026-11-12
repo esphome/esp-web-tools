@@ -1,4 +1,4 @@
-name: verify-lockfile
+name: Actions lockfile
 
 on:
   pull_request:
@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   verify:
-    name: Verify actions lockfile
+    name: Verify
     runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ github.token }}

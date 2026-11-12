@@ -1,4 +1,4 @@
-name: Node.js Package
+name: Publish
 
 on:
   release:
@@ -6,27 +6,72 @@ on:
 
 jobs:
   publish-npm:
+    name: npm
     runs-on: ubuntu-latest
+    environment:
+      name: npm
+      url: https://www.npmjs.com/package/esp-web-tools/v/${{ github.event.release.tag_name }}
     permissions:
-      contents: read
       id-token: write
     steps:
-      - uses: actions/checkout@v7.0.1
-      - name: Install jq tool
-        run: |
-          sudo apt-get update
-          sudo apt-get install jq
-      - uses: actions/setup-node@v7.1.0
+      - name: Create app token
+        id: app-token
+        uses: actions/create-github-app-token@v3.3.0
         with:
-          node-version: 22
+          client-id: ${{ vars.ESPHOME_GITHUB_APP_CLIENT_ID }}
+          private-key: ${{ secrets.ESPHOME_GITHUB_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ github.event.repository.name }}
+          permission-contents: read
+          permission-attestations: read
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7.1.0
+        with:
+          node-version: 24
           registry-url: https://registry.npmjs.org/
-      - name: Update npm to latest
-        run: npm install -g npm@latest
-      - run: npm ci
-      - name: Set version from release tag
+
+      - name: Download tarball
+        id: download
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          REPO: ${{ github.repository }}
+          TAG: ${{ github.event.release.tag_name }}
         run: |
-          VERSION="${{ github.event.release.tag_name }}"
-          VERSION="${VERSION#v}"
-          jq --arg v "$VERSION" '.version = $v' package.json > package.json.tmp && mv package.json.tmp package.json
-      - run: npm publish --provenance
-      
+          gh release download "$TAG" --repo "$REPO" --pattern '*.tgz' --dir "$RUNNER_TEMP/release"
+          shopt -s nullglob
+          files=("$RUNNER_TEMP"/release/*.tgz)
+          if [ "${#files[@]}" -ne 1 ]; then
+            echo "::error::Expected exactly one .tgz asset, found ${#files[@]}."
+            exit 1
+          fi
+          echo "file=${files[0]}" >> "$GITHUB_OUTPUT"
+
+      - name: Verify attestation
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          REPO: ${{ github.repository }}
+          TAG: ${{ github.event.release.tag_name }}
+          FILE: ${{ steps.download.outputs.file }}
+        run: gh release verify-asset "$TAG" "$FILE" --repo "$REPO"
+
+      - name: Check version
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+          FILE: ${{ steps.download.outputs.file }}
+        run: |
+          if ! pkg_json=$(tar -xzOf "$FILE" package/package.json); then
+            echo "::error::Failed to read package/package.json from tarball."
+            exit 1
+          fi
+          pkg_version=$(jq -r '.version' <<< "$pkg_json")
+          tag_version="${TAG#v}"
+          if [ "$pkg_version" != "$tag_version" ]; then
+            echo "::error::Tarball version $pkg_version does not match tag $TAG."
+            exit 1
+          fi
+
+      - name: Publish
+        env:
+          FILE: ${{ steps.download.outputs.file }}
+        run: npm publish "$FILE" --provenance --ignore-scripts

@@ -9,21 +9,30 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+
 jobs:
   build:
+    name: Build
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v7.0.1
+      - name: Checkout
+        uses: actions/checkout@v7.0.1
       - name: Install jq tool
         run: |
           sudo apt-get update
           sudo apt-get install jq
-      - name: Use Node.js
+      - name: Set up Node.js
         uses: actions/setup-node@v7.1.0
         with:
           node-version: 22
-      - run: npm ci
-      - run: script/build
-      - run: script/build_website
-      - run: npm exec -- prettier --check src
+      - name: Install dependencies
+        run: npm ci
+      - name: Build
+        run: script/build
+      - name: Build website
+        run: script/build_website
+      - name: Check formatting
+        run: npm exec -- prettier --check src

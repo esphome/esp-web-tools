@@ -1,0 +1,222 @@
+name: Build release
+
+on:
+  workflow_run:
+    workflows: ["Draft release"]
+    types: [completed]
+  workflow_dispatch:
+
+concurrency:
+  group: build-release
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  find-draft:
+    name: Find draft
+    if: github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'main')
+    runs-on: ubuntu-latest
+    permissions: {}
+    outputs:
+      id: ${{ steps.draft.outputs.id }}
+      tag: ${{ steps.draft.outputs.tag }}
+      sha: ${{ steps.draft.outputs.sha }}
+    steps:
+      - name: Create app token
+        id: app-token
+        uses: actions/create-github-app-token@v3.3.0
+        with:
+          client-id: ${{ vars.ESPHOME_GITHUB_APP_CLIENT_ID }}
+          private-key: ${{ secrets.ESPHOME_GITHUB_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ github.event.repository.name }}
+          permission-contents: write
+
+      - name: Find draft
+        id: draft
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          if ! releases=$(gh api "repos/$REPO/releases" --paginate); then
+            echo "::error::Failed to list releases."
+            exit 1
+          fi
+          if ! drafts=$(jq -s '[.[][] | select(.draft == true)]' <<< "$releases"); then
+            echo "::error::Failed to parse releases."
+            exit 1
+          fi
+          count=$(jq 'length' <<< "$drafts")
+          if [ "$count" -ne 1 ]; then
+            echo "::error::Expected exactly one draft release, found $count."
+            exit 1
+          fi
+          id=$(jq -r '.[0].id' <<< "$drafts")
+          tag=$(jq -r '.[0].tag_name' <<< "$drafts")
+          sha=$(jq -r '.[0].target_commitish' <<< "$drafts")
+          case "$tag" in
+            untagged-*)
+              echo "::error::Draft release has placeholder tag $tag."
+              exit 1
+              ;;
+          esac
+          if ! [[ "$sha" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::Draft target_commitish '$sha' is not a 40-char commit sha."
+            exit 1
+          fi
+          if ! out=$(gh api "repos/$REPO/compare/main...$sha" --jq .status); then
+            echo "::error::Failed to compare draft commit $sha with main."
+            exit 1
+          fi
+          case "$out" in
+            behind|identical) ;;
+            *)
+              echo "::error::Draft commit $sha is not reachable from main (compare status '$out')."
+              exit 1
+              ;;
+          esac
+          {
+            echo "id=$id"
+            echo "tag=$tag"
+            echo "sha=$sha"
+          } >> "$GITHUB_OUTPUT"
+
+  build:
+    name: Build
+    needs: find-draft
+    runs-on: ubuntu-latest
+    permissions: {}
+    outputs:
+      tarball: ${{ steps.pack.outputs.name }}
+    steps:
+      - name: Checkout draft commit
+        uses: actions/checkout@v7.0.1
+        with:
+          ref: ${{ needs.find-draft.outputs.sha }}
+          persist-credentials: false
+
+      - name: Check version
+        env:
+          TAG: ${{ needs.find-draft.outputs.tag }}
+        run: |
+          pkg_version=$(jq -r '.version' package.json)
+          tag_version="${TAG#v}"
+          if [ "$pkg_version" != "$tag_version" ]; then
+            echo "::error::package.json version $pkg_version does not match tag $TAG."
+            exit 1
+          fi
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7.1.0
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: script/build
+
+      - name: Pack
+        id: pack
+        run: |
+          mkdir -p "$RUNNER_TEMP/pack"
+          npm pack --ignore-scripts --pack-destination "$RUNNER_TEMP/pack"
+          shopt -s nullglob
+          files=("$RUNNER_TEMP"/pack/*.tgz)
+          if [ "${#files[@]}" -ne 1 ]; then
+            echo "::error::Expected exactly one tarball, found ${#files[@]}."
+            exit 1
+          fi
+          {
+            echo "file=${files[0]}"
+            echo "name=$(basename "${files[0]}")"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Upload tarball
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          path: ${{ steps.pack.outputs.file }}
+          archive: false
+          if-no-files-found: error
+          retention-days: 1
+
+  attach:
+    name: Attach to draft
+    needs: [find-draft, build]
+    runs-on: ubuntu-latest
+    permissions: {}
+    steps:
+      - name: Create app token
+        id: app-token
+        uses: actions/create-github-app-token@v3.3.0
+        with:
+          client-id: ${{ vars.ESPHOME_GITHUB_APP_CLIENT_ID }}
+          private-key: ${{ secrets.ESPHOME_GITHUB_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ github.event.repository.name }}
+          permission-contents: write
+
+      - name: Download tarball
+        uses: actions/download-artifact@v8.0.2
+        with:
+          name: ${{ needs.build.outputs.tarball }}
+          path: ${{ runner.temp }}/pack
+
+      - name: Verify tarball
+        id: verify
+        run: |
+          shopt -s nullglob
+          files=("$RUNNER_TEMP"/pack/*.tgz)
+          if [ "${#files[@]}" -ne 1 ]; then
+            echo "::error::Expected exactly one tarball, found ${#files[@]}."
+            exit 1
+          fi
+          echo "file=${files[0]}" >> "$GITHUB_OUTPUT"
+
+      - name: Attach to draft
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          REPO: ${{ github.repository }}
+          RELEASE_ID: ${{ needs.find-draft.outputs.id }}
+          FILE: ${{ steps.verify.outputs.file }}
+        run: |
+          if ! assets=$(gh api "repos/$REPO/releases/$RELEASE_ID/assets" --paginate); then
+            echo "::error::Failed to list release assets."
+            exit 1
+          fi
+          if ! old_ids=$(jq -s -r '.[][] | select(.name | endswith(".tgz")) | .id' <<< "$assets"); then
+            echo "::error::Failed to parse release assets."
+            exit 1
+          fi
+          for asset_id in $old_ids; do
+            gh api -X DELETE "repos/$REPO/releases/assets/$asset_id"
+          done
+          name=$(basename "$FILE")
+          gh api -X POST "https://uploads.github.com/repos/$REPO/releases/$RELEASE_ID/assets?name=$name" \
+            -H "Content-Type: application/gzip" --input "$FILE"
+
+      - name: Clear pending note
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          REPO: ${{ github.repository }}
+          RELEASE_ID: ${{ needs.find-draft.outputs.id }}
+        run: |
+          if ! release=$(gh api "repos/$REPO/releases/$RELEASE_ID"); then
+            echo "::error::Failed to fetch release $RELEASE_ID."
+            exit 1
+          fi
+          tag=$(jq -r '.tag_name' <<< "$release")
+          case "$tag" in
+            untagged-*)
+              echo "::error::Draft release has placeholder tag $tag; refusing to PATCH."
+              exit 1
+              ;;
+          esac
+          if ! payload=$(jq '{tag_name, name, prerelease, target_commitish, draft: true,
+              body: ((.body // "") | gsub("<!-- build-pending -->[\\s\\S]*?<!-- /build-pending -->\\s*"; ""))}' <<< "$release"); then
+            echo "::error::Failed to build release payload."
+            exit 1
+          fi
+          gh api -X PATCH "repos/$REPO/releases/$RELEASE_ID" --input - <<< "$payload" > /dev/null
