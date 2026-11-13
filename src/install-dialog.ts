@@ -215,6 +215,9 @@ export class EwtInstallDialog extends LitElement {
 
   _renderDashboard(): [string, TemplateResult, boolean] {
     const heading = formatFirmwareTitle(this._manifest.name);
+    const installLabel = this._isSameFirmware
+      ? `Update ${this._manifest.name}`
+      : `Install ${this._manifest.name}`;
     let content: TemplateResult;
     let allowClosing = true;
 
@@ -244,12 +247,8 @@ export class EwtInstallDialog extends LitElement {
                     }}
                   >
                     ${listItemInstallIcon}
-                    <div slot="headline">
-                      ${
-                        !this._isSameFirmware
-                          ? `Install ${this._manifest.name}`
-                          : `Update ${this._manifest.name}`
-                      }
+                    <div slot="headline" class="truncate" title=${installLabel}>
+                      ${installLabel}
                     </div>
                   </ew-list-item>
                 `
@@ -373,7 +372,13 @@ export class EwtInstallDialog extends LitElement {
             }}
           >
             ${listItemInstallIcon}
-            <div slot="headline">${`Install ${this._manifest.name}`}</div>
+            <div
+              slot="headline"
+              class="truncate"
+              title=${`Install ${this._manifest.name}`}
+            >
+              ${`Install ${this._manifest.name}`}
+            </div>
           </ew-list-item>
           <ew-list-item
             type="button"
@@ -1268,6 +1273,12 @@ export class EwtInstallDialog extends LitElement {
       div[slot="headline"] {
         padding-right: 48px;
         white-space: pre-line;
+      }
+      ew-list-item div[slot="headline"].truncate {
+        padding-right: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
       ew-icon-button[slot="headline"] {
         position: absolute;
