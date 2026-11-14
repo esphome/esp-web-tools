@@ -6,6 +6,41 @@ import { Logger } from "../const";
 import { Transport, HardReset } from "esptool-js";
 
 export class EwtConsole extends HTMLElement {
+  static style = `
+  :host, input {
+    background-color: #1c1c1c;
+    color: #ddd;
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier,
+      monospace;
+    line-height: 1.45;
+    display: flex;
+    flex-direction: column;
+  }
+  form {
+    display: flex;
+    align-items: center;
+    padding: 0 8px 0 16px;
+  }
+  input {
+    flex: 1;
+    padding: 4px;
+    margin: 0 8px;
+    border: 0;
+    outline: none;
+  }
+  ${coloredConsoleStyles}
+  @media (max-width: 600px) {
+    form {
+      padding: 0 4px 0 8px;
+    }
+    .log {
+      font-size: 11px;
+      padding: 8px;
+      border-radius: 0;
+    }
+  }
+`;
+
   public port!: SerialPort;
   public logger!: Logger;
   public allowInput = true;
@@ -24,40 +59,6 @@ export class EwtConsole extends HTMLElement {
     const shadowRoot = this.attachShadow({ mode: "open" });
 
     shadowRoot.innerHTML = `
-      <style>
-        :host, input {
-          background-color: #1c1c1c;
-          color: #ddd;
-          font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier,
-            monospace;
-          line-height: 1.45;
-          display: flex;
-          flex-direction: column;
-        }
-        form {
-          display: flex;
-          align-items: center;
-          padding: 0 8px 0 16px;
-        }
-        input {
-          flex: 1;
-          padding: 4px;
-          margin: 0 8px;
-          border: 0;
-          outline: none;
-        }
-        ${coloredConsoleStyles}
-        @media (max-width: 600px) {
-          form {
-            padding: 0 4px 0 8px;
-          }
-          .log {
-            font-size: 11px;
-            padding: 8px;
-            border-radius: 0;
-          }
-        }
-      </style>
       <div class="log"></div>
       ${
         this.allowInput
@@ -69,6 +70,22 @@ export class EwtConsole extends HTMLElement {
           : ""
       }
     `;
+
+    // Constructable stylesheet instead of an inline <style> element, so the
+    // console also works on pages whose Content-Security-Policy does not
+    // allow inline styles (same approach as <esp-web-install-button>).
+    if (
+      "adoptedStyleSheets" in Document.prototype &&
+      "replaceSync" in CSSStyleSheet.prototype
+    ) {
+      const sheet = new CSSStyleSheet();
+      sheet.replaceSync(EwtConsole.style);
+      shadowRoot.adoptedStyleSheets = [sheet];
+    } else {
+      const styleSheet = document.createElement("style");
+      styleSheet.textContent = EwtConsole.style;
+      shadowRoot.prepend(styleSheet);
+    }
 
     const log = this.shadowRoot!.querySelector("div")!;
     this._console = new ColoredConsole(log);
