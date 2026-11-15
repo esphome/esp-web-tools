@@ -7,6 +7,7 @@ import {
   FlashStateType,
 } from "./const";
 import { sleep } from "./util/sleep";
+import { t } from "./localize";
 
 /**
  * Perform a hard reset using esploader's chip-specific reset logic.
@@ -57,7 +58,7 @@ export const flash = async (
 
   fireStateEvent({
     state: FlashStateType.INITIALIZING,
-    message: "Initializing...",
+    message: t("Initializing..."),
     details: { done: false },
   });
 
@@ -68,8 +69,9 @@ export const flash = async (
     console.error(err);
     fireStateEvent({
       state: FlashStateType.ERROR,
-      message:
+      message: t(
         "Failed to initialize. Try resetting your device or holding the BOOT button while clicking INSTALL.",
+      ),
       details: { error: FlashError.FAILED_INITIALIZING, details: err },
     });
 
@@ -82,7 +84,7 @@ export const flash = async (
 
   fireStateEvent({
     state: FlashStateType.INITIALIZING,
-    message: `Initialized. Found ${chipFamily}`,
+    message: t("Initialized. Found {chipFamily}", { chipFamily }),
     details: { done: true },
   });
 
@@ -98,7 +100,7 @@ export const flash = async (
   if (!build) {
     fireStateEvent({
       state: FlashStateType.ERROR,
-      message: `Your ${chipFamily} board is not supported.`,
+      message: t("Your {chipFamily} board is not supported.", { chipFamily }),
       details: { error: FlashError.NOT_SUPPORTED, details: chipFamily },
     });
     await hardResetDevice(transport, esploader);
@@ -108,7 +110,7 @@ export const flash = async (
 
   fireStateEvent({
     state: FlashStateType.PREPARING,
-    message: "Preparing installation...",
+    message: t("Preparing installation..."),
     details: { done: false },
   });
 
@@ -162,27 +164,27 @@ export const flash = async (
 
   fireStateEvent({
     state: FlashStateType.PREPARING,
-    message: "Installation prepared",
+    message: t("Installation prepared"),
     details: { done: true },
   });
 
   if (eraseFirst) {
     fireStateEvent({
       state: FlashStateType.ERASING,
-      message: "Erasing device...",
+      message: t("Erasing device..."),
       details: { done: false },
     });
     await esploader.eraseFlash();
     fireStateEvent({
       state: FlashStateType.ERASING,
-      message: "Device erased",
+      message: t("Device erased"),
       details: { done: true },
     });
   }
 
   fireStateEvent({
     state: FlashStateType.WRITING,
-    message: `Writing progress: 0%`,
+    message: t("Writing progress: {percentage}%", { percentage: 0 }),
     details: {
       bytesTotal: totalSize,
       bytesWritten: 0,
@@ -217,7 +219,7 @@ export const flash = async (
 
         fireStateEvent({
           state: FlashStateType.WRITING,
-          message: `Writing progress: ${newPct}%`,
+          message: t("Writing progress: {percentage}%", { percentage: newPct }),
           details: {
             bytesTotal: totalSize,
             bytesWritten: totalWritten + written,
@@ -239,7 +241,7 @@ export const flash = async (
 
   fireStateEvent({
     state: FlashStateType.WRITING,
-    message: "Writing complete",
+    message: t("Writing complete"),
     details: {
       bytesTotal: totalSize,
       bytesWritten: totalWritten,
@@ -254,6 +256,6 @@ export const flash = async (
 
   fireStateEvent({
     state: FlashStateType.FINISHED,
-    message: "All done!",
+    message: t("All done!"),
   });
 };

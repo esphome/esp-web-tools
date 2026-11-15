@@ -76,11 +76,15 @@ export class InstallButton extends HTMLElement {
 
     this.renderRoot = this.attachShadow({ mode: "open" });
 
+    const locale = (document.documentElement.lang || navigator.language)
+      .toLowerCase()
+      .split("-")[0];
+
     if (!InstallButton.isSupported || !InstallButton.isAllowed) {
       this.toggleAttribute("install-unsupported", true);
       this.renderRoot.innerHTML = !InstallButton.isAllowed
-        ? "<slot name='not-allowed'>You can only install ESP devices on HTTPS websites or on the localhost.</slot>"
-        : "<slot name='unsupported'>Your browser does not support installing things on ESP devices. Use Mozilla Firefox, Google Chrome, Microsoft Edge or Google Chrome on Android.</slot>";
+        ? `<slot name='not-allowed'>${locale === "sv" ? "ESP-enheter kan bara installeras från HTTPS-webbplatser eller localhost." : "You can only install ESP devices on HTTPS websites or on the localhost."}</slot>`
+        : `<slot name='unsupported'>${locale === "sv" ? "Din webbläsare stöder inte installation på ESP-enheter. Använd Mozilla Firefox, Google Chrome, Microsoft Edge eller Google Chrome på Android." : "Your browser does not support installing things on ESP devices. Use Mozilla Firefox, Google Chrome, Microsoft Edge or Google Chrome on Android."}</slot>`;
       return;
     }
 
@@ -96,7 +100,7 @@ export class InstallButton extends HTMLElement {
 
     slot.name = "activate";
     const button = document.createElement("button");
-    button.innerText = "Connect";
+    button.innerText = locale === "sv" ? "Anslut" : "Connect";
     slot.append(button);
     if (
       "adoptedStyleSheets" in Document.prototype &&

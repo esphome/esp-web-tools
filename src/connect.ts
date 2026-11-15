@@ -1,6 +1,11 @@
 import type { InstallButton } from "./install-button.js";
 import { requestSerialPort } from "./util/serial.js";
 
+const isSwedish = () =>
+  (document.documentElement.lang || navigator.language)
+    .toLowerCase()
+    .split("-")[0] === "sv";
+
 export const connect = async (button: InstallButton) => {
   import("./install-dialog.js");
   let port: SerialPort | undefined;
@@ -13,7 +18,7 @@ export const connect = async (button: InstallButton) => {
       );
       return;
     }
-    alert(`Error: ${err.message}`);
+    alert(`${isSwedish() ? "Fel" : "Error"}: ${err.message}`);
     return;
   }
 

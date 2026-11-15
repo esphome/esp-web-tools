@@ -52,6 +52,17 @@ describe("connect", () => {
     expect(mockedOpenDialog).not.toHaveBeenCalled();
   });
 
+  it("uses a Swedish error label for Swedish documents", async () => {
+    const originalLanguage = document.documentElement.lang;
+    document.documentElement.lang = "sv-SE";
+    mockedRequest.mockRejectedValue(new Error("boom"));
+
+    await connect(makeButton());
+
+    expect(alert).toHaveBeenCalledWith("Fel: boom");
+    document.documentElement.lang = originalLanguage;
+  });
+
   it("returns early when no port is returned", async () => {
     mockedRequest.mockResolvedValue(undefined as any);
     await connect(makeButton());
