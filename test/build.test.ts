@@ -42,10 +42,19 @@ afterAll(async () => {
 
 describe("rollup build", () => {
   it("keeps the entry chunk free of imports of other chunks", async () => {
-    const entry = (await build()).find((c) => c.isEntry)!;
+    const chunks = await build();
+    const entry = chunks.find((c) => c.isEntry)!;
     // The entry is loaded straight from a script tag, so it must be a single
     // file that needs nothing else to start. Lazy chunks load on demand.
     expect(entry.imports).toEqual([]);
+
+    const swedish = chunks.find((c) =>
+      Object.keys(c.modules).some((m) =>
+        m.endsWith(path.join("locales", "sv.js")),
+      ),
+    )!;
+    expect(swedish.isDynamicEntry).toBe(true);
+    expect(chunks.flatMap((c) => c.imports)).not.toContain(swedish.fileName);
   }, 180_000);
 
   it("keeps lazy chunks from importing the entry chunk", async () => {

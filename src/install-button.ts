@@ -1,7 +1,6 @@
 import type { FlashState } from "./const";
 import type { EwtInstallDialog } from "./install-dialog";
 import { connect } from "./connect";
-import { loadLocale, t } from "./localize";
 import { isSerialSupported, preloadSerialSupport } from "./util/serial";
 
 export class InstallButton extends HTMLElement {
@@ -77,7 +76,9 @@ export class InstallButton extends HTMLElement {
 
     this.renderRoot = this.attachShadow({ mode: "open" });
 
-    const translations = loadLocale();
+    const translations = import("./localize.js").then(({ loadLocale }) =>
+      loadLocale(),
+    );
 
     if (!InstallButton.isSupported || !InstallButton.isAllowed) {
       this.toggleAttribute("install-unsupported", true);
@@ -86,9 +87,9 @@ export class InstallButton extends HTMLElement {
       const message = InstallButton.isAllowed
         ? "Your browser does not support installing things on ESP devices. Use Mozilla Firefox, Google Chrome, Microsoft Edge or Google Chrome on Android."
         : "You can only install ESP devices on HTTPS websites or on the localhost.";
-      slot.textContent = t(message);
+      slot.textContent = message;
       this.renderRoot.append(slot);
-      void translations.then(() => {
+      void translations.then((t) => {
         slot.textContent = t(message);
       });
       return;
@@ -106,8 +107,8 @@ export class InstallButton extends HTMLElement {
 
     slot.name = "activate";
     const button = document.createElement("button");
-    button.textContent = t("Connect");
-    void translations.then(() => {
+    button.textContent = "Connect";
+    void translations.then((t) => {
       button.textContent = t("Connect");
     });
     slot.append(button);

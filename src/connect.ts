@@ -1,11 +1,12 @@
 import type { InstallButton } from "./install-button.js";
-import { loadLocale, t } from "./localize.js";
 import { requestSerialPort } from "./util/serial.js";
 
 export const connect = async (button: InstallButton) => {
   import("./install-dialog.js");
   // The port chooser must be requested before awaiting translations.
-  const translations = loadLocale();
+  const translations = import("./localize.js").then(({ loadLocale }) =>
+    loadLocale(),
+  );
   let port: SerialPort | undefined;
   try {
     port = await requestSerialPort();
@@ -18,7 +19,7 @@ export const connect = async (button: InstallButton) => {
       mod.openNoPortPickedDialog(() => connect(button));
       return;
     }
-    await translations;
+    const t = await translations;
     alert(`${t("Error")}: ${err.message}`);
     return;
   }

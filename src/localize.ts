@@ -4,7 +4,7 @@ type Messages = Record<string, string>;
 const loaders = new Map<string, () => Promise<{ default: Messages }>>([
   ["sv", () => import("./locales/sv.js")],
 ]);
-const pending = new Map<string, Promise<void>>();
+const pending = new Map<string, Promise<typeof t>>();
 const catalogs = new Map<string, Messages>();
 
 function locale(): string {
@@ -12,11 +12,11 @@ function locale(): string {
   return language.toLowerCase().split("-")[0];
 }
 
-export function loadLocale(): Promise<void> {
+export function loadLocale(): Promise<typeof t> {
   const language = locale();
   const load = loaders.get(language);
   if (!load) {
-    return Promise.resolve();
+    return Promise.resolve(t);
   }
 
   let loading = pending.get(language);
@@ -24,6 +24,7 @@ export function loadLocale(): Promise<void> {
     loading = load().then(
       ({ default: messages }) => {
         catalogs.set(language, messages);
+        return t;
       },
       (err) => {
         pending.delete(language);
@@ -31,6 +32,7 @@ export function loadLocale(): Promise<void> {
           `Could not load ESP Web Tools translations for ${language}`,
           err,
         );
+        return t;
       },
     );
     pending.set(language, loading);
