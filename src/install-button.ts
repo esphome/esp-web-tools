@@ -1,6 +1,7 @@
 import type { FlashState } from "./const";
 import type { EwtInstallDialog } from "./install-dialog";
 import { connect } from "./connect";
+import { loadLocale, t } from "./localize";
 import { isSerialSupported, preloadSerialSupport } from "./util/serial";
 
 export class InstallButton extends HTMLElement {
@@ -76,15 +77,20 @@ export class InstallButton extends HTMLElement {
 
     this.renderRoot = this.attachShadow({ mode: "open" });
 
-    const locale = (document.documentElement.lang || navigator.language)
-      .toLowerCase()
-      .split("-")[0];
+    const translations = loadLocale();
 
     if (!InstallButton.isSupported || !InstallButton.isAllowed) {
       this.toggleAttribute("install-unsupported", true);
-      this.renderRoot.innerHTML = !InstallButton.isAllowed
-        ? `<slot name='not-allowed'>${locale === "sv" ? "ESP-enheter kan bara installeras från HTTPS-webbplatser eller localhost." : "You can only install ESP devices on HTTPS websites or on the localhost."}</slot>`
-        : `<slot name='unsupported'>${locale === "sv" ? "Din webbläsare stöder inte installation på ESP-enheter. Använd Mozilla Firefox, Google Chrome, Microsoft Edge eller Google Chrome på Android." : "Your browser does not support installing things on ESP devices. Use Mozilla Firefox, Google Chrome, Microsoft Edge or Google Chrome on Android."}</slot>`;
+      const slot = document.createElement("slot");
+      slot.name = InstallButton.isAllowed ? "unsupported" : "not-allowed";
+      const message = InstallButton.isAllowed
+        ? "Your browser does not support installing things on ESP devices. Use Mozilla Firefox, Google Chrome, Microsoft Edge or Google Chrome on Android."
+        : "You can only install ESP devices on HTTPS websites or on the localhost.";
+      slot.textContent = t(message);
+      this.renderRoot.append(slot);
+      void translations.then(() => {
+        slot.textContent = t(message);
+      });
       return;
     }
 
@@ -100,7 +106,10 @@ export class InstallButton extends HTMLElement {
 
     slot.name = "activate";
     const button = document.createElement("button");
-    button.innerText = locale === "sv" ? "Anslut" : "Connect";
+    button.textContent = t("Connect");
+    void translations.then(() => {
+      button.textContent = t("Connect");
+    });
     slot.append(button);
     if (
       "adoptedStyleSheets" in Document.prototype &&

@@ -10,6 +10,7 @@ export default defineConfig({
       include: [
         "src/connect.ts",
         "src/util/serial.ts",
+        "src/util/format-firmware-title.ts",
         "src/no-port-picked/index.ts",
       ],
       thresholds: {

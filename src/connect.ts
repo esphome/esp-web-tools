@@ -1,24 +1,25 @@
 import type { InstallButton } from "./install-button.js";
+import { loadLocale, t } from "./localize.js";
 import { requestSerialPort } from "./util/serial.js";
-
-const isSwedish = () =>
-  (document.documentElement.lang || navigator.language)
-    .toLowerCase()
-    .split("-")[0] === "sv";
 
 export const connect = async (button: InstallButton) => {
   import("./install-dialog.js");
+  // The port chooser must be requested before awaiting translations.
+  const translations = loadLocale();
   let port: SerialPort | undefined;
   try {
     port = await requestSerialPort();
   } catch (err: any) {
     if ((err as DOMException).name === "NotFoundError") {
-      import("./no-port-picked/index").then((mod) =>
-        mod.openNoPortPickedDialog(() => connect(button)),
-      );
+      const [mod] = await Promise.all([
+        import("./no-port-picked/index"),
+        translations,
+      ]);
+      mod.openNoPortPickedDialog(() => connect(button));
       return;
     }
-    alert(`${isSwedish() ? "Fel" : "Error"}: ${err.message}`);
+    await translations;
+    alert(`${t("Error")}: ${err.message}`);
     return;
   }
 
@@ -32,6 +33,8 @@ export const connect = async (button: InstallButton) => {
     alert(err.message);
     return;
   }
+
+  await translations;
 
   const el = document.createElement("ewt-install-dialog");
   el.port = port;

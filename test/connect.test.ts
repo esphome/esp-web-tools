@@ -57,10 +57,14 @@ describe("connect", () => {
     document.documentElement.lang = "sv-SE";
     mockedRequest.mockRejectedValue(new Error("boom"));
 
-    await connect(makeButton());
-
-    expect(alert).toHaveBeenCalledWith("Fel: boom");
-    document.documentElement.lang = originalLanguage;
+    try {
+      const connection = connect(makeButton());
+      expect(mockedRequest).toHaveBeenCalledTimes(1);
+      await connection;
+      expect(alert).toHaveBeenCalledWith("Fel: boom");
+    } finally {
+      document.documentElement.lang = originalLanguage;
+    }
   });
 
   it("returns early when no port is returned", async () => {

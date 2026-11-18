@@ -1,5 +1,6 @@
 import { LitElement, html, PropertyValues, css, TemplateResult } from "lit";
 import { state } from "lit/decorators.js";
+import { formatFirmwareTitle } from "./util/format-firmware-title";
 import "./components/ew-text-button";
 import "./components/ew-list";
 import "./components/ew-list-item";
@@ -216,7 +217,7 @@ export class EwtInstallDialog extends LitElement {
   }
 
   _renderDashboard(): [string, TemplateResult, boolean] {
-    const heading = this._manifest.name;
+    const heading = formatFirmwareTitle(this._manifest.name);
     let content: TemplateResult;
     let allowClosing = true;
 
@@ -249,11 +250,7 @@ export class EwtInstallDialog extends LitElement {
                   >
                     ${listItemInstallIcon}
                     <div slot="headline">
-                      ${
-                        !this._isSameFirmware
-                          ? t("Install {name}", { name: this._manifest.name })
-                          : t("Update {name}", { name: this._manifest.name })
-                      }
+                      ${t(this._isSameFirmware ? "Update" : "Install")}
                     </div>
                   </ew-list-item>
                 `
@@ -358,7 +355,7 @@ export class EwtInstallDialog extends LitElement {
     return [heading, content, allowClosing];
   }
   _renderDashboardNoImprov(): [string, TemplateResult, boolean] {
-    const heading = this._manifest.name;
+    const heading = formatFirmwareTitle(this._manifest.name);
     let content: TemplateResult;
     let allowClosing = true;
 
@@ -377,9 +374,7 @@ export class EwtInstallDialog extends LitElement {
             }}
           >
             ${listItemInstallIcon}
-            <div slot="headline">
-              ${t("Install {name}", { name: this._manifest.name })}
-            </div>
+            <div slot="headline">${t("Install")}</div>
           </ew-list-item>
           <ew-list-item
             type="button"
@@ -694,16 +689,16 @@ export class EwtInstallDialog extends LitElement {
       `;
     } else if (!this._installConfirmed) {
       heading = t("Confirm Installation");
-      const action = isUpdate ? t("update to") : t("install");
       content = html`
         <div slot="content">
           ${
             isUpdate
-              ? html`Your device is running
-                  ${this._info!.firmware}&nbsp;${this._info!.version}.<br /><br />`
+              ? html`${t("Your device is running {firmware}.", {
+                    firmware: `${this._info!.firmware}\u00a0${this._info!.version}`,
+                  })}<br /><br />`
               : ""
           }
-          ${t("Do you want to {action} {name} {version}?", { action, name: this._manifest.name, version: this._manifest.version })}
+          ${t(isUpdate ? "Do you want to update to {name} {version}?" : "Do you want to install {name} {version}?", { name: this._manifest.name, version: this._manifest.version })}
           ${
             this._installErase
               ? html`<br /><br />${t("All data on the device will be erased.")}`
@@ -719,7 +714,7 @@ export class EwtInstallDialog extends LitElement {
             ${t("Back")}
           </ew-text-button>
           <ew-text-button @click=${this._confirmInstall}>
-            ${t("install")}
+            ${t("Install")}
           </ew-text-button>
         </div>
       `;
@@ -1091,8 +1086,9 @@ export class EwtInstallDialog extends LitElement {
       this._info = undefined;
       if (err instanceof PortNotReady) {
         this._state = "ERROR";
-        this._error =
-          "Serial port is not ready. Close any other application using it and try again.";
+        this._error = t(
+          "Serial port is not ready. Close any other application using it and try again.",
+        );
       } else {
         this._client = null; // not supported
         this.logger.error("Improv initialization failed.", err);
@@ -1276,6 +1272,7 @@ export class EwtInstallDialog extends LitElement {
       }
       div[slot="headline"] {
         padding-right: 48px;
+        white-space: pre-line;
       }
       ew-icon-button[slot="headline"] {
         position: absolute;
