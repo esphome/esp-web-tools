@@ -3,17 +3,24 @@ import { requestSerialPort } from "./util/serial.js";
 
 export const connect = async (button: InstallButton) => {
   import("./install-dialog.js");
+  // The port chooser must be requested before awaiting translations.
+  const translations = import("./localize.js").then(({ loadLocale }) =>
+    loadLocale(),
+  );
   let port: SerialPort | undefined;
   try {
     port = await requestSerialPort();
   } catch (err: any) {
     if ((err as DOMException).name === "NotFoundError") {
-      import("./no-port-picked/index").then((mod) =>
-        mod.openNoPortPickedDialog(() => connect(button)),
-      );
+      const [mod] = await Promise.all([
+        import("./no-port-picked/index"),
+        translations,
+      ]);
+      mod.openNoPortPickedDialog(() => connect(button));
       return;
     }
-    alert(`Error: ${err.message}`);
+    const t = await translations;
+    alert(`${t("Error")}: ${err.message}`);
     return;
   }
 
@@ -27,6 +34,8 @@ export const connect = async (button: InstallButton) => {
     alert(err.message);
     return;
   }
+
+  await translations;
 
   const el = document.createElement("ewt-install-dialog");
   el.port = port;

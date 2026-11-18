@@ -5,6 +5,7 @@ import "../components/ew-text-button";
 
 import { dialogStyles } from "../styles";
 import { getOperatingSystem } from "../util/get-operating-system";
+import { t } from "../localize";
 
 const cloudDownload = svg`
   <svg
@@ -37,49 +38,42 @@ class EwtNoPortPickedDialog extends LitElement {
 
     return html`
       <ew-dialog open @closed=${this._handleClose}>
-        <div slot="headline">No port selected</div>
+        <div slot="headline">${t("No port selected")}</div>
         <div slot="content">
           <div>
-            If you didn't select a port because you didn't see your device
-            listed, try the following steps:
+            ${t("If you didn't select a port because you didn't see your device listed, try the following steps:")}
           </div>
           <ol>
             ${
               isAndroid
                 ? html`
                     <li>
-                      Make sure that the device is plugged into this phone or
-                      tablet. Most phones need a USB OTG adapter or a USB-C
-                      cable to connect to a device.
+                      ${t("Make sure that the device is plugged into this phone or tablet. Most phones need a USB OTG adapter or a USB-C cable to connect to a device.")}
                     </li>
                   `
                 : html`
                     <li>
-                      Make sure that the device is connected to this computer
-                      (the one that runs the browser that shows this website)
+                      ${t("Make sure that the device is connected to this computer (the one that runs the browser that shows this website).")}
                     </li>
                   `
             }
             <li>
-              Most devices have a tiny light when it is powered on. If yours has
-              one, make sure it is on.
+              ${t("Most devices have a tiny light when it is powered on. If yours has one, make sure it is on.")}
             </li>
             <li>
-              Make sure that the USB cable you use can be used for data and is
-              not a power-only cable.
+              ${t("Make sure that the USB cable you use can be used for data and is not a power-only cable.")}
             </li>
             ${
               OS === "Linux"
                 ? html`
                     <li>
-                      If you are using a Linux flavor, make sure that your user
-                      is part of the <code>dialout</code> group so it has
-                      permission to access the device.
+                      ${t("If you are using a Linux flavor, make sure that your user is part of the")}
+                      <code>dialout</code>
+                      ${t("group so it has permission to access the device.")}
                       <code class="block"
                         >sudo usermod -a -G dialout YourUserName</code
                       >
-                      You may need to log out & back in or reboot to activate
-                      the new group access.
+                      ${t("You may need to log out & back in or reboot to activate the new group access.")}
                     </li>
                   `
                 : ""
@@ -88,15 +82,12 @@ class EwtNoPortPickedDialog extends LitElement {
               isAndroid
                 ? html`
                     <li>
-                      No drivers are needed on Android. If your device still
-                      isn't listed, its USB chip may not be supported on Android
-                      yet. Try again from a computer instead.
+                      ${t("No drivers are needed on Android. If your device still isn't listed, its USB chip may not be supported on Android yet. Try again from a computer instead.")}
                     </li>
                   `
                 : html`
                     <li>
-                      Make sure you have the right drivers installed. Below are
-                      the drivers for common chips used in ESP devices:
+                      ${t("Make sure you have the right drivers installed. Below are the drivers for common chips used in ESP devices:")}
                       <ul>
                         <li>
                           CP2102 drivers:
@@ -122,7 +113,8 @@ class EwtNoPortPickedDialog extends LitElement {
                             >Mac</a
                           >
                           <br />
-                          (download via blue button with ${cloudDownload} icon)
+                          (${t("download via blue button with")}
+                          ${cloudDownload})
                         </li>
                         <li>
                           CH340, CH341 drivers:
@@ -139,7 +131,8 @@ class EwtNoPortPickedDialog extends LitElement {
                             >Mac</a
                           >
                           <br />
-                          (download via blue button with ${cloudDownload} icon)
+                          (${t("download via blue button with")}
+                          ${cloudDownload})
                         </li>
                       </ul>
                     </li>
@@ -151,13 +144,17 @@ class EwtNoPortPickedDialog extends LitElement {
           ${
             this.doTryAgain
               ? html`
-                  <ew-text-button @click=${this.close}>Cancel</ew-text-button>
+                  <ew-text-button @click=${this.close}
+                    >${t("Cancel")}</ew-text-button
+                  >
                   <ew-text-button @click=${this.tryAgain}>
-                    Try Again
+                    ${t("Try Again")}
                   </ew-text-button>
                 `
               : html`
-                  <ew-text-button @click=${this.close}>Close</ew-text-button>
+                  <ew-text-button @click=${this.close}
+                    >${t("Close")}</ew-text-button
+                  >
                 `
           }
         </div>
