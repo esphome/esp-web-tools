@@ -46,7 +46,7 @@ jobs:
 
       - name: Update release notes
         id: drafter
-        uses: release-drafter/release-drafter@v7.10.0
+        uses: release-drafter/release-drafter@v7.11.0
         with:
           token: ${{ steps.app-token.outputs.token }}
 
