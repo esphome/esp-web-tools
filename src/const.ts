@@ -4,6 +4,22 @@ export interface Logger {
   debug(msg: string, ...args: any[]): void;
 }
 
+/**
+ * OTA firmware info for a build. Read by firmware that updates itself over
+ * the air from the manifest (for example ESPHome's http_request update
+ * platform). ESP Web Tools ignores it.
+ */
+export interface OtaInfo {
+  /** URL or path of the OTA firmware binary, resolved like part paths. */
+  path: string;
+  /** MD5 hex digest of the OTA firmware binary. */
+  md5: string;
+  /** Release notes. Overrides the top-level `summary`. */
+  summary?: string;
+  /** Link to the release page. Overrides the top-level `release_url`. */
+  release_url?: string;
+}
+
 export interface Build {
   chipFamily:
     | "ESP32"
@@ -22,6 +38,8 @@ export interface Build {
     offset: number;
   }[];
   serialType?: "cdc" | "uart";
+  /** Used by firmware for OTA updates, ignored by ESP Web Tools. */
+  ota?: OtaInfo;
 }
 
 export interface Manifest {
@@ -29,6 +47,10 @@ export interface Manifest {
   version: string;
   home_assistant_domain?: string;
   funding_url?: string;
+  /** OTA release notes for every build. A build's `ota.summary` wins. */
+  summary?: string;
+  /** OTA release page for every build. A build's `ota.release_url` wins. */
+  release_url?: string;
   /** @deprecated use `new_install_prompt_erase` instead */
   new_install_skip_erase?: boolean;
   new_install_prompt_erase?: boolean;

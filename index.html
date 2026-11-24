@@ -548,6 +548,71 @@ esptool --chip esp32 merge_bin \
         is visible in the ESP Web Tools menu when connected to a device running
         your firmware (as detected via Improv).
       </p>
+      <h4 id="ota">OTA updates</h4>
+      <p>
+        The manifest can also describe over-the-air (OTA) updates, so a device
+        that is already installed can check the same manifest for a newer
+        <code>version</code> and update itself. ESP Web Tools ignores these
+        fields. They are for the firmware on the device, and any firmware can
+        read them. ESPHome's
+        <a href="https://esphome.io/components/update/http_request/"
+          >http_request update platform</a
+        >
+        is one implementation.
+      </p>
+      <pre>
+{
+  "name": "My Firmware",
+  "version": "1.2.0",
+  "summary": "Bug fixes and a new sensor.",
+  "release_url": "https://example.com/releases/1.2.0",
+  "builds": [
+    {
+      "chipFamily": "ESP32",
+      "parts": [
+        { "path": "esp32.factory.bin", "offset": 0 }
+      ],
+      "ota": {
+        "path": "esp32.ota.bin",
+        "md5": "0123456789abcdef0123456789abcdef"
+      }
+    },
+    {
+      "chipFamily": "ESP32-C3",
+      "parts": [
+        { "path": "esp32-c3.factory.bin", "offset": 0 }
+      ],
+      "ota": {
+        "path": "esp32-c3.ota.bin",
+        "md5": "fedcba9876543210fedcba9876543210"
+      }
+    }
+  ]
+}</pre
+      >
+      <p>
+        A device updating over the air uses the build matching its chip, so
+        that build needs an <code>ota</code> object. Builds without it still
+        work for browser installs. Its
+        <code>path</code> and <code>md5</code> are required:
+        <code>path</code> is the URL or path of the OTA firmware binary and
+        <code>md5</code> is the MD5 hex digest of that binary. A full
+        <code>http(s)</code> URL is used as-is, a leading <code>/</code> is
+        relative to the manifest's host, and anything else is relative to the
+        manifest's directory. The optional <code>summary</code> (release notes)
+        and <code>release_url</code> (link to the release page) can go in the
+        <code>ota</code> object too.
+      </p>
+      <p>
+        To avoid repeating the release notes in every build, set
+        <code>summary</code> and <code>release_url</code> once at the top level
+        of the manifest. A value inside a build's <code>ota</code> object
+        overrides the top-level one. Firmware that predates the top-level form
+        only reads <code>ota.summary</code> and <code>ota.release_url</code>, so
+        it will not show the notes if they are only at the top level (the
+        update itself still works). ESPHome reads the top-level form from
+        2026.12.0.
+      </p>
       <p>
         ESP Web Tools allows you to provide your own check if the device is
         running the same firmware as specified in the manifest. This check can
