@@ -16,7 +16,7 @@ const cloudDownload = svg`
     y="0px"
     viewBox="0 0 510.322 510.322"
     xml:space="preserve"
-    style="width: 28px; vertical-align: middle;"
+    style="width: 2em; vertical-align: -0.6em;"
   >
     <g>
       <path

@@ -1265,13 +1265,17 @@ export class EwtInstallDialog extends LitElement {
         padding-right: 48px;
         white-space: pre-line;
       }
+      /* Centre the 40px button on the first line of the headline text.
+         Undo the padding and centring the dialog gives everything in the
+         headline slot, which shrinks the button's ripple to the icon height. */
       ew-icon-button[slot="headline"] {
         position: absolute;
-        right: 4px;
-        top: 8px;
+        right: 8px;
+        top: 20px;
+        padding: 0;
+        align-items: stretch;
       }
       ew-icon-button[slot="headline"] svg {
-        padding: 8px;
         color: var(--text-color);
       }
       .dialog-nav svg {
