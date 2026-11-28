@@ -18,6 +18,7 @@ import "./pages/ewt-page-message";
 import {
   closeIcon,
   listItemConsole,
+  listItemEditDevice,
   listItemEraseUserData,
   listItemFundDevelopment,
   listItemHomeAssistant,
@@ -98,8 +99,13 @@ export class EwtInstallDialog extends LitElement {
   @state() private _client?: ImprovSerial | null;
 
   @state() private _state:
-    "ERROR" | "DASHBOARD" | "PROVISION" | "INSTALL" | "ASK_ERASE" | "LOGS" =
-    "DASHBOARD";
+    | "ERROR"
+    | "DASHBOARD"
+    | "PROVISION"
+    | "DEVICE_SETTINGS"
+    | "INSTALL"
+    | "ASK_ERASE"
+    | "LOGS" = "DASHBOARD";
 
   @state() private _installErase = false;
   @state() private _installConfirmed = false;
@@ -111,6 +117,13 @@ export class EwtInstallDialog extends LitElement {
   @state() private _error?: string;
 
   @state() private _busy = false;
+
+  // Device Name & Hostname support & values
+  @state() private _supportsDeviceName = false;
+  @state() private _supportsHostname = false;
+  @state() private _deviceName = "";
+  @state() private _hostname = "";
+  @state() private _deviceSettingsError?: string;
 
   // undefined = not loaded
   // null = not available
@@ -162,6 +175,8 @@ export class EwtInstallDialog extends LitElement {
         : this._renderDashboardNoImprov();
     } else if (this._state === "PROVISION") {
       [heading, content] = this._renderProvision();
+    } else if (this._state === "DEVICE_SETTINGS") {
+      [heading, content] = this._renderDeviceSettings();
     } else if (this._state === "LOGS") {
       [heading, content] = this._renderLogs();
     }
@@ -299,6 +314,30 @@ export class EwtInstallDialog extends LitElement {
               }
             </div>
           </ew-list-item>
+          ${
+            this._supportsDeviceName || this._supportsHostname
+              ? html`
+                  <ew-list-item
+                    type="button"
+                    @click=${() => {
+                      this._deviceSettingsError = undefined;
+                      this._state = "DEVICE_SETTINGS";
+                    }}
+                  >
+                    ${listItemEditDevice}
+                    <div slot="headline">
+                      ${
+                        this._supportsDeviceName && this._supportsHostname
+                          ? "Device Name & Hostname"
+                          : this._supportsDeviceName
+                            ? "Change Device Name"
+                            : "Change Hostname"
+                      }
+                    </div>
+                  </ew-list-item>
+                `
+              : ""
+          }
           <ew-list-item
             type="button"
             @click=${async () => {
@@ -349,6 +388,7 @@ export class EwtInstallDialog extends LitElement {
 
     return [heading, content, allowClosing];
   }
+
   _renderDashboardNoImprov(): [string, TemplateResult, boolean] {
     const heading = formatFirmwareTitle(this._manifest.name);
     let content: TemplateResult;
@@ -387,6 +427,69 @@ export class EwtInstallDialog extends LitElement {
     `;
 
     return [heading, content, allowClosing];
+  }
+
+  _renderDeviceSettings(): [string | undefined, TemplateResult] {
+    const heading = "Configure Device";
+
+    if (this._busy) {
+      return [heading, this._renderProgress("Saving settings")];
+    }
+
+    const content = html`
+      <div slot="content">
+        <div>Update the identification settings stored on your device.</div>
+        ${
+          this._deviceSettingsError
+            ? html`<p class="error">${this._deviceSettingsError}</p>`
+            : ""
+        }
+        ${
+          this._supportsDeviceName
+            ? html`
+                <ew-filled-text-field
+                  label="Device Name"
+                  name="deviceName"
+                  .value=${this._deviceName}
+                  @keydown=${(ev: KeyboardEvent) => {
+                    if (ev.key === "Enter") {
+                      this._saveDeviceSettings();
+                    }
+                  }}
+                ></ew-filled-text-field>
+              `
+            : ""
+        }
+        ${
+          this._supportsHostname
+            ? html`
+                <ew-filled-text-field
+                  label="Hostname"
+                  name="hostname"
+                  .value=${this._hostname}
+                  @keydown=${(ev: KeyboardEvent) => {
+                    if (ev.key === "Enter") {
+                      this._saveDeviceSettings();
+                    }
+                  }}
+                ></ew-filled-text-field>
+              `
+            : ""
+        }
+      </div>
+      <div slot="actions">
+        <ew-text-button
+          @click=${() => {
+            this._state = "DASHBOARD";
+          }}
+        >
+          Back
+        </ew-text-button>
+        <ew-text-button @click=${this._saveDeviceSettings}>Save</ew-text-button>
+      </div>
+    `;
+
+    return [heading, content];
   }
 
   _renderProvision(): [string | undefined, TemplateResult] {
@@ -884,7 +987,8 @@ export class EwtInstallDialog extends LitElement {
 
   // Devices online via another interface report their URL in the network state.
   private get _deviceUrl(): string | undefined {
-    return this._client?.nextUrl ?? this._client?.networkState?.urls[0];
+    const urls = this._client?.networkState?.urls;
+    return this._client?.nextUrl ?? (Array.isArray(urls) ? urls[0] : urls);
   }
 
   /**
@@ -1001,6 +1105,11 @@ export class EwtInstallDialog extends LitElement {
       this._client?.stopNetworkStatePolling();
     }
 
+    if (this._state === "DEVICE_SETTINGS") {
+      this._focusFormElement();
+      return;
+    }
+
     if (this._state !== "PROVISION") {
       return;
     }
@@ -1026,6 +1135,47 @@ export class EwtInstallDialog extends LitElement {
     ) as LitElement | null;
     if (formEl) {
       formEl.updateComplete.then(() => setTimeout(() => formEl.focus(), 100));
+    }
+  }
+
+  private async _probeOptionalFeatures(client: ImprovSerial) {
+    this._supportsDeviceName = false;
+    this._supportsHostname = false;
+    this._deviceName = this._info?.name ?? "";
+    this._hostname = "";
+
+    // Probe Device Name (Command 0x06)
+    try {
+      const name = await client.getDeviceName();
+      if (
+        typeof name === "string" &&
+        (client.error as ImprovSerialErrorState) !==
+          ImprovSerialErrorState.UNKNOWN_RPC_COMMAND
+      ) {
+        this._supportsDeviceName = true;
+        this._deviceName = name;
+      }
+    } catch {
+      // Unsupported or timed out; leave hidden
+    } finally {
+      client.error = ImprovSerialErrorState.NO_ERROR;
+    }
+
+    // Probe Hostname (Command 0x05)
+    try {
+      const hostname = await client.getHostname();
+      if (
+        typeof hostname === "string" &&
+        (client.error as ImprovSerialErrorState) !==
+          ImprovSerialErrorState.UNKNOWN_RPC_COMMAND
+      ) {
+        this._supportsHostname = true;
+        this._hostname = hostname;
+      }
+    } catch {
+      // Unsupported or timed out; leave hidden
+    } finally {
+      client.error = ImprovSerialErrorState.NO_ERROR;
     }
   }
 
@@ -1073,9 +1223,14 @@ export class EwtInstallDialog extends LitElement {
       this._info = await client.initialize(timeout);
       this._client = client;
       client.addEventListener("disconnect", this._handleDisconnect);
+
+      // Probe optional Improv Serial commands (0x06 Device Name & 0x05 Hostname)
+      await this._probeOptionalFeatures(client);
     } catch (err: any) {
       // Clear old value
       this._info = undefined;
+      this._supportsDeviceName = false;
+      this._supportsHostname = false;
       if (err instanceof PortNotReady) {
         this._state = "ERROR";
         this._error =
@@ -1128,6 +1283,55 @@ export class EwtInstallDialog extends LitElement {
       this._manifest,
       this._installErase,
     ).finally(() => this._wakeLock.release());
+  }
+
+  private async _saveDeviceSettings() {
+    const newDeviceName = this._supportsDeviceName
+      ? (
+          this.shadowRoot!.querySelector(
+            "ew-filled-text-field[name=deviceName]",
+          ) as EwFilledTextField
+        ).value.trim()
+      : "";
+    const newHostname = this._supportsHostname
+      ? (
+          this.shadowRoot!.querySelector(
+            "ew-filled-text-field[name=hostname]",
+          ) as EwFilledTextField
+        ).value.trim()
+      : "";
+
+    this._busy = true;
+    this._deviceSettingsError = undefined;
+    this._client!.error = ImprovSerialErrorState.NO_ERROR;
+
+    try {
+      // Improv spec recommends setting Device Name before Hostname
+      if (this._supportsDeviceName && newDeviceName) {
+        const updatedName = await this._client!.setDeviceName(newDeviceName);
+        this._deviceName = updatedName ?? newDeviceName;
+        if (this._info) {
+          this._info = { ...this._info, name: this._deviceName };
+        }
+      }
+
+      if (this._supportsHostname && newHostname) {
+        const updatedHostname = await this._client!.setHostname(newHostname);
+        this._hostname = updatedHostname ?? newHostname;
+      }
+
+      this._state = "DASHBOARD";
+    } catch (err: any) {
+      if ((this._client!.error as number) === 0x05) {
+        this._deviceSettingsError =
+          "Invalid hostname (use only letters, numbers, and hyphens).";
+      } else {
+        this._deviceSettingsError =
+          err?.message || "Failed to update device settings.";
+      }
+    } finally {
+      this._busy = false;
+    }
   }
 
   private async _doProvision() {
@@ -1328,6 +1532,9 @@ export class EwtInstallDialog extends LitElement {
       }
       ew-list-item svg {
         height: 24px;
+      }
+      ew-list-item div[slot="headline"] {
+        white-space: normal;
       }
       ewt-page-message + ew-list {
         padding-top: 16px;
