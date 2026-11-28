@@ -259,7 +259,9 @@ export class EwtInstallDialog extends LitElement {
                     }}
                   >
                     ${listItemInstallIcon}
-                    <div slot="headline">${this._isSameFirmware ? "Update" : "Install"}</div>
+                    <div slot="headline">
+                      ${this._isSameFirmware ? "Update" : "Install"}
+                    </div>
                   </ew-list-item>
                 `
               : ""
@@ -304,11 +306,13 @@ export class EwtInstallDialog extends LitElement {
             }}
           >
             ${listItemWifi}
-            <div slot="headline">${
-              this._client!.state === ImprovSerialCurrentState.PROVISIONED
-                ? "Change Wi-Fi"
-                : "Connect to Wi-Fi"
-            }</div>
+            <div slot="headline">
+              ${
+                this._client!.state === ImprovSerialCurrentState.PROVISIONED
+                  ? "Change Wi-Fi"
+                  : "Connect to Wi-Fi"
+              }
+            </div>
           </ew-list-item>
           ${
             this._supportsDeviceName || this._supportsHostname
@@ -321,13 +325,15 @@ export class EwtInstallDialog extends LitElement {
                     }}
                   >
                     ${listItemEditDevice}
-                    <div slot="headline">${
-                      this._supportsDeviceName && this._supportsHostname
-                        ? "Device Name & Hostname"
-                        : this._supportsDeviceName
-                          ? "Change Device Name"
-                          : "Change Hostname"
-                    }</div>
+                    <div slot="headline">
+                      ${
+                        this._supportsDeviceName && this._supportsHostname
+                          ? "Device Name & Hostname"
+                          : this._supportsDeviceName
+                            ? "Change Device Name"
+                            : "Change Hostname"
+                      }
+                    </div>
                   </ew-list-item>
                 `
               : ""
@@ -981,7 +987,8 @@ export class EwtInstallDialog extends LitElement {
 
   // Devices online via another interface report their URL in the network state.
   private get _deviceUrl(): string | undefined {
-    return this._client?.nextUrl ?? this._client?.networkState?.urls;
+    const urls = this._client?.networkState?.urls;
+    return this._client?.nextUrl ?? (Array.isArray(urls) ? urls[0] : urls);
   }
 
   /**
@@ -1139,10 +1146,11 @@ export class EwtInstallDialog extends LitElement {
 
     // Probe Device Name (Command 0x06)
     try {
-      const name = await (client as any).getDeviceName();
+      const name = await client.getDeviceName();
       if (
         typeof name === "string" &&
-        client.error !== ImprovSerialErrorState.UNKNOWN_RPC_COMMAND
+        (client.error as ImprovSerialErrorState) !==
+          ImprovSerialErrorState.UNKNOWN_RPC_COMMAND
       ) {
         this._supportsDeviceName = true;
         this._deviceName = name;
@@ -1155,10 +1163,11 @@ export class EwtInstallDialog extends LitElement {
 
     // Probe Hostname (Command 0x05)
     try {
-      const hostname = await (client as any).getHostname();
+      const hostname = await client.getHostname();
       if (
         typeof hostname === "string" &&
-        client.error !== ImprovSerialErrorState.UNKNOWN_RPC_COMMAND
+        (client.error as ImprovSerialErrorState) !==
+          ImprovSerialErrorState.UNKNOWN_RPC_COMMAND
       ) {
         this._supportsHostname = true;
         this._hostname = hostname;
@@ -1299,9 +1308,7 @@ export class EwtInstallDialog extends LitElement {
     try {
       // Improv spec recommends setting Device Name before Hostname
       if (this._supportsDeviceName && newDeviceName) {
-        const updatedName = await (this._client as any).setDeviceName(
-          newDeviceName,
-        );
+        const updatedName = await this._client!.setDeviceName(newDeviceName);
         this._deviceName = updatedName ?? newDeviceName;
         if (this._info) {
           this._info = { ...this._info, name: this._deviceName };
@@ -1309,9 +1316,7 @@ export class EwtInstallDialog extends LitElement {
       }
 
       if (this._supportsHostname && newHostname) {
-        const updatedHostname = await (this._client as any).setHostname(
-          newHostname,
-        );
+        const updatedHostname = await this._client!.setHostname(newHostname);
         this._hostname = updatedHostname ?? newHostname;
       }
 
@@ -1527,6 +1532,9 @@ export class EwtInstallDialog extends LitElement {
       }
       ew-list-item svg {
         height: 24px;
+      }
+      ew-list-item div[slot="headline"] {
+        white-space: normal;
       }
       ewt-page-message + ew-list {
         padding-top: 16px;
